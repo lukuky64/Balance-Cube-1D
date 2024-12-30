@@ -1,0 +1,37 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.2 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="25.0.2">
+  <diagram name="Page-1" id="-gYsz8aW-vj6ITZaHm62">
+    <mxGraphModel dx="1646" dy="1105" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-3" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;IMU&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="582" width="127" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-4" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;BLDC DRIVER&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="352.5" y="377" width="177" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-5" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;BLDC CURRENT SENSE&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="320" y="469" width="242" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-6" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;MAG ENC&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="216" width="127" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-7" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;USB PD&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="673" width="127" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-8" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;SD&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="784" width="127" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-9" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;OPTICAL ENC&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="290" width="127" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-10" value="&lt;span style=&quot;font-size: 24px;&quot;&gt;SERVO&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="983" width="127" height="67" as="geometry" />
+        </mxCell>
+        <mxCell id="WpBpt3ZNnvcSfI1GrqfO-11" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;BUZZER&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#2B2B2B;" vertex="1" parent="1">
+          <mxGeometry x="377.5" y="882" width="127" height="67" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
