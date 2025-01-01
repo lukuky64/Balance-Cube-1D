@@ -14,6 +14,7 @@ void STATE_MACHINE::setup()
 
 void STATE_MACHINE::begin()
 {
+    delay(3000);
     // Setup the initial state
     m_currState = INITIALISATION;
 
@@ -29,22 +30,13 @@ void STATE_MACHINE::loop()
     {
     case INITIALISATION:
     {
-        bool initSuccess = m_devices.initialisationSeq(LOG_SD, LOG_SERIAL, SILENT_INDICATION, SERVO_BRAKING, USE_IMU, USE_ROT_ENC);
+        m_currState = m_devices.initialisationSeq(LOG_SD, LOG_SERIAL, SILENT_INDICATION, SERVO_BRAKING, USE_IMU, USE_ROT_ENC)
+                          ? CALIBRATION
+                          : CRITICAL_ERROR;
 
-        ESP_LOGI("STATE_MACHINE INITIALISATION", "Starting Indication Loop Task");
-        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_MEDIUM, nullptr);
-        xTaskCreate(&STATE_MACHINE::checkStatusTask, "Device status check loop Task", 2048, this, PRIORITY_MEDIUM, nullptr);
-
-        if (initSuccess)
-        {
-            m_currState = CALIBRATION;
-        }
-        else
-        {
-            m_currState = CRITICAL_ERROR;
-        }
+        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_MEDIUM, &m_indicationLoopTaskHandle);
+        xTaskCreate(&STATE_MACHINE::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_MEDIUM, &m_refreshStatusTaskHandle);
     }
-
     break;
     case CRITICAL_ERROR:
     {
@@ -78,47 +70,59 @@ void STATE_MACHINE::indicationLoopTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_devices.indicateStatus();
+        bool requirementsMet = machine->m_devices.indicateStatus();
 
-        // UBaseType_t highWaterMark = uxTaskGetStackHighWaterMark(NULL);
-        // ESP_LOGI("INDICATION LOOP TASK", "High Water Mark: %d", highWaterMark);
+        if (!requirementsMet)
+        {
+            machine->m_currState = CRITICAL_ERROR;
+        }
 
         vTaskDelay(pdMS_TO_TICKS(2000)); // Indicate status every 2 seconds
     }
 }
 
-void STATE_MACHINE::checkStatusTask(void *pvParameters)
+void STATE_MACHINE::refreshStatusTask(void *pvParameters)
 {
     // Convert generic pointer back to STATE_MACHINE*
     auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
 
     while (true)
     {
-        machine->m_devices.checkStatusAll();
-        vTaskDelay(pdMS_TO_TICKS(5000)); // Check every 5 seconds
+        vTaskDelay(pdMS_TO_TICKS(10000)); // Check every 10 seconds
+        machine->m_devices.refreshStatusAll();
     }
 }
 
 void STATE_MACHINE::criticalErrorSeq()
 {
-    // ESP_LOGE("STATE_MACHINE CRITICAL ERROR", "Critical Error Sequence!");
+    ESP_LOGE("STATE_MACHINE CRITICAL ERROR", "Critical Error Sequence!");
 
-    // while (true)
-    // {
-    //     m_devices.m_indicators.showCriticalError();
-    //     vTaskDelay(pdMS_TO_TICKS(1000));
-    // }
+    // destroy task
+    vTaskDelete(m_refreshStatusTaskHandle);
+    m_refreshStatusTaskHandle = nullptr; // clear the handle
+
+    vTaskDelay(pdMS_TO_TICKS(5000)); // wait for 5 seconds before restarting the initialisation sequence
+
+    // destroy task
+    vTaskDelete(m_indicationLoopTaskHandle);
+    m_indicationLoopTaskHandle = nullptr; // clear the handle
+
+    m_currState = INITIALISATION;
 }
 
 void STATE_MACHINE::calibrationSeq()
 {
-    m_currState = LOW_POWER_IDLE;
+    vTaskDelay(pdMS_TO_TICKS(500));
 
-    // ESP_LOGI("STATE_MACHINE CALIBRATION", "Calibration Sequence!");
+    ESP_LOGI("STATE_MACHINE CALIBRATION", "Calibration Sequence!");
+
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    m_devices.setStatus(0);
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
     // while (true)
     // {
-    //     m_devices.m_indicators.showWarning();
+    //     // m_devices.m_indicators.showWarning();
     //     vTaskDelay(pdMS_TO_TICKS(1000));
     // }
 }

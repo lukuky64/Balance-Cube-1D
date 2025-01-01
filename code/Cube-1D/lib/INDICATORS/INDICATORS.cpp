@@ -7,10 +7,13 @@ INDICATORS::INDICATORS()
 INDICATORS::~INDICATORS()
 {
     // Disable the buzzer and RGB LED
-    controlRGBLed(0, 0);
 
     m_buzzerEnabled = false;
     m_RGBLedEnabled = false;
+
+    // Delete the mutexes
+    vSemaphoreDelete(buzzerMutex);
+    vSemaphoreDelete(rgbLedMutex);
 }
 
 void INDICATORS::setupBuzzer(uint8_t buzzerPin)

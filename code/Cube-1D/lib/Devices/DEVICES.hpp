@@ -18,29 +18,6 @@
 #include "LOG.hpp"
 #include "SERVO_CTR.hpp"
 
-// struct STATUS
-// {
-//     bool indicationSucc = false;
-//     bool voltageSucc = false;
-//     bool BLDCSucc = false;
-//     bool IMUSucc = false;
-//     bool ROT_ENCSucc = false;
-//     bool MAGSucc = false;
-//     bool serialSucc = false;
-//     bool SDSucc = false;
-//     bool ServoSucc = false;
-// };
-
-// struct preferences
-// {
-//     bool logSD = false;
-//     bool logSerial = false;
-//     bool SilentIndication = false;
-//     bool servoBraking = false;
-//     bool useIMU = false;
-//     bool useROT_ENC = false;
-// };
-
 enum DeviceBit
 {
     INDICATION_BIT = 1 << 7, // 0b10000000
@@ -69,10 +46,17 @@ public:
     bool setupSDLog(uint8_t CS, uint8_t MISO, uint8_t MOSI, uint8_t CLK);
     bool setupServo(uint8_t servoPin);
 
-    void checkStatusAll();
-    void indicateStatus();
-    bool checkRequirements();
+    void refreshStatusAll();
+    bool indicateStatus();
+    bool checkRequirementsMet();
     bool initialisationSeq(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC);
+
+    void setStatus(uint8_t status);
+
+private:
+    uint8_t m_statusMask = 0;
+
+    uint8_t m_prefMask = 0;
 
     // devices
     INDICATORS m_indicators;
@@ -83,13 +67,6 @@ public:
     MAG_ENC m_magEnc;
     LOG m_logger;
     SERVO_CTR m_servo;
-
-private:
-    SemaphoreHandle_t m_statusMaskMutex; // Handle to the mutex
-    uint8_t m_statusMask = 0;
-    uint8_t m_prefMask = 0;
-    // preferences m_currPref;
-    // STATUS m_deviceStatuses;
 };
 
 #endif // DEVICES_HPP

@@ -2,7 +2,6 @@
 
 DEVICES::DEVICES()
 {
-    m_statusMaskMutex = xSemaphoreCreateMutex();
 }
 
 // bool DEVICES::setupIndication(bool silentIndication)
@@ -55,47 +54,51 @@ bool DEVICES::setupServo(uint8_t servoPin)
     return true;
 }
 
-void DEVICES::indicateStatus()
+bool DEVICES::indicateStatus()
 {
-    if (!checkRequirements())
+    bool requirementsMet = checkRequirementsMet();
+
+    if (!requirementsMet)
     {
         m_indicators.showCriticalError();
     }
     else if (m_statusMask != m_prefMask)
     {
+        ESP_LOGI("DEVICES", "Status: %d, Pref: %d", m_statusMask, m_prefMask);
         m_indicators.showWarning();
     }
     else
     {
         m_indicators.showAllGood();
     }
+
+    return requirementsMet;
 }
 
-void DEVICES::checkStatusAll()
+void DEVICES::refreshStatusAll()
 {
     ESP_LOGI("DEVICES", "Checking all device statuses...");
 
-    // Take mutex before modifying m_statusMask
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY) == pdTRUE)
-    {
-        uint8_t statusMask = 0;
-        statusMask |= (INDICATION_BIT && m_indicators.checkStatus());
-        statusMask |= (USBPD_BIT && m_usbPD.checkStatus());
-        statusMask |= (BLDC_BIT && m_bldc.checkStatus());
-        statusMask |= (IMU_BIT && m_imu.checkStatus());
-        statusMask |= (ROT_ENC_BIT && m_rotEnc.checkStatus());
-        statusMask |= (MAG_BIT && m_magEnc.checkStatus());
-        statusMask |= (SERIAL_BIT && m_logger.m_serialTalker.checkStatus());
-        statusMask |= (SD_BIT && m_logger.m_sdTalker.checkStatus());
-        statusMask |= (SERVO_BIT && m_servo.checkStatus());
-        m_statusMask = statusMask; // this ensure a single write operation so we might not need mutex here
+    uint8_t statusMask = 0;
+    statusMask |= (m_indicators.checkStatus() ? INDICATION_BIT : 0);
+    statusMask |= (m_usbPD.checkStatus() ? USBPD_BIT : 0);
+    statusMask |= (m_bldc.checkStatus() ? BLDC_BIT : 0);
+    statusMask |= (m_imu.checkStatus() ? IMU_BIT : 0);
+    statusMask |= (m_rotEnc.checkStatus() ? ROT_ENC_BIT : 0);
+    statusMask |= (m_magEnc.checkStatus() ? MAG_BIT : 0);
+    statusMask |= (m_logger.m_serialTalker.checkStatus() ? SERIAL_BIT : 0);
+    statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);
+    statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0);
 
-        xSemaphoreGive(m_statusMaskMutex);
-    }
+    m_statusMask = statusMask & m_prefMask;
 }
 
 bool DEVICES::initialisationSeq(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC)
 {
+    vTaskDelay(pdMS_TO_TICKS(500));
+
+    bool result = false;
+
     m_statusMask = 0;
     m_prefMask = 0;
 
@@ -169,56 +172,55 @@ bool DEVICES::initialisationSeq(bool logSD, bool logSerial, bool SilentIndicatio
 
     // next few are mandatory
 
-    m_prefMask |= USBPD_BIT | MAG_BIT | BLDC_BIT;
-
     // set up voltage
     if (setupUSBPD(I2C_SCL, I2C_SDA))
     {
         m_statusMask |= USBPD_BIT;
+        m_prefMask |= USBPD_BIT;
     }
 
     // set up Magnetic sensor for BLDC
     if (setupMAG(SPI_CS_MAG, SPI_MISO, SPI_MOSI, SPI_CLK))
     {
         m_statusMask |= MAG_BIT;
+        m_prefMask |= MAG_BIT;
     }
 
     // set up BLDC
     if (setupBLDC())
     {
         m_statusMask |= BLDC_BIT;
+        m_prefMask |= BLDC_BIT;
     }
 
     // explicitly check each required bit
 
-    if (checkRequirements())
+    if (checkRequirementsMet())
     {
-        ESP_LOGI("Initialisation", "Minimum device successes satisifed!");
+        ESP_LOGI("Initialisation", "Minimum device successes satisfied!");
         m_indicators.showSuccess();
-        return true;
+        result = true;
     }
     else
     {
-        ESP_LOGE("Initialisation", "Minimum device successes not satisifed.");
-        return false;
+        ESP_LOGE("Initialisation", "Minimum device successes not satisfied.");
+        result = false;
     }
+    return result;
 }
 
-bool DEVICES::checkRequirements()
+bool DEVICES::checkRequirementsMet()
 {
-    // Take mutex before modifying m_statusMask
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY) == pdTRUE)
-    {
-        const bool isIndicationOk = (m_statusMask & INDICATION_BIT) != 0;
-        const bool isUsbpdOk = (m_statusMask & USBPD_BIT) != 0;
-        const bool isBldcOk = (m_statusMask & BLDC_BIT) != 0;
-        const bool isImuOrEncOk = ((m_statusMask & IMU_BIT) != 0) || ((m_statusMask & ROT_ENC_BIT) != 0);
+    const bool isIndicationOk = (m_statusMask & INDICATION_BIT) != 0;
+    const bool isUsbpdOk = (m_statusMask & USBPD_BIT) != 0;
+    const bool isBldcOk = (m_statusMask & BLDC_BIT) != 0;
+    const bool isImuOrEncOk = ((m_statusMask & IMU_BIT) != 0) || ((m_statusMask & ROT_ENC_BIT) != 0);
+    // ESP_LOGI("DEVICES", "Indication: %d, USBPD: %d, BLDC: %d, IMU/ENC: %d", isIndicationOk, isUsbpdOk, isBldcOk, isImuOrEncOk);
 
-        xSemaphoreGive(m_statusMaskMutex);
-        return isIndicationOk && isUsbpdOk && isBldcOk && isImuOrEncOk;
-    }
-    else
-    {
-        return false;
-    }
+    return isIndicationOk && isUsbpdOk && isBldcOk && isImuOrEncOk;
+}
+
+void DEVICES::setStatus(uint8_t status)
+{
+    m_statusMask = status;
 }

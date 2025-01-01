@@ -47,12 +47,15 @@ public:
 
     // FreeRTOS Tasks
     static void indicationLoopTask(void *pvParameters);
-    static void checkStatusTask(void *pvParameters);
+    static void refreshStatusTask(void *pvParameters);
 
 private:
     STATES m_currState;
-
     DEVICES m_devices;
+
+    // FreeRTOS Handles
+    TaskHandle_t m_indicationLoopTaskHandle = nullptr;
+    TaskHandle_t m_refreshStatusTaskHandle = nullptr;
 };
 
 #endif // STATE_MACHINE_HPP
