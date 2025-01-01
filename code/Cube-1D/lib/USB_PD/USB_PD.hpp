@@ -28,6 +28,7 @@ public:
     //	TI_INA209(byte address, float shunt);
     word readWord(byte reg_addr);
     void writeWord(byte reg_addr, word data);
+    bool checkStatus();
 };
 
 #endif // USB_PD_HPP

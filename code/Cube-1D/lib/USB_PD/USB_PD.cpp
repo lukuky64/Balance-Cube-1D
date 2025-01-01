@@ -47,3 +47,8 @@ void USB_PD::writeWord(byte reg_addr, word data)
     Wire.write(lowByte(data));
     Wire.endTransmission();
 }
+
+bool USB_PD::checkStatus()
+{
+    return true;
+}

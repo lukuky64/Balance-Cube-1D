@@ -7,6 +7,8 @@ class MAG_ENC
 {
 public:
     MAG_ENC();
+    ~MAG_ENC();
+    bool checkStatus();
 
 private:
 };

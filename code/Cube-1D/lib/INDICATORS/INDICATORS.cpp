@@ -1,5 +1,18 @@
 #include "INDICATORS.hpp"
 
+INDICATORS::INDICATORS()
+{
+}
+
+INDICATORS::~INDICATORS()
+{
+    // Disable the buzzer and RGB LED
+    controlRGBLed(0, 0);
+
+    m_buzzerEnabled = false;
+    m_RGBLedEnabled = false;
+}
+
 void INDICATORS::setupBuzzer(uint8_t buzzerPin)
 {
     m_buzzerPin = buzzerPin;
@@ -122,4 +135,9 @@ bool INDICATORS::controlRGBLed(int hexValue, int duration)
         }
     }
     return false;
+}
+
+bool INDICATORS::checkStatus()
+{
+    return m_buzzerEnabled || m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
 }

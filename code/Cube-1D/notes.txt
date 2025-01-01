@@ -5,4 +5,8 @@ Ideas:
 - Logging can cause delays. Use a circular buffer for data collection and perform batch writes to the SD card to minimise blocking times.
 - Consider fusing IMU and optical/magnetic encoder data using a complementary or Kalman filter to improve angle estimation accuracy.
 - Integrate low-power modes for non-critical tasks to maximise energy efficiency.
-+
+
+
+
+Issues:
+- When disconnecting fro serial, the ESP goes into a non code state (this is normal) but the Red and Green LEDs get left HIGH

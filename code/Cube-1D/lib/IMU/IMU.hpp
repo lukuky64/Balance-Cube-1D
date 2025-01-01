@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include <Adafruit_LSM6DSOX.h>
+#include "esp_log.h"
 
 class IMU
 {
@@ -18,6 +19,7 @@ public:
     float getGyroY();
     float getGyroZ();
     uint32_t getTimestampMS();
+    bool checkStatus();
 
 private:
     Adafruit_LSM6DSOX m_imu;

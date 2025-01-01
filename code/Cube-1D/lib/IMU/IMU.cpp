@@ -22,13 +22,17 @@ IMU::IMU()
 
 bool IMU::begin(uint8_t SPI_CS, SPIClass *pSPI_BUS)
 {
-
     if (m_imu.begin_SPI(SPI_CS, pSPI_BUS))
     {
         m_imu.setAccelRange(m_accelRange);
         m_imu.setGyroRange(m_gyroRange);
         m_imu.setAccelDataRate(m_dataRate);
         m_imu.setGyroDataRate(m_dataRate);
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -85,4 +89,9 @@ float IMU::getGyroZ()
 uint32_t IMU::getTimestampMS()
 {
     return m_accel.timestamp; // all sensor events have the same timestamp
+}
+
+bool IMU::checkStatus()
+{
+    return true;
 }

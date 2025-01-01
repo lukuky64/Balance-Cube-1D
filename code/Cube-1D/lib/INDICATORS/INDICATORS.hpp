@@ -24,6 +24,9 @@ struct Colour
 class INDICATORS
 {
 public:
+    INDICATORS();
+    ~INDICATORS();
+
     void setupBuzzer(uint8_t buzzerPin);
     void setupRGBLed(uint8_t ledR, uint8_t ledG, uint8_t ledB);
 
@@ -35,6 +38,8 @@ public:
     void showSuccess();
     void showAllGood();
     void showIdle();
+
+    bool checkStatus();
 
 private:
     SemaphoreHandle_t buzzerMutex; // Mutex for buzzer
