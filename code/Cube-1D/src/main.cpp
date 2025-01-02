@@ -7,8 +7,6 @@ STATE_MACHINE stateMachine;
 
 void setup()
 {
-    delay(1000);
-    ESP_LOGI("MAIN SETUP", "TEST");
     // Call the begin function of the state machine
     stateMachine.begin();
 }

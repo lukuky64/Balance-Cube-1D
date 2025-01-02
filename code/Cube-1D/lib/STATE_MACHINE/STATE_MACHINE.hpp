@@ -5,19 +5,23 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_sleep.h"
 
 #include "Arduino.h"
 #include "esp_log.h"
 
 #include "DEVICES.hpp"
 
+#include "CONTROLLER.hpp"
+
 enum STATES
 {
     INITIALISATION = 0,
     CRITICAL_ERROR = 1,
     CALIBRATION = 2,
-    LOW_POWER_IDLE = 3,
-    CONTROL = 4,
+    IDLE = 3,
+    LIGHT_SLEEP = 4,
+    CONTROL = 5,
 };
 
 enum PRIORITY
@@ -39,7 +43,9 @@ public:
 
     void calibrationSeq();
     void controlSeq();
-    void lowPowerIdleSeq();
+    void lightSleepSeq();
+    void idleSeq();
+    void checkActivityTask();
 
     STATES getCurrentState();
 
@@ -50,12 +56,18 @@ public:
     static void refreshStatusTask(void *pvParameters);
 
 private:
+    SemaphoreHandle_t m_stateMutex = nullptr;
     STATES m_currState;
     DEVICES m_devices;
+    CONTROLLER m_control;
 
     // FreeRTOS Handles
     TaskHandle_t m_indicationLoopTaskHandle = nullptr;
     TaskHandle_t m_refreshStatusTaskHandle = nullptr;
+
+    uint16_t m_refreshStatusPeriod;
+    uint16_t m_indicationPeriod;
+    uint16_t m_activityCheckPeriod;
 };
 
 #endif // STATE_MACHINE_HPP

@@ -1,0 +1,46 @@
+#include <Arduino.h>
+#include "esp_log.h"
+
+void setup()
+{
+    USBSerial.begin(250000);
+    delay(3000);
+    USBSerial.println("SETUP FUNCTION");
+    // Call the begin function of the state machine
+    // stateMachine.begin();
+    {
+        gpio_config_t io_conf = {
+            .pin_bit_mask = (1ULL << GPIO_NUM_10),
+            .mode = GPIO_MODE_INPUT,
+
+            .pull_up_en = GPIO_PULLUP_DISABLE, // Adjust based on hardware
+            .pull_down_en = GPIO_PULLDOWN_DISABLE,
+            .intr_type = GPIO_INTR_DISABLE // Disable interrupts; wake-up is handled by ESP-IDF
+        };
+
+        esp_err_t ret = gpio_config(&io_conf);
+
+        if (ret != ESP_OK)
+        {
+            return;
+        }
+
+        esp_sleep_enable_ext0_wakeup(GPIO_NUM_10, 1); // 1 = High level wake-up using the IMU's interrupt pin
+    }
+
+    pinMode(LED_B, OUTPUT);
+    digitalWrite(LED_B, HIGH);
+}
+
+void loop()
+{
+    delay(5000);
+    digitalWrite(LED_B, LOW);
+    USBSerial.println("GOING TO LIGHT SLEEP");
+
+    esp_light_sleep_start();
+    delay(125);
+    USBSerial.begin(250000);
+    USBSerial.println("WOKE UP FROM LIGHT SLEEP");
+    digitalWrite(LED_B, HIGH);
+}

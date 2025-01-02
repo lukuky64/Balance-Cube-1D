@@ -9,6 +9,8 @@
 
 #include "Arduino.h"
 
+#include "PIN_DEFS.hpp"
+
 #include "INDICATORS.hpp"
 #include "USB_PD.hpp"
 #include "BLDC.hpp"
@@ -37,28 +39,30 @@ public:
     DEVICES();
     ~DEVICES();
     // bool setupIndication(bool silentIndication);
-    bool setupUSBPD(uint8_t SCL, uint8_t SDA);
+    bool setupUSBPD(gpio_num_t SCL, gpio_num_t SDA);
     bool setupBLDC();
-    bool setupIMU(uint8_t CS, uint8_t MISO, uint8_t MOSI, uint8_t CLK);
+    bool setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin);
     bool setupROT_ENC();
-    bool setupMAG(uint8_t CS, uint8_t MISO, uint8_t MOSI, uint8_t CLK);
+    bool setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK);
     bool setupSerialLog();
-    bool setupSDLog(uint8_t CS, uint8_t MISO, uint8_t MOSI, uint8_t CLK);
-    bool setupServo(uint8_t servoPin);
+    bool setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK);
+    bool setupServo(gpio_num_t servoPin);
 
     void refreshStatusAll();
     bool indicateStatus();
     bool checkRequirementsMet();
     bool initialisationSeq(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC);
 
+    uint8_t getStatus();
+
     void setStatus(uint8_t status);
 
-private:
-    uint8_t m_statusMask = 0;
+    bool calibrateSeq();
 
-    uint8_t m_prefMask = 0;
+    bool sleepMode();
+    void wakeMode();
 
-    // devices
+    // devices. Making public for now
     INDICATORS m_indicators;
     USB_PD m_usbPD;
     BLDC m_bldc;
@@ -67,6 +71,13 @@ private:
     MAG_ENC m_magEnc;
     LOG m_logger;
     SERVO_CTR m_servo;
+
+private:
+    SemaphoreHandle_t m_statusMaskMutex = nullptr;
+    uint8_t m_statusMask = 0;
+
+    SemaphoreHandle_t m_prefMaskMutex = nullptr;
+    uint8_t m_prefMask = 0;
 };
 
 #endif // DEVICES_HPP

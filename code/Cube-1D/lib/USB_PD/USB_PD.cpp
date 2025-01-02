@@ -50,5 +50,5 @@ void USB_PD::writeWord(byte reg_addr, word data)
 
 bool USB_PD::checkStatus()
 {
-    return true;
+    return false;
 }

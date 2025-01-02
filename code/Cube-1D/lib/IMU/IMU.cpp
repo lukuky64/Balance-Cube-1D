@@ -20,7 +20,7 @@ IMU::IMU()
 */
 /*****************************************************************************/
 
-bool IMU::begin(uint8_t SPI_CS, SPIClass *pSPI_BUS)
+bool IMU::begin(uint8_t SPI_CS, SPIClass *pSPI_BUS, gpio_num_t intPin)
 {
     if (m_imu.begin_SPI(SPI_CS, pSPI_BUS))
     {
@@ -28,7 +28,7 @@ bool IMU::begin(uint8_t SPI_CS, SPIClass *pSPI_BUS)
         m_imu.setGyroRange(m_gyroRange);
         m_imu.setAccelDataRate(m_dataRate);
         m_imu.setGyroDataRate(m_dataRate);
-        return true;
+        return configureInturrupt(intPin);
     }
     else
     {
@@ -36,17 +36,24 @@ bool IMU::begin(uint8_t SPI_CS, SPIClass *pSPI_BUS)
     }
 }
 
-void IMU::update()
+bool IMU::update()
 {
-    m_imu.getEvent(&m_accel, &m_gyro, &m_temp);
+    if (m_imu.getEvent(&m_accel, &m_gyro, &m_temp))
+    {
+        // m_accel.acceleration.x;
+        // m_accel.acceleration.y;
+        // m_accel.acceleration.z;
 
-    // m_accel.acceleration.x;
-    // m_accel.acceleration.y;
-    // m_accel.acceleration.z;
+        // m_gyro.gyro.x;
+        // m_gyro.gyro.y;
+        // m_gyro.gyro.z;
 
-    // m_gyro.gyro.x;
-    // m_gyro.gyro.y;
-    // m_gyro.gyro.z;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 float IMU::getAccelX()
@@ -94,4 +101,39 @@ uint32_t IMU::getTimestampMS()
 bool IMU::checkStatus()
 {
     return true;
+}
+
+bool IMU::configureInturrupt(gpio_num_t intPin)
+{
+    m_imu.configIntOutputs(false, false);               // active high and push-pull configuration
+    m_imu.configInt1(false, false, false, false, true); // enabling wake up interrupt
+    m_imu.enableWakeup(true, 50, 20);                   // duration, threshold
+
+    m_intPin = intPin;
+
+    gpio_config_t io_conf = {
+        .pin_bit_mask = (1ULL << m_intPin),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE, // since we have push-pull configuration, don't need pull-down
+        .intr_type = GPIO_INTR_DISABLE         // Disable interrupts; wake-up is handled by ESP-IDF
+    };
+
+    esp_err_t ret = gpio_config(&io_conf);
+
+    if (ret != ESP_OK)
+    {
+        ESP_LOGE("IMU", "GPIO configuration failed with error: %d", ret);
+        return false;
+    }
+    else
+    {
+        ESP_LOGI("IMU", "Configured GPIO %d for IMU interrupt", m_intPin);
+        return true;
+    }
+}
+
+gpio_num_t IMU::getIntPin()
+{
+    return m_intPin;
 }
