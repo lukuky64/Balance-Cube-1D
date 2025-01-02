@@ -19,6 +19,8 @@
 #include "MAG_ENC.hpp"
 #include "LOG.hpp"
 #include "SERVO_CTR.hpp"
+#include "COMMS.hpp"
+#include "SemaphoreGuard.hpp"
 
 enum DeviceBit
 {
@@ -51,16 +53,19 @@ public:
     void refreshStatusAll();
     bool indicateStatus();
     bool checkRequirementsMet();
-    bool initialisationSeq(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC);
+    bool init(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC);
 
     uint8_t getStatus();
 
     void setStatus(uint8_t status);
+    void setPref(uint8_t status);
 
     bool calibrateSeq();
 
     bool sleepMode();
     void wakeMode();
+
+    bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus);
 
     // devices. Making public for now
     INDICATORS m_indicators;
@@ -78,6 +83,9 @@ private:
 
     SemaphoreHandle_t m_prefMaskMutex = nullptr;
     uint8_t m_prefMask = 0;
+
+    SPICOM m_SPIComSensors = {&SPI, false, nullptr};
+    SPICOM m_SPIComSD = {&SPI, false, nullptr}; // sd will use a different bus
 };
 
 #endif // DEVICES_HPP

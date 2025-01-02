@@ -2,6 +2,7 @@
 
 STATE_MACHINE::STATE_MACHINE() : m_devices(), m_control(m_devices)
 {
+    m_stateMutex = xSemaphoreCreateMutex();
     m_refreshStatusPeriod = 5000; // 5 seconds
     m_indicationPeriod = 2000;    // 2 seconds
 }
@@ -16,14 +17,15 @@ void STATE_MACHINE::setup()
 
 void STATE_MACHINE::begin()
 {
-    m_stateMutex = xSemaphoreCreateMutex();
     delay(3000);
     // Setup the initial state
 
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
     {
-        m_currState = INITIALISATION;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = INITIALISATION;
+        }
     }
 
     while (true)
@@ -35,24 +37,20 @@ void STATE_MACHINE::begin()
 void STATE_MACHINE::loop()
 {
     STATES currState;
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
+
     {
-        currState = m_currState;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            currState = m_currState;
+        }
     }
 
     switch (currState)
     {
     case INITIALISATION:
     {
-        if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
-        {
-            m_currState = m_devices.initialisationSeq(LOG_SD, LOG_SERIAL, SILENT_INDICATION, SERVO_BRAKING, USE_IMU, USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
-            xSemaphoreGive(m_stateMutex);
-        }
-
-        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_MEDIUM, &m_indicationLoopTaskHandle);
-        xTaskCreate(&STATE_MACHINE::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_MEDIUM, &m_refreshStatusTaskHandle);
+        initialisationSeq();
     }
     break;
     case CRITICAL_ERROR:
@@ -97,10 +95,13 @@ void STATE_MACHINE::indicationLoopTask(void *pvParameters)
 
         if (!requirementsMet)
         {
-            if (xSemaphoreTake(machine->m_stateMutex, portMAX_DELAY))
+
             {
-                machine->m_currState = CRITICAL_ERROR;
-                xSemaphoreGive(machine->m_stateMutex);
+                SemaphoreGuard guard(machine->m_stateMutex);
+                if (guard.acquired())
+                {
+                    machine->m_currState = CRITICAL_ERROR;
+                }
             }
         }
 
@@ -121,6 +122,28 @@ void STATE_MACHINE::refreshStatusTask(void *pvParameters)
     }
 }
 
+void STATE_MACHINE::initialisationSeq()
+{
+    STATES currState = m_devices.init(LOG_SD, LOG_SERIAL, SILENT_INDICATION, SERVO_BRAKING, USE_IMU, USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
+
+    {
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = currState;
+        }
+    }
+
+    if (m_indicationLoopTaskHandle == NULL)
+    {
+        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_MEDIUM, &m_indicationLoopTaskHandle);
+    }
+    if (m_refreshStatusTaskHandle == NULL)
+    {
+        xTaskCreate(&STATE_MACHINE::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_MEDIUM, &m_refreshStatusTaskHandle);
+    }
+}
+
 void STATE_MACHINE::criticalErrorSeq()
 {
     ESP_LOGE("STATE_MACHINE CRITICAL ERROR", "Critical Error Sequence!");
@@ -135,10 +158,12 @@ void STATE_MACHINE::criticalErrorSeq()
     vTaskDelete(m_indicationLoopTaskHandle);
     m_indicationLoopTaskHandle = nullptr; // clear the handle
 
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
     {
-        m_currState = INITIALISATION;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = INITIALISATION;
+        }
     }
 }
 
@@ -148,10 +173,12 @@ void STATE_MACHINE::calibrationSeq()
 
     ESP_LOGI("STATE_MACHINE CALIBRATION", "Calibration Sequence!");
 
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
     {
-        m_currState = m_devices.calibrateSeq() ? IDLE : CRITICAL_ERROR;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = m_devices.calibrateSeq() ? IDLE : CRITICAL_ERROR;
+        }
     }
 }
 
@@ -185,10 +212,12 @@ void STATE_MACHINE::lightSleepSeq()
         ESP_LOGI("STATE_MACHINE", "USB connected, cannot enter light sleep!");
     }
 
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
     {
-        m_currState = IDLE;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = IDLE;
+        }
     }
 }
 
@@ -206,10 +235,12 @@ STATES STATE_MACHINE::getCurrentState()
 {
     STATES currState;
 
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
     {
-        currState = m_currState;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            currState = m_currState;
+        }
     }
 
     return currState;
@@ -229,20 +260,23 @@ void STATE_MACHINE::idleSeq()
         // if here for more than 1 minute, enter light sleep. !!! Currently 6 seconds
         if (millis() - startTime > 6000)
         {
-            if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
             {
-                m_currState = LIGHT_SLEEP;
-                xSemaphoreGive(m_stateMutex);
+                SemaphoreGuard guard(m_stateMutex);
+                if (guard.acquired())
+                {
+                    m_currState = LIGHT_SLEEP;
+                }
             }
             break;
         }
     }
 
-    // if we are here, we can control the angle
-    if (xSemaphoreTake(m_stateMutex, portMAX_DELAY))
     {
-        m_currState = CONTROL;
-        xSemaphoreGive(m_stateMutex);
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = CONTROL;
+        }
     }
 
     vTaskDelay(pdMS_TO_TICKS(100));

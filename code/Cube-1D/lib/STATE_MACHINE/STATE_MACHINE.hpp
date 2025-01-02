@@ -6,6 +6,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_sleep.h"
+#include "SemaphoreGuard.hpp"
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -41,6 +42,7 @@ public:
     void begin();
     void loop();
 
+    void initialisationSeq();
     void calibrationSeq();
     void controlSeq();
     void lightSleepSeq();

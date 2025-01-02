@@ -5,12 +5,14 @@
 #include <Adafruit_LSM6DSOX.h>
 #include "esp_log.h"
 #include "driver/gpio.h"
+#include "COMMS.hpp"
+#include "SemaphoreGuard.hpp"
 
 class IMU
 {
 public:
     IMU();
-    bool begin(uint8_t SPI_CS, SPIClass *pSPI_BUS, gpio_num_t intPin);
+    bool begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin);
     bool update();
     void print();
     float getAccelX();
@@ -37,6 +39,10 @@ private:
     sensors_event_t m_temp;
 
     gpio_num_t m_intPin;
+
+    SPICOM *m_SPI_BUS = nullptr;
+
+    bool initialised;
 };
 
 #endif // IMU_HPP

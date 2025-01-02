@@ -11,6 +11,7 @@ public:
     SERIAL_TALKER();
     ~SERIAL_TALKER();
     bool checkStatus();
+    bool begin();
 
 private:
 };

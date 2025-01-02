@@ -2,6 +2,9 @@
 
 DEVICES::DEVICES()
 {
+    m_SPIComSensors.mutex = xSemaphoreCreateMutex();
+    m_SPIComSD.mutex = xSemaphoreCreateMutex();
+
     m_statusMaskMutex = xSemaphoreCreateMutex();
     m_prefMaskMutex = xSemaphoreCreateMutex();
 }
@@ -13,8 +16,35 @@ DEVICES::DEVICES()
 
 DEVICES::~DEVICES()
 {
-    // disable all devices
+    // Disable or de-initialize all devices if necessary
+
+    // Delete mutexes
+    if (m_SPIComSensors.mutex != nullptr)
+    {
+        vSemaphoreDelete(m_SPIComSensors.mutex);
+        m_SPIComSensors.mutex = nullptr;
+    }
+
+    if (m_SPIComSD.mutex != nullptr)
+    {
+        vSemaphoreDelete(m_SPIComSD.mutex);
+        m_SPIComSD.mutex = nullptr;
+    }
+
+    if (m_statusMaskMutex != nullptr)
+    {
+        vSemaphoreDelete(m_statusMaskMutex);
+        m_statusMaskMutex = nullptr;
+    }
+
+    if (m_prefMaskMutex != nullptr)
+    {
+        vSemaphoreDelete(m_prefMaskMutex);
+        m_prefMaskMutex = nullptr;
+    }
 }
+
+#if dummyDevices
 
 bool DEVICES::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 {
@@ -55,25 +85,89 @@ bool DEVICES::setupServo(gpio_num_t servoPin)
 {
     return true;
 }
+#else
+
+bool DEVICES::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
+{
+    return false;
+}
+
+bool DEVICES::setupBLDC()
+{
+    return true;
+}
+
+bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
+{
+
+    SemaphoreGuard guard(SPIBus.mutex);
+    if (guard.acquired())
+    {
+        // check if SPI bus is already initialised
+        if (!SPIBus.begun)
+        {
+            SPIBus.BUS->begin(CLK, MISO, MOSI);
+            SPIBus.BUS->setFrequency(40000000); // 40 MHz
+            SPIBus.begun = true;
+        }
+    }
+
+    return SPIBus.begun;
+}
+
+bool DEVICES::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
+{
+    if (!setupSPI(MISO, MOSI, CLK, m_SPIComSensors))
+    {
+        return false;
+    }
+
+    return m_imu.begin(CS, m_SPIComSensors, intPin);
+}
+
+bool DEVICES::setupROT_ENC()
+{
+    return true;
+}
+
+bool DEVICES::setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
+{
+    return true;
+}
+
+bool DEVICES::setupSerialLog()
+{
+    return m_logger.m_serialTalker.begin();
+}
+
+bool DEVICES::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
+{
+    setupSPI(MISO, MOSI, CLK, m_SPIComSD);
+    return m_logger.m_sdTalker.begin(CS, m_SPIComSD);
+}
+
+bool DEVICES::setupServo(gpio_num_t servoPin)
+{
+    return m_servo.begin(servoPin);
+}
+
+#endif // dummyDevices
 
 bool DEVICES::indicateStatus()
 {
-    bool requirementsMet = checkRequirementsMet();
 
     uint8_t statusMask = 0;
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY))
-    {
-        statusMask = m_statusMask;
-        xSemaphoreGive(m_statusMaskMutex);
-    }
 
     uint8_t prefMask = 0;
-    if (xSemaphoreTake(m_prefMaskMutex, portMAX_DELAY))
     {
-        prefMask = m_prefMask;
-        xSemaphoreGive(m_prefMaskMutex);
+        SemaphoreGuard guard(m_prefMaskMutex);
+        if (guard.acquired())
+        {
+            prefMask = m_prefMask;
+        }
     }
 
+    bool requirementsMet = checkRequirementsMet();
     if (!requirementsMet)
     {
         m_indicators.showCriticalError();
@@ -106,21 +200,10 @@ void DEVICES::refreshStatusAll()
     statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);
     statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0);
 
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY))
-    {
-        uint8_t prefMask = 0;
-        if (xSemaphoreTake(m_prefMaskMutex, portMAX_DELAY))
-        {
-            prefMask = m_prefMask;
-            xSemaphoreGive(m_prefMaskMutex);
-        }
-
-        m_statusMask = statusMask & prefMask;
-        xSemaphoreGive(m_statusMaskMutex);
-    }
+    setStatus(statusMask);
 }
 
-bool DEVICES::initialisationSeq(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC)
+bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC)
 {
     vTaskDelay(pdMS_TO_TICKS(500));
 
@@ -222,17 +305,9 @@ bool DEVICES::initialisationSeq(bool logSD, bool logSerial, bool SilentIndicatio
         prefMask |= BLDC_BIT;
     }
 
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY))
-    {
-        m_statusMask = statusMask;
-        xSemaphoreGive(m_statusMaskMutex);
-    }
+    setStatus(statusMask);
 
-    if (xSemaphoreTake(m_prefMaskMutex, portMAX_DELAY))
-    {
-        m_prefMask = prefMask;
-        xSemaphoreGive(m_prefMaskMutex);
-    }
+    setPref(prefMask);
 
     // explicitly check each required bit
     if (checkRequirementsMet())
@@ -258,12 +333,7 @@ bool DEVICES::calibrateSeq()
 
 bool DEVICES::checkRequirementsMet()
 {
-    uint8_t statusMask = 0;
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY))
-    {
-        statusMask = m_statusMask;
-        xSemaphoreGive(m_statusMaskMutex);
-    }
+    uint8_t statusMask = getStatus();
 
     bool isIndicationOk = (statusMask & INDICATION_BIT) == INDICATION_BIT;
     // bool isUsbpdOk = (statusMask & USBPD_BIT) == USBPD_BIT;
@@ -276,27 +346,37 @@ bool DEVICES::checkRequirementsMet()
 
 void DEVICES::setStatus(uint8_t status)
 {
-    ESP_LOGE("DEVICES", "Setting status to (DELETE THIS): %d", status);
-
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY))
     {
-        m_statusMask = status;
-        xSemaphoreGive(m_statusMaskMutex);
+        SemaphoreGuard guard(m_statusMaskMutex);
+        if (guard.acquired())
+        {
+            m_statusMask = status;
+        }
+    }
+}
+
+void DEVICES::setPref(uint8_t pref)
+{
+    {
+        SemaphoreGuard guard(m_prefMaskMutex);
+        if (guard.acquired())
+        {
+            m_prefMask = pref;
+        }
     }
 }
 
 uint8_t DEVICES::getStatus()
 {
     uint8_t status = 0;
-
-    if (xSemaphoreTake(m_statusMaskMutex, portMAX_DELAY))
     {
-        status = m_statusMask;
-        xSemaphoreGive(m_statusMaskMutex);
+        SemaphoreGuard guard(m_statusMaskMutex);
+        if (guard.acquired())
+        {
+            status = m_statusMask;
+        }
     }
-
     ESP_LOGI("DEVICES", "Status: %d", status);
-
     return status;
 }
 

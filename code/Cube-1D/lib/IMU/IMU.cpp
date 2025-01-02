@@ -1,7 +1,7 @@
 
 #include "IMU.hpp"
 
-IMU::IMU()
+IMU::IMU() : initialised(false)
 {
     m_accelRange = LSM6DS_ACCEL_RANGE_2_G;
     m_gyroRange = LSM6DS_GYRO_RANGE_250_DPS;
@@ -20,40 +20,37 @@ IMU::IMU()
 */
 /*****************************************************************************/
 
-bool IMU::begin(uint8_t SPI_CS, SPIClass *pSPI_BUS, gpio_num_t intPin)
+bool IMU::begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin)
 {
-    if (m_imu.begin_SPI(SPI_CS, pSPI_BUS))
+
+    m_SPI_BUS = &SPI_BUS;
+
+    SemaphoreGuard guard(m_SPI_BUS->mutex);
+    if (guard.acquired())
     {
-        m_imu.setAccelRange(m_accelRange);
-        m_imu.setGyroRange(m_gyroRange);
-        m_imu.setAccelDataRate(m_dataRate);
-        m_imu.setGyroDataRate(m_dataRate);
-        return configureInturrupt(intPin);
+        if (m_imu.begin_SPI(SPI_CS, m_SPI_BUS->BUS))
+        {
+            m_imu.setAccelRange(m_accelRange);
+            m_imu.setGyroRange(m_gyroRange);
+            m_imu.setAccelDataRate(m_dataRate);
+            m_imu.setGyroDataRate(m_dataRate);
+            initialised = configureInturrupt(intPin);
+        }
     }
-    else
-    {
-        return false;
-    }
+    return initialised;
 }
 
 bool IMU::update()
 {
-    if (m_imu.getEvent(&m_accel, &m_gyro, &m_temp))
-    {
-        // m_accel.acceleration.x;
-        // m_accel.acceleration.y;
-        // m_accel.acceleration.z;
+    bool success = false;
 
-        // m_gyro.gyro.x;
-        // m_gyro.gyro.y;
-        // m_gyro.gyro.z;
-
-        return true;
-    }
-    else
+    SemaphoreGuard guard(m_SPI_BUS->mutex);
+    if (guard.acquired())
     {
-        return false;
+        success = m_imu.getEvent(&m_accel, &m_gyro, &m_temp);
     }
+
+    return success;
 }
 
 float IMU::getAccelX()

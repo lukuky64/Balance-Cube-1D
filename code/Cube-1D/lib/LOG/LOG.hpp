@@ -13,12 +13,15 @@ class LOG
 public:
     LOG();
     ~LOG();
+    // bool beginSerial();
+    // bool beginSD();
 
     SD_TALKER m_sdTalker;
     SERIAL_TALKER m_serialTalker;
 
 private:
-    
+    bool m_sdLog;
+    bool m_serialLog;
 };
 
 #endif // LOG_HPP

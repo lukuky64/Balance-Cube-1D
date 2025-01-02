@@ -13,3 +13,8 @@ bool SERIAL_TALKER::checkStatus()
 {
     return true;
 }
+
+bool SERIAL_TALKER::begin()
+{
+    return true;
+}
