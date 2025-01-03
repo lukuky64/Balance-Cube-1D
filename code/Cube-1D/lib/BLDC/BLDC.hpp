@@ -11,6 +11,8 @@ public:
     BLDC();
     ~BLDC();
     bool checkStatus();
+    void enableMotor(bool enable);
+    void begin();
 
 private:
 };

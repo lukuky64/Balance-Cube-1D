@@ -13,3 +13,8 @@ bool ROT_ENC::checkStatus()
 {
     return true;
 }
+
+float ROT_ENC::getAngle()
+{
+    return 0.0;
+}

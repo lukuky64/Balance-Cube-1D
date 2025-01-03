@@ -17,3 +17,5 @@ For future:
 - removed USBPD check from requirements for now
 - need to implement timestamps into kalman fiter, the imu data has this associated with it
 - convert estimator to 2D case
+- fusing the encoder with IMU in estimator estimate function
+- need to consider the orientation of the imu for estimator correct function

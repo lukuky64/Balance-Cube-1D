@@ -2,10 +2,9 @@
 #include "CONTROLLER.hpp"
 
 CONTROLLER::CONTROLLER(DEVICES &devicesRef) : m_devicesRef(devicesRef),
-                                              m_filters{FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f),
-                                                        FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f),
-                                                        FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f),
-                                                        FILTER(0.1f, 1.0f, 1.0f, 0.0f)}
+                                              m_filters{FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f)},
+                                              m_estimator(devicesRef, aquisition_dt_ms),
+                                              m_controllableAngleThreshold(AngleThresh)
 {
 }
 
@@ -22,58 +21,25 @@ bool CONTROLLER::checkStatus()
     return true;
 }
 
-bool CONTROLLER::controlableAngle()
+bool CONTROLLER::controllableAngle()
 {
-    return true;
+    return (abs(m_filters.filter_theta.getValue()) < m_controllableAngleThreshold);
 }
 
-bool CONTROLLER::updateFilters()
+void CONTROLLER::updateFilters()
 {
-    m_filters.filter_ax.update(m_devicesRef.m_imu.getAccelX());
-    m_filters.filter_ay.update(m_devicesRef.m_imu.getAccelY());
-    m_filters.filter_az.update(m_devicesRef.m_imu.getAccelZ());
-
-    m_filters.filter_gx.update(m_devicesRef.m_imu.getGyroX());
-    m_filters.filter_gy.update(m_devicesRef.m_imu.getGyroY());
-    m_filters.filter_gz.update(m_devicesRef.m_imu.getGyroZ());
-
+    m_estimator.estimate();
+    m_filters.filter_omega.update(m_estimator.getOmega());
+    m_filters.filter_theta.update(m_estimator.getTheta());
     m_filters.filter_mag.update(0.0f); // !!! MAG ENCODER NOT IMPLEMENTED YET !!!
-
-    return true;
 }
 
-// get the filtered values
-float CONTROLLER::getFilteredAccelX()
+void CONTROLLER::updateBalanceControl()
 {
-    return m_filters.filter_ax.getValue();
+    // get errors, apply gains and all that jazz
 }
 
-float CONTROLLER::getFilteredAccelY()
+void CONTROLLER::updateBLDC()
 {
-    return m_filters.filter_ay.getValue();
-}
-
-float CONTROLLER::getFilteredAccelZ()
-{
-    return m_filters.filter_az.getValue();
-}
-
-float CONTROLLER::getFilteredGyroX()
-{
-    return m_filters.filter_gx.getValue();
-}
-
-float CONTROLLER::getFilteredGyroY()
-{
-    return m_filters.filter_gy.getValue();
-}
-
-float CONTROLLER::getFilteredGyroZ()
-{
-    return m_filters.filter_gz.getValue();
-}
-
-float CONTROLLER::getFilteredMag()
-{
-    return m_filters.filter_mag.getValue();
+    // update the BLDC motor
 }

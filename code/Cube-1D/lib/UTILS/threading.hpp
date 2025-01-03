@@ -1,0 +1,11 @@
+#ifndef THREADING_HPP
+#define THREADING_HPP
+
+enum PRIORITY
+{
+    PRIORITY_HIGH = 1,
+    PRIORITY_MEDIUM = 2,
+    PRIORITY_LOW = 3,
+};
+
+#endif // THREADING_HPP

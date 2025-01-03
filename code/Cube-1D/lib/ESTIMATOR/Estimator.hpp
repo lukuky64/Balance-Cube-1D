@@ -3,35 +3,60 @@
 
 #include "Arduino.h"
 #include "esp_log.h"
+#include "params.hpp"
+#include "DEVICES.hpp"
+#include "FILTER.hpp"
+
+#include "SemaphoreGuard.hpp"
 
 // Attitude estimator class
 class Estimator
 {
 public:
     // Constructor
-    Estimator();
-    // Initializer
-    void init();
+    Estimator(DEVICES &devicesRef, uint16_t dt);
+
     // Estimate step
     void estimate();
-    // Rotation quaternion estimations
-    float q0, q1, q2, q3;
-    // Angular velocity (rad/s) estimations
-    float omega_x, omega_y, omega_z;
+
+    float getTheta();
+    float getOmega();
 
 private:
+    DEVICES &m_devicesRef;
+
+    void estimateIMU();
+    void estimateROT_ENC();
+
+    //
+    bool selectDevice();
+
     // Angular velocity bias calibration
     void calibrate();
     // Predict step
-    void predict(float omega_x, float omega_y, float omega_z);
+    void predict(float omega_y);
     // Correct step
-    void correct(float ax, float ay, float az);
+    void correct(float ax, float ay);
     // Angular velocity (rad/s) bias
-    float b_omega_x, b_omega_y, b_omega_z;
+
+    void WrapTheta();
+
+    float m_theta; // Orientation angle (radians)
+    float m_omega; // Angular velocity (rad/s)
+
+    SemaphoreHandle_t m_theta_mutex = nullptr;
+    SemaphoreHandle_t m_omega_mutex = nullptr;
+
+    float m_omegaBias; // Angular velocity bias (rad/s)
 
     // Estimator gains
-    float lds;
-    float ldw;
+    float m_lds;
+    float m_ldw;
+
+    bool m_imuSelected;
+    bool m_rotEncSelected;
+
+    uint16_t m_dt;
 };
 
 #endif

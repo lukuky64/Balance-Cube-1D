@@ -1,134 +1,205 @@
 #include "Estimator.hpp"
 
 // Constructor
-Estimator::Estimator()
+Estimator::Estimator(DEVICES &devicesRef, uint16_t dt) : m_devicesRef(devicesRef), m_imuSelected(false), m_rotEncSelected(false), m_dt(dt)
 {
+    m_theta_mutex = xSemaphoreCreateMutex();
+    m_omega_mutex = xSemaphoreCreateMutex();
+
     // Estimator gains
-    lds = 0.02;
-    ldw = 50.0;
 
-    // Set initial rotation quaternion
-    q0 = 1.0;
-    q1 = 0.0;
-    q2 = 0.0;
-    q3 = 0.0;
-    // Set initial angular velocity
-    omega_x = 0.0;
-    omega_y = 0.0;
-    omega_z = 0.0;
+    m_lds = 0.02;
+    m_ldw = 50.0; // not used
+
+    SemaphoreGuard guard(m_theta_mutex);
+    if (guard.acquired())
+    {
+        SemaphoreGuard guard(m_omega_mutex);
+        if (guard.acquired())
+        {
+            // Set initial orientation angle
+            m_theta = 0.0;
+            // Set initial angular velocity
+            m_omega = 0.0;
+        }
+    }
+
     // Set initial angular velocity bias
-    b_omega_x = 0.0;
-    b_omega_y = 0.0;
-    b_omega_z = 0.0;
+    m_omegaBias = 0.0;
+
+    selectDevice();
 }
 
-// Initializer
-void Estimator::init()
+bool Estimator::selectDevice()
 {
-    // Angular velocity bias calibration
-    calibrate();
+    // prioritise IMU over ROT_ENC
+    if ((m_devicesRef.getStatus() & IMU_BIT) == IMU_BIT)
+    {
+        ESP_LOGI("ESTIMATOR", "IMU selected!");
+        m_imuSelected = true;
+
+        // Angular velocity bias calibration for IMU
+        calibrate();
+    }
+    else if ((m_devicesRef.getStatus() & ROT_ENC_BIT) == ROT_ENC_BIT)
+
+    {
+        ESP_LOGI("ESTIMATOR", "ROT_ENC selected!");
+        m_rotEncSelected = true;
+    }
+    else
+    {
+        ESP_LOGE("ESTIMATOR", "No device selected!");
+    }
+
+    return (m_imuSelected || m_rotEncSelected);
 }
 
-// Angular velocity bias calibration
+// Angular velocity bias calibration for IMU
 void Estimator::calibrate()
 {
-    // Calculate angular velocity bias by averaging n samples during 0,5 seconds
-    int n = f / 2;
-    for (int i = 0; i < f; i++)
+    if (m_imuSelected)
     {
-        imu.read();
-        b_omega_x += imu.gx / f;
-        b_omega_y += imu.gy / f;
-        b_omega_z += imu.gz / f;
-        wait_us(dt_us);
+        // Calculate angular velocity bias by averaging n samples for 0.5 seconds
+        int n = aquisitionFreq / 2;
+        for (int i = 0; i < n; i++)
+        {
+            m_devicesRef.m_imu.update();
+            m_omegaBias += m_devicesRef.m_imu.getGyroY() / n;
+            vTaskDelay(pdMS_TO_TICKS(m_dt));
+        }
     }
 }
 
-// Estimate step
-void Estimator::estimate()
+void Estimator::estimateIMU()
 {
+    // Update latest readings
+    m_devicesRef.m_imu.update();
+
     // Get angular velocity from IMU gyroscope data
-    imu.read_gyr();
-    omega_x = imu.gx - b_omega_x;
-    omega_y = imu.gy - b_omega_y;
-    omega_z = imu.gz - b_omega_z;
+    float omega_measured = m_devicesRef.m_imu.getGyroY();
 
     // Predict step
-    predict(omega_x, omega_y, omega_z);
+    predict(omega_measured);
 
     // Get linear acceleration from IMU accelerometer data
-    imu.read_acc();
-    float ax = f_ax * (imu.ax - b_ax);
-    float ay = f_ay * (imu.ay - b_ay);
-    float az = f_az * (imu.az - b_az);
+    float ax = m_devicesRef.m_imu.getAccelX(); // Assuming X-axis
+    float ay = m_devicesRef.m_imu.getAccelY(); // Assuming Y-axis
+
     // Normalize linear acceleration
-    float a_norm = sqrt(ax * ax + ay * ay + az * az);
+    float a_norm = sqrt(ax * ax + ay * ay);
+    if (a_norm == 0)
+        a_norm = 1; // Prevent division by zero
+
     ax /= a_norm;
     ay /= a_norm;
-    az /= a_norm;
 
     // Correct step
-    correct(ax, ay, az);
+    correct(ax, ay);
 
-    // Normalize rotation quaternion
-    float q_norm = sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
-    q0 /= q_norm;
-    q1 /= q_norm;
-    q2 /= q_norm;
-    q3 /= q_norm;
+    WrapTheta(); // wrap theta to [-π, π]
 }
 
-// Estimate step
-void Estimator::predict(float omega_x, float omega_y, float omega_z)
+// wrap theta to [-π, π]
+void Estimator::WrapTheta()
 {
-    // Predict rotation quaternion time derivative
-    float q0_dot = 0.5 * (-q1 * omega_x - q2 * omega_y - q3 * omega_z);
-    float q1_dot = 0.5 * (q0 * omega_x - q3 * omega_y + q2 * omega_z);
-    float q2_dot = 0.5 * (q3 * omega_x + q0 * omega_y - q1 * omega_z);
-    float q3_dot = 0.5 * (-q2 * omega_x + q0 * omega_z + q1 * omega_y);
-    // Predict rotation quaternion
-    q0 += q0_dot * dt;
-    q1 += q1_dot * dt;
-    q2 += q2_dot * dt;
-    q3 += q3_dot * dt;
+    SemaphoreGuard guard(m_theta_mutex);
+    if (guard.acquired())
+    {
+        if (m_theta > PI)
+            m_theta -= 2 * PI;
+        else if (m_theta < -PI)
+            m_theta += 2 * PI;
+    }
+}
+
+// Estimate step. This is the main function that should be called periodically
+void Estimator::estimate()
+{
+    if (m_imuSelected)
+    {
+        estimateIMU();
+    }
+
+    if (m_rotEncSelected)
+    {
+        estimateROT_ENC();
+    }
+
+    // !!! need to somehow fuse these two, if they are both selected
+}
+
+void Estimator::estimateROT_ENC()
+{
+    // Example: Read encoder value and convert to angle
+    float encoder_angle = m_devicesRef.m_rotEnc.getAngle();
+    // Implement prediction and correction based on encoder data
+}
+
+// Predict step
+void Estimator::predict(float omega_measured)
+{
+    SemaphoreGuard guard(m_theta_mutex);
+    if (guard.acquired())
+    {
+        SemaphoreGuard guard(m_omega_mutex);
+        if (guard.acquired())
+        {
+            // Correct the measured angular velocity with bias
+            float omega_corrected = omega_measured - m_omegaBias;
+            // Update orientation
+            m_theta += omega_corrected * m_dt;
+            // Optionally, you can also update omega if you want to track it
+            m_omega = omega_corrected;
+        }
+    }
 }
 
 // Correct step
-void Estimator::correct(float ax, float ay, float az)
+void Estimator::correct(float ax, float ay)
 {
-    // // Calculate rotation quaternion measurement
-    // float qm0 =   ax*q2 - ay*q1 - az*q0;
-    // float qm1 = - ax*q3 - ay*q0 + az*q1;
-    // float qm2 =   ax*q0 - ay*q3 + az*q2;
-    // float qm3 = - ax*q1 - ay*q2 - az*q3;
-    // // Correct rotation quaternion
-    // q0 += lds*dt*(qm0-q0);
-    // q1 += lds*dt*(qm1-q1);
-    // q2 += lds*dt*(qm2-q2);
-    // q3 += lds*dt*(qm3-q3);
+    SemaphoreGuard guard(m_theta_mutex);
+    if (guard.acquired())
+    {
+        // Assuming ax and ay are normalized
+        // Calculate the expected gravity direction
+        float gravity_est_x = cos(m_theta);
+        float gravity_est_y = sin(m_theta);
 
-    // Calculate rotation quaternion measurement
-    float qm0 = ax * q2 - ay * q1 - az * q0;
-    float qm1 = -ax * q3 - ay * q0 + az * q1;
-    float qm2 = ax * q0 - ay * q3 + az * q2;
-    float qm3 = -ax * q1 - ay * q2 - az * q3;
-    // Calculate rotation quaternion error
-    float qe0 = q0 * qm0 + q1 * qm1 + q2 * qm2 + q3 * qm3;
-    float qe1 = q0 * qm1 - q1 * qm0 - q2 * qm3 + q3 * qm2;
-    float qe2 = q0 * qm2 + q1 * qm3 - q2 * qm0 - q3 * qm1;
-    float qe3 = q0 * qm3 - q1 * qm2 + q2 * qm1 - q3 * qm0;
-    // Calculate rotation Gibbs-vector error
-    float se1 = qe1 / qe0;
-    float se2 = qe2 / qe0;
-    float se3 = qe3 / qe0;
-    // Calculate rotation quaternion error time derivative
-    float qe0_dot = -q1 * se1 - q2 * se2 - q3 * se3;
-    float qe1_dot = q0 * se1 - q3 * se2 + q2 * se3;
-    float qe2_dot = q3 * se1 + q0 * se2 - q1 * se3;
-    float qe3_dot = -q2 * se1 + q1 * se2 + q0 * se3;
-    // Correct rotation quaternion
-    q0 += lds * dt * qe0_dot;
-    q1 += lds * dt * qe1_dot;
-    q2 += lds * dt * qe2_dot;
-    q3 += lds * dt * qe3_dot;
+        // Compute error between measured and estimated gravity
+        float error_x = ax - gravity_est_x;
+        float error_y = ay - gravity_est_y;
+
+        // Compute error angle (simplified)
+        float error_theta = atan2(error_y, error_x);
+
+        // Apply correction
+        m_theta += m_lds * error_theta * m_dt;
+    }
+}
+
+float Estimator::getTheta()
+{
+    SemaphoreGuard guard(m_theta_mutex);
+    if (guard.acquired())
+    {
+        return m_theta;
+    }
+    else
+    {
+        return 0.0;
+    }
+}
+
+float Estimator::getOmega()
+{
+    SemaphoreGuard guard(m_omega_mutex);
+    if (guard.acquired())
+    {
+        return m_omega;
+    }
+    else
+    {
+        return 0.0;
+    }
 }

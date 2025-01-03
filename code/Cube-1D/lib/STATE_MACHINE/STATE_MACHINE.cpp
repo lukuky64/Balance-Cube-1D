@@ -1,6 +1,6 @@
 #include "STATE_MACHINE.hpp"
 
-STATE_MACHINE::STATE_MACHINE() : m_devices(), m_control(m_devices)
+STATE_MACHINE::STATE_MACHINE() : m_control(m_devices)
 {
     m_stateMutex = xSemaphoreCreateMutex();
     m_refreshStatusPeriod = 5000; // 5 seconds
@@ -83,6 +83,53 @@ void STATE_MACHINE::loop()
     }
 }
 
+void STATE_MACHINE::BLDCLoopTask(void *pvParameters)
+{
+    vTaskDelay(pdMS_TO_TICKS(100));
+    // Convert generic pointer back to STATE_MACHINE*
+    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+
+    machine->m_devices.m_bldc.enableMotor(true); // Enable motor
+
+    while (machine->m_control.controllableAngle())
+    {
+        machine->m_control.updateBLDC();
+        vTaskDelay(pdMS_TO_TICKS(BLDC_dt_ms));
+    }
+
+    machine->m_devices.m_bldc.enableMotor(false); // Disable motor
+
+    // Delete the task explicitly
+    machine->m_BLDCLoopTaskHandle = nullptr;
+    vTaskDelete(NULL);
+}
+
+void STATE_MACHINE::balanceLoopTask(void *pvParameters)
+{
+    vTaskDelay(pdMS_TO_TICKS(100));
+    // Convert generic pointer back to STATE_MACHINE*
+    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+
+    while (true)
+    {
+        machine->m_control.updateBalanceControl();
+        vTaskDelay(pdMS_TO_TICKS(balance_dt_ms));
+    }
+}
+
+void STATE_MACHINE::updateFiltersLoopTask(void *pvParameters)
+{
+    vTaskDelay(pdMS_TO_TICKS(500));
+    // Convert generic pointer back to STATE_MACHINE*
+    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+
+    while (true)
+    {
+        machine->m_control.updateFilters();
+        vTaskDelay(pdMS_TO_TICKS(aquisitionFreq));
+    }
+}
+
 void STATE_MACHINE::indicationLoopTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(500));
@@ -136,11 +183,11 @@ void STATE_MACHINE::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_MEDIUM, &m_indicationLoopTaskHandle);
+        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
     }
     if (m_refreshStatusTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_MEDIUM, &m_refreshStatusTaskHandle);
+        xTaskCreate(&STATE_MACHINE::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
     }
 }
 
@@ -225,9 +272,19 @@ void STATE_MACHINE::controlSeq()
 {
     ESP_LOGI("STATE_MACHINE CONTROL", "Control Sequence!");
 
-    while (m_control.controlableAngle())
+    if (m_updateFiltersLoopTaskHandle == NULL)
     {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        xTaskCreate(&STATE_MACHINE::updateFiltersLoopTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersLoopTaskHandle);
+    }
+
+    if (m_balanceLoopTaskHandle == NULL)
+    {
+        xTaskCreate(&STATE_MACHINE::balanceLoopTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceLoopTaskHandle);
+    }
+
+    if (m_BLDCLoopTaskHandle == NULL)
+    {
+        xTaskCreate(&STATE_MACHINE::BLDCLoopTask, "Updating BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCLoopTaskHandle);
     }
 }
 
@@ -253,7 +310,7 @@ void STATE_MACHINE::idleSeq()
     unsigned long startTime = millis();
 
     // if angle is out of bounds, we will disable active control; stay here and monitor angle
-    while (!m_control.controlableAngle())
+    while (!m_control.controllableAngle())
     {
         vTaskDelay(pdMS_TO_TICKS(200));
 

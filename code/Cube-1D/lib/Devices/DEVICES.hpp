@@ -3,8 +3,8 @@
 #define DEVICES_HPP
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
+#include "SemaphoreGuard.hpp"
+
 #include "esp_log.h"
 
 #include "Arduino.h"
@@ -20,7 +20,6 @@
 #include "LOG.hpp"
 #include "SERVO_CTR.hpp"
 #include "COMMS.hpp"
-#include "SemaphoreGuard.hpp"
 
 enum DeviceBit
 {
@@ -68,14 +67,14 @@ public:
     bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus);
 
     // devices. Making public for now
-    INDICATORS m_indicators;
-    USB_PD m_usbPD;
-    BLDC m_bldc;
-    IMU m_imu;
-    ROT_ENC m_rotEnc;
-    MAG_ENC m_magEnc;
-    LOG m_logger;
-    SERVO_CTR m_servo;
+    INDICATORS &m_indicators = *new INDICATORS();
+    USB_PD &m_usbPD = *new USB_PD();
+    BLDC &m_bldc = *new BLDC();
+    IMU &m_imu = *new IMU();
+    ROT_ENC &m_rotEnc = *new ROT_ENC();
+    MAG_ENC &m_magEnc = *new MAG_ENC();
+    LOG &m_logger = *new LOG();
+    SERVO_CTR &m_servo = *new SERVO_CTR();
 
 private:
     SemaphoreHandle_t m_statusMaskMutex = nullptr;

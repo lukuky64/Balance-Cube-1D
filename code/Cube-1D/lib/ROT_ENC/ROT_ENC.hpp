@@ -10,6 +10,7 @@ public:
     ROT_ENC();
     ~ROT_ENC();
     bool checkStatus();
+    float getAngle();
 
 private:
 };

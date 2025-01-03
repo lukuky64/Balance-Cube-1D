@@ -3,10 +3,9 @@
 #define STATE_MACHINE_HPP
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
 #include "esp_sleep.h"
 #include "SemaphoreGuard.hpp"
+#include "threading.hpp"
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -23,13 +22,6 @@ enum STATES
     IDLE = 3,
     LIGHT_SLEEP = 4,
     CONTROL = 5,
-};
-
-enum PRIORITY
-{
-    PRIORITY_HIGH = 1,
-    PRIORITY_MEDIUM = 2,
-    PRIORITY_LOW = 3,
 };
 
 class STATE_MACHINE
@@ -57,15 +49,23 @@ public:
     static void indicationLoopTask(void *pvParameters);
     static void refreshStatusTask(void *pvParameters);
 
+    static void updateFiltersLoopTask(void *pvParameters);
+    static void balanceLoopTask(void *pvParameters);
+    static void BLDCLoopTask(void *pvParameters);
+
 private:
     SemaphoreHandle_t m_stateMutex = nullptr;
     STATES m_currState;
-    DEVICES m_devices;
+    DEVICES &m_devices = *new DEVICES();
     CONTROLLER m_control;
 
     // FreeRTOS Handles
     TaskHandle_t m_indicationLoopTaskHandle = nullptr;
     TaskHandle_t m_refreshStatusTaskHandle = nullptr;
+
+    TaskHandle_t m_updateFiltersLoopTaskHandle = nullptr;
+    TaskHandle_t m_balanceLoopTaskHandle = nullptr;
+    TaskHandle_t m_BLDCLoopTaskHandle = nullptr;
 
     uint16_t m_refreshStatusPeriod;
     uint16_t m_indicationPeriod;

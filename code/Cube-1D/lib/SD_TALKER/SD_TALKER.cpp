@@ -169,6 +169,7 @@ String SD_TALKER::createUniqueLogFile(String prefix)
             return uniqueFileName;
         }
     }
+    return "";
 }
 
 bool SD_TALKER::isInitialized()

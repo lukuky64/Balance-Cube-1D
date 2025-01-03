@@ -5,17 +5,13 @@
 #include "esp_log.h"
 #include "DEVICES.hpp"
 #include "FILTER.hpp"
+#include "Estimator.hpp"
 
 // create a set of filters for each device
 struct FILTERS
 {
-    FILTER filter_ax;
-    FILTER filter_ay;
-    FILTER filter_az;
-
-    FILTER filter_gx;
-    FILTER filter_gy;
-    FILTER filter_gz;
+    FILTER filter_theta;
+    FILTER filter_omega;
 
     FILTER filter_mag;
 };
@@ -29,23 +25,18 @@ public:
 
     void setup();
     bool checkStatus();
-    bool controlableAngle();
-    bool updateFilters();
-
-    // get the filtered values
-    float getFilteredAccelX();
-    float getFilteredAccelY();
-    float getFilteredAccelZ();
-
-    float getFilteredGyroX();
-    float getFilteredGyroY();
-    float getFilteredGyroZ();
-
-    float getFilteredMag();
+    bool controllableAngle();
+    void updateFilters();
+    void updateBalanceControl();
+    void updateBLDC();
 
 private:
     DEVICES &m_devicesRef;
     FILTERS m_filters;
+
+    Estimator m_estimator;
+
+    float m_controllableAngleThreshold;
 };
 
 #endif // CONTROLLER_HPP
