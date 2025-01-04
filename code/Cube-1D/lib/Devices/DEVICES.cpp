@@ -19,50 +19,40 @@ DEVICES::~DEVICES()
     // Disable or de-initialize all devices if necessary
 
     // Delete mutexes
-    if (m_SPIComSensors.mutex != nullptr)
+    if (m_SPIComSensors.mutex != NULL)
     {
         vSemaphoreDelete(m_SPIComSensors.mutex);
-        m_SPIComSensors.mutex = nullptr;
+        m_SPIComSensors.mutex = NULL;
     }
 
-    if (m_SPIComSD.mutex != nullptr)
+    if (m_SPIComSD.mutex != NULL)
     {
         vSemaphoreDelete(m_SPIComSD.mutex);
-        m_SPIComSD.mutex = nullptr;
+        m_SPIComSD.mutex = NULL;
     }
 
-    if (m_statusMaskMutex != nullptr)
+    if (m_statusMaskMutex != NULL)
     {
         vSemaphoreDelete(m_statusMaskMutex);
-        m_statusMaskMutex = nullptr;
+        m_statusMaskMutex = NULL;
     }
 
-    if (m_prefMaskMutex != nullptr)
+    if (m_prefMaskMutex != NULL)
     {
         vSemaphoreDelete(m_prefMaskMutex);
-        m_prefMaskMutex = nullptr;
+        m_prefMaskMutex = NULL;
     }
 }
 
 bool DEVICES::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 {
-    return false;
+    return true;
 }
 
 bool DEVICES::setupBLDC()
 {
     return true;
 }
-
-#if DUMMY_SPI
-
-bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
-{
-
-    return true;
-}
-
-#else
 
 bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
 {
@@ -74,15 +64,13 @@ bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM 
         if (!SPIBus.begun)
         {
             SPIBus.BUS->begin(CLK, MISO, MOSI);
-            SPIBus.BUS->setFrequency(40000000); // 40 MHz
+            SPIBus.BUS->setFrequency(SPIBus.frequency); // 40 MHz
             SPIBus.begun = true;
         }
     }
 
     return SPIBus.begun;
 }
-
-#endif
 
 bool DEVICES::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
 {
@@ -120,13 +108,27 @@ bool DEVICES::setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num
 
 bool DEVICES::setupSerialLog()
 {
-    return m_logger.m_serialTalker.begin();
+    if (m_logger.m_serialTalker.begin())
+    {
+        m_logger.selectLogSerial();
+        return true;
+    }
+
+    return false;
 }
 
 bool DEVICES::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
-    setupSPI(MISO, MOSI, CLK, m_SPIComSD);
-    return m_logger.m_sdTalker.begin(CS, m_SPIComSD);
+    if (setupSPI(MISO, MOSI, CLK, m_SPIComSD))
+    {
+        if (m_logger.m_sdTalker.begin(CS, m_SPIComSD))
+        {
+            m_logger.selectLogSD();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool DEVICES::setupServo(gpio_num_t servoPin)
@@ -136,40 +138,25 @@ bool DEVICES::setupServo(gpio_num_t servoPin)
 
 bool DEVICES::indicateStatus()
 {
-    uint8_t statusMask = 0;
-    {
-        SemaphoreGuard guard(m_statusMaskMutex);
-        if (guard.acquired())
-        {
-            statusMask = m_statusMask;
-        }
-    }
-
-    uint8_t prefMask = 0;
-    {
-        SemaphoreGuard guard(m_prefMaskMutex);
-        if (guard.acquired())
-        {
-            prefMask = m_prefMask;
-        }
-    }
-
     bool requirementsMet = checkRequirementsMet();
 
     if (!requirementsMet)
     {
         m_indicators.showCriticalError();
-    }
-    else if (statusMask & prefMask != prefMask)
-    {
-        ESP_LOGI("DEVICES", "Status: %d, Pref: %d", statusMask, prefMask);
-        m_indicators.showWarning();
-    }
-    else
-    {
-        m_indicators.showAllGood();
+        return requirementsMet;
     }
 
+    uint8_t statusMask = getStatus();
+    uint8_t prefMask = getPref();
+
+    if ((statusMask & prefMask) != prefMask)
+    {
+        ESP_LOGI("DEVICES", "Not all prefs met!");
+        m_indicators.showWarning();
+        return requirementsMet;
+    }
+
+    m_indicators.showAllGood();
     return requirementsMet;
 }
 
@@ -179,14 +166,14 @@ void DEVICES::refreshStatusAll()
 
     uint8_t statusMask = 0;
     statusMask |= (m_indicators.checkStatus() ? INDICATION_BIT : 0);
-    statusMask |= (m_usbPD.checkStatus() ? USBPD_BIT : 0);
-    statusMask |= (m_bldc.checkStatus() ? BLDC_BIT : 0);
-    statusMask |= (m_imu.checkStatus() ? IMU_BIT : 0);
-    statusMask |= (m_rotEnc.checkStatus() ? ROT_ENC_BIT : 0);
-    statusMask |= (m_magEnc.checkStatus() ? MAG_BIT : 0);
-    statusMask |= (m_logger.m_serialTalker.checkStatus() ? SERIAL_BIT : 0);
-    statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);
-    statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0);
+    statusMask |= (m_usbPD.checkStatus() ? USBPD_BIT : 0);                  // need to implement
+    statusMask |= (m_bldc.checkStatus() ? BLDC_BIT : 0);                    // need to implement
+    statusMask |= (m_imu.checkStatus() ? IMU_BIT : 0);                      // need to implement
+    statusMask |= (m_rotEnc.checkStatus() ? ROT_ENC_BIT : 0);               // need to implement
+    statusMask |= (m_magEnc.checkStatus() ? MAG_BIT : 0);                   // need to implement
+    statusMask |= (m_logger.m_serialTalker.checkStatus() ? SERIAL_BIT : 0); // need to implement
+    statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);         // need to implement
+    statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0);                  // need to implement
 
     setStatus(statusMask);
 }
@@ -292,8 +279,9 @@ bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
     }
 
     setStatus(statusMask);
-
     setPref(prefMask);
+
+    uint8_t prefs_check = getPref();
 
     // explicitly check each required bit
     if (checkRequirementsMet())
@@ -332,6 +320,7 @@ bool DEVICES::checkRequirementsMet()
 
 void DEVICES::setStatus(uint8_t status)
 {
+    ESP_LOGI("DEVICES", "Setting Status: %d", status);
     {
         SemaphoreGuard guard(m_statusMaskMutex);
         if (guard.acquired())
@@ -364,6 +353,20 @@ uint8_t DEVICES::getStatus()
     }
     ESP_LOGI("DEVICES", "Status: %d", status);
     return status;
+}
+
+uint8_t DEVICES::getPref()
+{
+    uint8_t pref = 0;
+    {
+        SemaphoreGuard guard(m_prefMaskMutex);
+        if (guard.acquired())
+        {
+            pref = m_prefMask;
+        }
+    }
+    ESP_LOGI("DEVICES", "Pref: %d", pref);
+    return pref;
 }
 
 bool DEVICES::sleepMode()

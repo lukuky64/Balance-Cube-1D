@@ -3,8 +3,6 @@
 STATE_MACHINE::STATE_MACHINE() : m_control(m_devices)
 {
     m_stateMutex = xSemaphoreCreateMutex();
-    m_refreshStatusPeriod = 5000; // 5 seconds
-    m_indicationPeriod = 2000;    // 2 seconds
 }
 
 STATE_MACHINE::~STATE_MACHINE()
@@ -13,8 +11,6 @@ STATE_MACHINE::~STATE_MACHINE()
 
 void STATE_MACHINE::begin()
 {
-    delay(3000);
-
     {
         SemaphoreGuard guard(m_stateMutex);
         if (guard.acquired())
@@ -78,7 +74,7 @@ void STATE_MACHINE::loop()
     }
 }
 
-void STATE_MACHINE::BLDCLoopTask(void *pvParameters)
+void STATE_MACHINE::BLDCTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
     // Convert generic pointer back to STATE_MACHINE*
@@ -106,11 +102,11 @@ void STATE_MACHINE::BLDCLoopTask(void *pvParameters)
     ESP_LOGI("STATE_MACHINE", "Ending BLDC Task!");
 
     // Delete the task explicitly
-    machine->m_BLDCLoopTaskHandle = nullptr;
+    machine->m_BLDCTaskHandle = NULL;
     vTaskDelete(NULL);
 }
 
-void STATE_MACHINE::balanceLoopTask(void *pvParameters)
+void STATE_MACHINE::balanceTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
     // Convert generic pointer back to STATE_MACHINE*
@@ -123,7 +119,7 @@ void STATE_MACHINE::balanceLoopTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::updateFiltersLoopTask(void *pvParameters)
+void STATE_MACHINE::updateFiltersTask(void *pvParameters)
 {
     ESP_LOGI("STATE_MACHINE", "Starting Filters Task");
 
@@ -138,9 +134,9 @@ void STATE_MACHINE::updateFiltersLoopTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::indicationLoopTask(void *pvParameters)
+void STATE_MACHINE::indicationTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(100));
     // Convert generic pointer back to STATE_MACHINE*
     auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
 
@@ -160,20 +156,35 @@ void STATE_MACHINE::indicationLoopTask(void *pvParameters)
             }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(machine->m_indicationPeriod)); // Indicate status every 2 seconds
+        vTaskDelay(pdMS_TO_TICKS(indication_dt_ms));
     }
 }
 
 void STATE_MACHINE::refreshStatusTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(100));
     // Convert generic pointer back to STATE_MACHINE*
     auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
 
     while (true)
     {
-        vTaskDelay(pdMS_TO_TICKS((machine->m_refreshStatusPeriod))); // Check every 5 seconds
+        vTaskDelay(pdMS_TO_TICKS(refreshStatus_dt_ms));
         machine->m_devices.refreshStatusAll();
+    }
+}
+
+void STATE_MACHINE::logTask(void *pvParameters)
+{
+    vTaskDelay(pdMS_TO_TICKS(100));
+    // Convert generic pointer back to STATE_MACHINE*
+    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+
+    machine->m_devices.m_logger.startNewLog();
+
+    while (true)
+    {
+        machine->m_devices.m_logger.logData();
+        vTaskDelay(pdMS_TO_TICKS(log_dt_ms));
     }
 }
 
@@ -191,7 +202,7 @@ void STATE_MACHINE::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::indicationLoopTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
+        xTaskCreate(&STATE_MACHINE::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
     }
     if (m_refreshStatusTaskHandle == NULL)
     {
@@ -205,13 +216,13 @@ void STATE_MACHINE::criticalErrorSeq()
 
     // destroy task
     vTaskDelete(m_refreshStatusTaskHandle);
-    m_refreshStatusTaskHandle = nullptr; // clear the handle
+    m_refreshStatusTaskHandle = NULL; // clear the handle
 
     vTaskDelay(pdMS_TO_TICKS(5000)); // wait for 5 seconds before restarting the initialisation sequence
 
     // destroy task
     vTaskDelete(m_indicationLoopTaskHandle);
-    m_indicationLoopTaskHandle = nullptr; // clear the handle
+    m_indicationLoopTaskHandle = NULL; // clear the handle
 
     {
         SemaphoreGuard guard(m_stateMutex);
@@ -232,10 +243,10 @@ void STATE_MACHINE::calibrationSeq()
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    if (m_updateFiltersLoopTaskHandle == NULL)
+    if (m_updateFiltersTaskHandle == NULL)
     {
         m_control.setup();
-        xTaskCreate(&STATE_MACHINE::updateFiltersLoopTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersLoopTaskHandle);
+        xTaskCreate(&STATE_MACHINE::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
     }
 
     SemaphoreGuard guard(m_stateMutex);
@@ -250,10 +261,10 @@ bool STATE_MACHINE::canSleep()
     uint8_t deviceStatus = m_devices.getStatus();
 
     // If we don't have HV supply, we are connected to a PC and sleep is not possible via USB OTG if we want to maintain communication
-    if (deviceStatus & USBPD_BIT == USBPD_BIT)
+    if ((deviceStatus & USBPD_BIT) == USBPD_BIT)
     {
         // check if IMU is enabled
-        if (deviceStatus & IMU_BIT == IMU_BIT)
+        if ((deviceStatus & IMU_BIT) == IMU_BIT)
         {
             ESP_LOGI("STATE_MACHINE", "Can sleep!");
             return true;
@@ -275,6 +286,16 @@ void STATE_MACHINE::lightSleepSeq()
 {
     if (canSleep())
     {
+        if (m_logTaskHandle != NULL)
+        { // stop the log task before sleeping
+
+            // flush the buffer first
+            m_devices.m_logger.forceFlush();
+
+            vTaskDelete(m_logTaskHandle);
+            m_logTaskHandle = NULL;
+        }
+
         if (m_devices.sleepMode())
         {
             ESP_LOGI("STATE_MACHINE", "Entering Light Sleep!");
@@ -289,22 +310,27 @@ void STATE_MACHINE::lightSleepSeq()
     SemaphoreGuard guard(m_stateMutex);
     if (guard.acquired())
     {
-        m_currState = IDLE;
+        m_currState = CONTROL;
     }
 }
 
 void STATE_MACHINE::controlSeq()
 {
-    if (m_balanceLoopTaskHandle == NULL)
+    if (m_logTaskHandle == NULL)
     {
-        ESP_LOGI("STATE_MACHINE", "Starting balance Task");
-        xTaskCreate(&STATE_MACHINE::balanceLoopTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceLoopTaskHandle);
+        xTaskCreate(&STATE_MACHINE::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
     }
 
-    if (m_BLDCLoopTaskHandle == NULL)
+    if (m_balanceTaskHandle == NULL)
+    {
+        ESP_LOGI("STATE_MACHINE", "Starting balance Task");
+        xTaskCreate(&STATE_MACHINE::balanceTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
+    }
+
+    if (m_BLDCTaskHandle == NULL)
     {
         ESP_LOGI("STATE_MACHINE", "Starting BLDC Task");
-        xTaskCreate(&STATE_MACHINE::BLDCLoopTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCLoopTaskHandle);
+        xTaskCreate(&STATE_MACHINE::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
     }
 }
 

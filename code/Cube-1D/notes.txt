@@ -14,10 +14,7 @@ Issues:
 
 
 
-
-THE ISSUE IS IN selectDevice();
-
-
+refreshStatusAll, we need to implement all the function used in this
 
 
 For future:

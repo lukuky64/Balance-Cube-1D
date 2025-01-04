@@ -31,7 +31,7 @@ public:
     // Dummy IMU member functions with inline implementations
     bool begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin)
     {
-        ESP_LOGI("IMU", "Dummy IMU initialized.");
+        ESP_LOGI("IMU", "Dummy IMU initialised.");
         return true;
     }
 

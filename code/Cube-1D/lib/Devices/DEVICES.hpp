@@ -55,8 +55,8 @@ public:
     bool init(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC);
 
     uint8_t getStatus();
+    uint8_t getPref();
 
-    void setStatus(uint8_t status);
     void setPref(uint8_t status);
 
     bool calibrateSeq();
@@ -77,14 +77,13 @@ public:
     SERVO_CTR &m_servo = *new SERVO_CTR();
 
 private:
-    SemaphoreHandle_t m_statusMaskMutex = nullptr;
+    void setStatus(uint8_t status);
+
+    SemaphoreHandle_t m_statusMaskMutex = NULL;
     uint8_t m_statusMask = 0;
 
-    SemaphoreHandle_t m_prefMaskMutex = nullptr;
+    SemaphoreHandle_t m_prefMaskMutex = NULL;
     uint8_t m_prefMask = 0;
-
-    SPICOM m_SPIComSensors = {&SPI, false, nullptr};
-    SPICOM m_SPIComSD = {&SPI, false, nullptr}; // sd will use a different bus
 };
 
 #endif // DEVICES_HPP

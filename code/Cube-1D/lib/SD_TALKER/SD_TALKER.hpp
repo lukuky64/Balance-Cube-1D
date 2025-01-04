@@ -10,7 +10,7 @@
 class SD_TALKER
 {
 public:
-    SD_TALKER(size_t bufferSize = 1024);
+    SD_TALKER(size_t bufferSize = 512);
     ~SD_TALKER();
 
 #if DUMMY_SD
@@ -25,9 +25,6 @@ public:
     bool createNestedDirectories(String prefix) { return true; }
 
 #else
-
-    SD_TALKER(size_t bufferSize = 1024);
-    ~SD_TALKER();
     bool checkStatus();
     bool begin(uint8_t CS, SPICOM &SPI_BUS);
 

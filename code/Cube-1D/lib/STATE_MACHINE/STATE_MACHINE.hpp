@@ -46,30 +46,28 @@ public:
     void criticalErrorSeq();
 
     // FreeRTOS Tasks
-    static void indicationLoopTask(void *pvParameters);
+    static void indicationTask(void *pvParameters);
     static void refreshStatusTask(void *pvParameters);
-
-    static void updateFiltersLoopTask(void *pvParameters);
-    static void balanceLoopTask(void *pvParameters);
-    static void BLDCLoopTask(void *pvParameters);
+    static void updateFiltersTask(void *pvParameters);
+    static void balanceTask(void *pvParameters);
+    static void BLDCTask(void *pvParameters);
+    static void logTask(void *pvParameters);
 
 private:
-    SemaphoreHandle_t m_stateMutex = nullptr;
+    SemaphoreHandle_t m_stateMutex = NULL;
     STATES m_currState;
     DEVICES m_devices;
     CONTROLLER m_control;
 
     // FreeRTOS Handles
-    TaskHandle_t m_indicationLoopTaskHandle = nullptr;
-    TaskHandle_t m_refreshStatusTaskHandle = nullptr;
+    TaskHandle_t m_indicationLoopTaskHandle = NULL;
+    TaskHandle_t m_refreshStatusTaskHandle = NULL;
 
-    TaskHandle_t m_updateFiltersLoopTaskHandle = nullptr;
-    TaskHandle_t m_balanceLoopTaskHandle = nullptr;
-    TaskHandle_t m_BLDCLoopTaskHandle = nullptr;
+    TaskHandle_t m_updateFiltersTaskHandle = NULL;
+    TaskHandle_t m_balanceTaskHandle = NULL;
+    TaskHandle_t m_BLDCTaskHandle = NULL;
 
-    uint16_t m_refreshStatusPeriod;
-    uint16_t m_indicationPeriod;
-    uint16_t m_activityCheckPeriod;
+    TaskHandle_t m_logTaskHandle = NULL;
 };
 
 #endif // STATE_MACHINE_HPP

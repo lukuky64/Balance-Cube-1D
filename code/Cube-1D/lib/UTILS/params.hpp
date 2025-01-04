@@ -4,12 +4,17 @@
 #define aquisitionFreq 10 // Hz
 #define balanceFreq 5     // Hz
 #define BLDCFreq 5        // Hz
-#define logFreq 5         // Hz
+#define logFreq 10        // Hz
 
-#define aquisition_dt_ms (1000.0 / aquisitionFreq) // ms
-#define balance_dt_ms (1000.0 / balanceFreq)       // ms
-#define BLDC_dt_ms (1000.0 / BLDCFreq)             // ms
-#define log_dt_ms (1000.0 / logFreq)               // ms
+#define refreshStatusFreq 0.2 // Hz
+#define indicationFreq 1      // Hz
+
+#define aquisition_dt_ms (1000.0 / aquisitionFreq)       // ms
+#define balance_dt_ms (1000.0 / balanceFreq)             // ms
+#define BLDC_dt_ms (1000.0 / BLDCFreq)                   // ms
+#define log_dt_ms (1000.0 / logFreq)                     // ms
+#define refreshStatus_dt_ms (1000.0 / refreshStatusFreq) // ms
+#define indication_dt_ms (1000.0 / indicationFreq)       // ms
 
 // Control and Estimator parameters
 

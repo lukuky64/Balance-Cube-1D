@@ -27,7 +27,28 @@ SD_TALKER::~SD_TALKER()
 
 bool SD_TALKER::checkStatus()
 {
-    return true;
+    SemaphoreGuard guard(m_SPI_BUS->mutex);
+    if (guard.acquired())
+    {
+        // Retrieve the card type
+        uint8_t cardType = SD.cardType();
+
+        if (cardType == CARD_NONE)
+        {
+            ESP_LOGI("SD_TALKER", "SD card not connected.");
+            return false;
+        }
+        else
+        {
+            ESP_LOGI("SD_TALKER", "SD card connected. Type: %d", cardType);
+            return true;
+        }
+    }
+    else
+    {
+        ESP_LOGI("SD_TALKER", "Failed to acquire SD mutex for status check.");
+        return false;
+    }
 }
 
 bool SD_TALKER::begin(uint8_t CS, SPICOM &SPI_BUS)
