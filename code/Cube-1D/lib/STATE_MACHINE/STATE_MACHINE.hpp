@@ -30,7 +30,6 @@ public:
     STATE_MACHINE();
     ~STATE_MACHINE();
 
-    void setup();
     void begin();
     void loop();
 
@@ -40,6 +39,7 @@ public:
     void lightSleepSeq();
     void idleSeq();
     void checkActivityTask();
+    bool canSleep();
 
     STATES getCurrentState();
 
@@ -56,7 +56,7 @@ public:
 private:
     SemaphoreHandle_t m_stateMutex = nullptr;
     STATES m_currState;
-    DEVICES &m_devices = *new DEVICES();
+    DEVICES m_devices;
     CONTROLLER m_control;
 
     // FreeRTOS Handles

@@ -1,6 +1,10 @@
 
 #include "IMU.hpp"
 
+#if DUMMY_IMU
+
+#else
+
 IMU::IMU() : initialised(false)
 {
     m_accelRange = LSM6DS_ACCEL_RANGE_2_G;
@@ -134,3 +138,5 @@ gpio_num_t IMU::getIntPin()
 {
     return m_intPin;
 }
+
+#endif

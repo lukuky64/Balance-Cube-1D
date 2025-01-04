@@ -1,5 +1,16 @@
 #include "SD_TALKER.hpp"
 
+#if DUMMY_SD
+SD_TALKER::SD_TALKER(size_t bufferSize)
+{
+}
+
+SD_TALKER::~SD_TALKER()
+{
+}
+
+#else
+
 SD_TALKER::SD_TALKER(size_t bufferSize) : isFileOpen(false), initialised(false), maxBufferSize(bufferSize)
 {
 }
@@ -176,3 +187,5 @@ bool SD_TALKER::isInitialized()
 {
     return isFileOpen;
 }
+
+#endif

@@ -12,6 +12,14 @@ Issues:
 - When disconnecting fro serial, the ESP goes into a non code state (this is normal) but the Red and Green LEDs get left HIGH
 
 
+
+
+
+THE ISSUE IS IN selectDevice();
+
+
+
+
 For future:
 - the inturrpt has been setup in IMU.cpp. We it should be active HIGH but the library described it strangely. Also once inturrpt is HIGH, do we need to manually set it back to LOW?
 - removed USBPD check from requirements for now

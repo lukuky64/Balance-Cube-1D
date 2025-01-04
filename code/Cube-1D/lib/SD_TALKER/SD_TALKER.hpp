@@ -12,6 +12,22 @@ class SD_TALKER
 public:
     SD_TALKER(size_t bufferSize = 1024);
     ~SD_TALKER();
+
+#if DUMMY_SD
+
+    bool checkStatus() { return true; }
+    bool begin(uint8_t CS, SPICOM &SPI_BUS) { return true; }
+    bool createFile(String StartMsg, String prefix) { return true; }
+    bool writeToBuffer(String dataString) { return true; }
+    void flushBuffer();
+    bool isInitialized() { return true; }
+    String createUniqueLogFile(String prefix) { return "true"; }
+    bool createNestedDirectories(String prefix) { return true; }
+
+#else
+
+    SD_TALKER(size_t bufferSize = 1024);
+    ~SD_TALKER();
     bool checkStatus();
     bool begin(uint8_t CS, SPICOM &SPI_BUS);
 
@@ -33,6 +49,8 @@ private:
     bool initialised;
 
     SPICOM *m_SPI_BUS = nullptr;
+
+#endif
 };
 
 #endif // SD_TALKER_HPP

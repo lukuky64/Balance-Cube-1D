@@ -1,10 +1,10 @@
 #ifndef PARAMS_HPP
 #define PARAMS_HPP
 
-#define aquisitionFreq 200 // Hz
-#define balanceFreq 100    // Hz
-#define BLDCFreq 100       // Hz
-#define logFreq 20         // Hz
+#define aquisitionFreq 10 // Hz
+#define balanceFreq 5     // Hz
+#define BLDCFreq 5        // Hz
+#define logFreq 5         // Hz
 
 #define aquisition_dt_ms (1000.0 / aquisitionFreq) // ms
 #define balance_dt_ms (1000.0 / balanceFreq)       // ms

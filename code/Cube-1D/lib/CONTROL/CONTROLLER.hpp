@@ -33,7 +33,6 @@ public:
 private:
     DEVICES &m_devicesRef;
     FILTERS m_filters;
-
     Estimator m_estimator;
 
     float m_controllableAngleThreshold;

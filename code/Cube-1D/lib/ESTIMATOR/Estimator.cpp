@@ -1,15 +1,18 @@
 #include "Estimator.hpp"
 
 // Constructor
-Estimator::Estimator(DEVICES &devicesRef, uint16_t dt) : m_devicesRef(devicesRef), m_imuSelected(false), m_rotEncSelected(false), m_dt(dt)
+Estimator::Estimator(DEVICES &devicesRef, uint16_t dt)
+    : m_devicesRef(devicesRef),
+      m_imuSelected(false),
+      m_rotEncSelected(false),
+      m_dt(dt),
+      m_lds(0.02),
+      m_ldw(50.0)
 {
     m_theta_mutex = xSemaphoreCreateMutex();
     m_omega_mutex = xSemaphoreCreateMutex();
 
     // Estimator gains
-
-    m_lds = 0.02;
-    m_ldw = 50.0; // not used
 
     SemaphoreGuard guard(m_theta_mutex);
     if (guard.acquired())
@@ -26,30 +29,29 @@ Estimator::Estimator(DEVICES &devicesRef, uint16_t dt) : m_devicesRef(devicesRef
 
     // Set initial angular velocity bias
     m_omegaBias = 0.0;
-
-    selectDevice();
 }
 
 bool Estimator::selectDevice()
 {
+    uint8_t status = m_devicesRef.getStatus();
+
+    ESP_LOGI("ESTIMATOR", "Device status from estimator: %d", status);
+
     // prioritise IMU over ROT_ENC
-    if ((m_devicesRef.getStatus() & IMU_BIT) == IMU_BIT)
+    if ((status & IMU_BIT) == IMU_BIT)
     {
-        ESP_LOGI("ESTIMATOR", "IMU selected!");
         m_imuSelected = true;
 
         // Angular velocity bias calibration for IMU
         calibrate();
     }
-    else if ((m_devicesRef.getStatus() & ROT_ENC_BIT) == ROT_ENC_BIT)
+    else if ((status & ROT_ENC_BIT) == ROT_ENC_BIT)
 
     {
-        ESP_LOGI("ESTIMATOR", "ROT_ENC selected!");
         m_rotEncSelected = true;
     }
     else
     {
-        ESP_LOGE("ESTIMATOR", "No device selected!");
     }
 
     return (m_imuSelected || m_rotEncSelected);
@@ -79,6 +81,8 @@ void Estimator::estimateIMU()
     // Get angular velocity from IMU gyroscope data
     float omega_measured = m_devicesRef.m_imu.getGyroY();
 
+    // ESP_LOGI("ESTIMATOR", "Omega measured: %f", omega_measured);
+
     // Predict step
     predict(omega_measured);
 
@@ -97,7 +101,7 @@ void Estimator::estimateIMU()
     // Correct step
     correct(ax, ay);
 
-    WrapTheta(); // wrap theta to [-π, π]
+    // WrapTheta(); // wrap theta to [-π, π]
 }
 
 // wrap theta to [-π, π]
@@ -116,6 +120,7 @@ void Estimator::WrapTheta()
 // Estimate step. This is the main function that should be called periodically
 void Estimator::estimate()
 {
+
     if (m_imuSelected)
     {
         estimateIMU();

@@ -44,8 +44,6 @@ DEVICES::~DEVICES()
     }
 }
 
-#if dummyDevices
-
 bool DEVICES::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 {
     return false;
@@ -56,46 +54,15 @@ bool DEVICES::setupBLDC()
     return true;
 }
 
-bool DEVICES::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
+#if DUMMY_SPI
+
+bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
 {
+
     return true;
 }
 
-bool DEVICES::setupROT_ENC()
-{
-    return true;
-}
-
-bool DEVICES::setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
-{
-    return true;
-}
-
-bool DEVICES::setupSerialLog()
-{
-    return true;
-}
-
-bool DEVICES::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
-{
-    return true;
-}
-
-bool DEVICES::setupServo(gpio_num_t servoPin)
-{
-    return true;
-}
 #else
-
-bool DEVICES::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
-{
-    return false;
-}
-
-bool DEVICES::setupBLDC()
-{
-    return true;
-}
 
 bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
 {
@@ -115,11 +82,27 @@ bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM 
     return SPIBus.begun;
 }
 
+#endif
+
 bool DEVICES::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
 {
     if (!setupSPI(MISO, MOSI, CLK, m_SPIComSensors))
     {
         return false;
+    }
+
+    intPin = GPIO_NUM_14;
+
+    esp_err_t interrupt_setup = esp_sleep_enable_ext0_wakeup(intPin, 1); // 1 = High level wake-up using the IMU's interrupt pin
+
+    if (interrupt_setup != ESP_OK)
+    {
+        ESP_LOGE("DEVICES", "Failed to set up IMU interrupt pin %d", intPin);
+        return false;
+    }
+    else
+    {
+        ESP_LOGI("DEVICES", "IMU interrupt pin %d set up successfully", intPin);
     }
 
     return m_imu.begin(CS, m_SPIComSensors, intPin);
@@ -151,12 +134,16 @@ bool DEVICES::setupServo(gpio_num_t servoPin)
     return m_servo.begin(servoPin);
 }
 
-#endif // dummyDevices
-
 bool DEVICES::indicateStatus()
 {
-
     uint8_t statusMask = 0;
+    {
+        SemaphoreGuard guard(m_statusMaskMutex);
+        if (guard.acquired())
+        {
+            statusMask = m_statusMask;
+        }
+    }
 
     uint8_t prefMask = 0;
     {
@@ -168,11 +155,12 @@ bool DEVICES::indicateStatus()
     }
 
     bool requirementsMet = checkRequirementsMet();
+
     if (!requirementsMet)
     {
         m_indicators.showCriticalError();
     }
-    else if (statusMask != prefMask)
+    else if (statusMask & prefMask != prefMask)
     {
         ESP_LOGI("DEVICES", "Status: %d, Pref: %d", statusMask, prefMask);
         m_indicators.showWarning();
@@ -205,7 +193,7 @@ void DEVICES::refreshStatusAll()
 
 bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC)
 {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     bool result = false;
 
@@ -243,8 +231,6 @@ bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
 
         if (setupIMU(SPI_CS_IMU, SPI_MISO, SPI_MOSI, SPI_CLK, IMU_INT1))
         {
-            esp_sleep_enable_ext0_wakeup(m_imu.getIntPin(), 1); // 1 = High level wake-up using the IMU's interrupt pin
-
             statusMask |= IMU_BIT;
         }
     }
@@ -388,6 +374,10 @@ bool DEVICES::sleepMode()
     {
         ESP_LOGE("STATE_MACHINE", "Failed to sleep devices!");
         // Handle error accordingly
+    }
+    else
+    {
+        ESP_LOGI("STATE_MACHINE", "Sleeping devices!");
     }
 
     return deviceSLeepSucc;

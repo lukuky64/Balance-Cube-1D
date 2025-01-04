@@ -22,14 +22,13 @@ public:
     float getTheta();
     float getOmega();
 
+    bool selectDevice();
+
 private:
     DEVICES &m_devicesRef;
 
     void estimateIMU();
     void estimateROT_ENC();
-
-    //
-    bool selectDevice();
 
     // Angular velocity bias calibration
     void calibrate();

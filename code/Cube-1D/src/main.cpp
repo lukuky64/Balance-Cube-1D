@@ -7,6 +7,7 @@ STATE_MACHINE stateMachine;
 
 void setup()
 {
+    delay(2000);
     // Call the begin function of the state machine
     stateMachine.begin();
 }

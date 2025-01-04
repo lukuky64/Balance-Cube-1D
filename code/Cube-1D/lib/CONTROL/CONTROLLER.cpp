@@ -14,6 +14,8 @@ CONTROLLER::~CONTROLLER()
 
 void CONTROLLER::setup()
 {
+    ESP_LOGI("CONTROLLER", "Setting up controller!");
+    m_estimator.selectDevice();
 }
 
 bool CONTROLLER::checkStatus()
@@ -23,7 +25,11 @@ bool CONTROLLER::checkStatus()
 
 bool CONTROLLER::controllableAngle()
 {
-    return (abs(m_filters.filter_theta.getValue()) < m_controllableAngleThreshold);
+    float angle = m_filters.filter_theta.getValue();
+
+    ESP_LOGI("CONTROLLER", "Current angle: %f", angle);
+
+    return (fabs(angle) < m_controllableAngleThreshold);
 }
 
 void CONTROLLER::updateFilters()

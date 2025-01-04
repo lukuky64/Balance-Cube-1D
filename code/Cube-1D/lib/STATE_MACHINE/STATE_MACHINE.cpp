@@ -11,14 +11,9 @@ STATE_MACHINE::~STATE_MACHINE()
 {
 }
 
-void STATE_MACHINE::setup()
-{
-}
-
 void STATE_MACHINE::begin()
 {
     delay(3000);
-    // Setup the initial state
 
     {
         SemaphoreGuard guard(m_stateMutex);
@@ -99,6 +94,17 @@ void STATE_MACHINE::BLDCLoopTask(void *pvParameters)
 
     machine->m_devices.m_bldc.enableMotor(false); // Disable motor
 
+    // go to idle state
+    {
+        SemaphoreGuard guard(machine->m_stateMutex);
+        if (guard.acquired())
+        {
+            machine->m_currState = IDLE;
+        }
+    }
+
+    ESP_LOGI("STATE_MACHINE", "Ending BLDC Task!");
+
     // Delete the task explicitly
     machine->m_BLDCLoopTaskHandle = nullptr;
     vTaskDelete(NULL);
@@ -119,6 +125,8 @@ void STATE_MACHINE::balanceLoopTask(void *pvParameters)
 
 void STATE_MACHINE::updateFiltersLoopTask(void *pvParameters)
 {
+    ESP_LOGI("STATE_MACHINE", "Starting Filters Task");
+
     vTaskDelay(pdMS_TO_TICKS(500));
     // Convert generic pointer back to STATE_MACHINE*
     auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
@@ -216,75 +224,87 @@ void STATE_MACHINE::criticalErrorSeq()
 
 void STATE_MACHINE::calibrationSeq()
 {
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     ESP_LOGI("STATE_MACHINE CALIBRATION", "Calibration Sequence!");
 
+    bool calibrated = m_devices.calibrateSeq();
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    if (m_updateFiltersLoopTaskHandle == NULL)
     {
-        SemaphoreGuard guard(m_stateMutex);
-        if (guard.acquired())
-        {
-            m_currState = m_devices.calibrateSeq() ? IDLE : CRITICAL_ERROR;
-        }
+        m_control.setup();
+        xTaskCreate(&STATE_MACHINE::updateFiltersLoopTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersLoopTaskHandle);
+    }
+
+    SemaphoreGuard guard(m_stateMutex);
+    if (guard.acquired())
+    {
+        m_currState = (calibrated) ? IDLE : CRITICAL_ERROR;
     }
 }
 
-void STATE_MACHINE::lightSleepSeq()
+bool STATE_MACHINE::canSleep()
 {
     uint8_t deviceStatus = m_devices.getStatus();
 
     // If we don't have HV supply, we are connected to a PC and sleep is not possible via USB OTG if we want to maintain communication
-    if (deviceStatus & USBPD_BIT != USBPD_BIT)
+    if (deviceStatus & USBPD_BIT == USBPD_BIT)
     {
-        ESP_LOGI("STATE_MACHINE", "Light sleep Sequence!");
-
         // check if IMU is enabled
-        if (deviceStatus & IMU_BIT != 0)
+        if (deviceStatus & IMU_BIT == IMU_BIT)
         {
-            if (m_devices.sleepMode())
-            {
-                // Enter Light Sleep
-                esp_light_sleep_start();
-
-                m_devices.wakeMode();
-            }
+            ESP_LOGI("STATE_MACHINE", "Can sleep!");
+            return true;
         }
         else
         {
             ESP_LOGI("STATE_MACHINE", "IMU not enabled, cannot enter light sleep!");
+            return false;
         }
     }
     else
     {
         ESP_LOGI("STATE_MACHINE", "USB connected, cannot enter light sleep!");
+        return false;
+    }
+}
+
+void STATE_MACHINE::lightSleepSeq()
+{
+    if (canSleep())
+    {
+        if (m_devices.sleepMode())
+        {
+            ESP_LOGI("STATE_MACHINE", "Entering Light Sleep!");
+            // Enter Light Sleep
+            esp_light_sleep_start();
+
+            ESP_LOGI("STATE_MACHINE", "Waking up from light sleep!");
+            m_devices.wakeMode();
+        }
     }
 
+    SemaphoreGuard guard(m_stateMutex);
+    if (guard.acquired())
     {
-        SemaphoreGuard guard(m_stateMutex);
-        if (guard.acquired())
-        {
-            m_currState = IDLE;
-        }
+        m_currState = IDLE;
     }
 }
 
 void STATE_MACHINE::controlSeq()
 {
-    ESP_LOGI("STATE_MACHINE CONTROL", "Control Sequence!");
-
-    if (m_updateFiltersLoopTaskHandle == NULL)
-    {
-        xTaskCreate(&STATE_MACHINE::updateFiltersLoopTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersLoopTaskHandle);
-    }
-
     if (m_balanceLoopTaskHandle == NULL)
     {
+        ESP_LOGI("STATE_MACHINE", "Starting balance Task");
         xTaskCreate(&STATE_MACHINE::balanceLoopTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceLoopTaskHandle);
     }
 
     if (m_BLDCLoopTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::BLDCLoopTask, "Updating BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCLoopTaskHandle);
+        ESP_LOGI("STATE_MACHINE", "Starting BLDC Task");
+        xTaskCreate(&STATE_MACHINE::BLDCLoopTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCLoopTaskHandle);
     }
 }
 
@@ -305,6 +325,7 @@ STATES STATE_MACHINE::getCurrentState()
 
 void STATE_MACHINE::idleSeq()
 {
+    vTaskDelay(pdMS_TO_TICKS(100));
     ESP_LOGI("STATE_MACHINE", "Idle Sequence!");
 
     unsigned long startTime = millis();
@@ -317,14 +338,19 @@ void STATE_MACHINE::idleSeq()
         // if here for more than 1 minute, enter light sleep. !!! Currently 6 seconds
         if (millis() - startTime > 6000)
         {
+            if (canSleep())
             {
                 SemaphoreGuard guard(m_stateMutex);
                 if (guard.acquired())
                 {
                     m_currState = LIGHT_SLEEP;
                 }
+                return;
             }
-            break;
+            else
+            {
+                startTime = millis(); // reset the timer
+            }
         }
     }
 
