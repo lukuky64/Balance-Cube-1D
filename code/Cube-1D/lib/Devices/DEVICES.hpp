@@ -9,17 +9,17 @@
 
 #include "Arduino.h"
 
-#include "PIN_DEFS.hpp"
+#include "Pin_Defs.hpp"
 
-#include "INDICATORS.hpp"
+#include "Indicators.hpp"
 #include "USB_PD.hpp"
 #include "BLDC.hpp"
 #include "IMU.hpp"
-#include "ROT_ENC.hpp"
-#include "MAG_ENC.hpp"
+#include "Rot_Enc.hpp"
+#include "Mag_Enc.hpp"
 #include "LOG.hpp"
-#include "SERVO_CTR.hpp"
-#include "COMMS.hpp"
+#include "Servo_CTR.hpp"
+#include "Comms.hpp"
 
 enum DeviceBit
 {
@@ -34,11 +34,11 @@ enum DeviceBit
     SERVO_BIT = 0            // Not used for version 1.0 of Cube-1D
 };
 
-class DEVICES
+class Devices
 {
 public:
-    DEVICES();
-    ~DEVICES();
+    Devices();
+    ~Devices();
     // bool setupIndication(bool silentIndication);
     bool setupUSBPD(gpio_num_t SCL, gpio_num_t SDA);
     bool setupBLDC();
@@ -67,14 +67,14 @@ public:
     bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus);
 
     // devices. Making public for now
-    INDICATORS &m_indicators = *new INDICATORS();
+    Indicators &m_indicators = *new Indicators();
     USB_PD &m_usbPD = *new USB_PD();
     BLDC &m_bldc = *new BLDC();
     IMU &m_imu = *new IMU();
-    ROT_ENC &m_rotEnc = *new ROT_ENC();
-    MAG_ENC &m_magEnc = *new MAG_ENC();
-    LOG &m_logger = *new LOG();
-    SERVO_CTR &m_servo = *new SERVO_CTR();
+    Rot_Enc &m_rotEnc = *new Rot_Enc();
+    Mag_Enc &m_magEnc = *new Mag_Enc();
+    Log &m_logger = *new Log();
+    Servo_CTR &m_servo = *new Servo_CTR();
 
 private:
     void setStatus(uint8_t status);

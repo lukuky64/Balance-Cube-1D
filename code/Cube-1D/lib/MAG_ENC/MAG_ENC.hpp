@@ -3,11 +3,11 @@
 
 #include "Arduino.h"
 
-class MAG_ENC
+class Mag_Enc
 {
 public:
-    MAG_ENC();
-    ~MAG_ENC();
+    Mag_Enc();
+    ~Mag_Enc();
     bool checkStatus();
 
 private:

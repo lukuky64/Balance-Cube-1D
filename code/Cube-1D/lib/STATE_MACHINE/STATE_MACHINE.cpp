@@ -1,15 +1,15 @@
-#include "STATE_MACHINE.hpp"
+#include "State_Machine.hpp"
 
-STATE_MACHINE::STATE_MACHINE() : m_control(m_devices)
+State_Machine::State_Machine() : m_control(m_devices)
 {
     m_stateMutex = xSemaphoreCreateMutex();
 }
 
-STATE_MACHINE::~STATE_MACHINE()
+State_Machine::~State_Machine()
 {
 }
 
-void STATE_MACHINE::begin()
+void State_Machine::begin()
 {
     {
         SemaphoreGuard guard(m_stateMutex);
@@ -25,7 +25,7 @@ void STATE_MACHINE::begin()
     }
 }
 
-void STATE_MACHINE::loop()
+void State_Machine::loop()
 {
     STATES currState;
 
@@ -74,11 +74,11 @@ void STATE_MACHINE::loop()
     }
 }
 
-void STATE_MACHINE::BLDCTask(void *pvParameters)
+void State_Machine::BLDCTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
-    // Convert generic pointer back to STATE_MACHINE*
-    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
 
     machine->m_devices.m_bldc.enableMotor(true); // Enable motor
 
@@ -99,18 +99,18 @@ void STATE_MACHINE::BLDCTask(void *pvParameters)
         }
     }
 
-    ESP_LOGI("STATE_MACHINE", "Ending BLDC Task!");
+    ESP_LOGI("State_Machine", "Ending BLDC Task!");
 
     // Delete the task explicitly
     machine->m_BLDCTaskHandle = NULL;
     vTaskDelete(NULL);
 }
 
-void STATE_MACHINE::balanceTask(void *pvParameters)
+void State_Machine::balanceTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
-    // Convert generic pointer back to STATE_MACHINE*
-    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
 
     while (true)
     {
@@ -119,13 +119,13 @@ void STATE_MACHINE::balanceTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::updateFiltersTask(void *pvParameters)
+void State_Machine::updateFiltersTask(void *pvParameters)
 {
-    ESP_LOGI("STATE_MACHINE", "Starting Filters Task");
+    ESP_LOGI("State_Machine", "Starting Filters Task");
 
     vTaskDelay(pdMS_TO_TICKS(500));
-    // Convert generic pointer back to STATE_MACHINE*
-    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
 
     while (true)
     {
@@ -134,11 +134,11 @@ void STATE_MACHINE::updateFiltersTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::indicationTask(void *pvParameters)
+void State_Machine::indicationTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
-    // Convert generic pointer back to STATE_MACHINE*
-    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
 
     while (true)
     {
@@ -160,11 +160,11 @@ void STATE_MACHINE::indicationTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::refreshStatusTask(void *pvParameters)
+void State_Machine::refreshStatusTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
-    // Convert generic pointer back to STATE_MACHINE*
-    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
 
     while (true)
     {
@@ -173,11 +173,11 @@ void STATE_MACHINE::refreshStatusTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::logTask(void *pvParameters)
+void State_Machine::logTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
-    // Convert generic pointer back to STATE_MACHINE*
-    auto *machine = static_cast<STATE_MACHINE *>(pvParameters);
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
 
     machine->m_devices.m_logger.startNewLog();
 
@@ -188,7 +188,7 @@ void STATE_MACHINE::logTask(void *pvParameters)
     }
 }
 
-void STATE_MACHINE::initialisationSeq()
+void State_Machine::initialisationSeq()
 {
     STATES currState = m_devices.init(LOG_SD, LOG_SERIAL, SILENT_INDICATION, SERVO_BRAKING, USE_IMU, USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
 
@@ -202,17 +202,17 @@ void STATE_MACHINE::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
+        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
     }
     if (m_refreshStatusTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
+        xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
     }
 }
 
-void STATE_MACHINE::criticalErrorSeq()
+void State_Machine::criticalErrorSeq()
 {
-    ESP_LOGE("STATE_MACHINE CRITICAL ERROR", "Critical Error Sequence!");
+    ESP_LOGE("State_Machine CRITICAL ERROR", "Critical Error Sequence!");
 
     // destroy task
     vTaskDelete(m_refreshStatusTaskHandle);
@@ -233,11 +233,11 @@ void STATE_MACHINE::criticalErrorSeq()
     }
 }
 
-void STATE_MACHINE::calibrationSeq()
+void State_Machine::calibrationSeq()
 {
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    ESP_LOGI("STATE_MACHINE CALIBRATION", "Calibration Sequence!");
+    ESP_LOGI("State_Machine CALIBRATION", "Calibration Sequence!");
 
     bool calibrated = m_devices.calibrateSeq();
 
@@ -246,7 +246,7 @@ void STATE_MACHINE::calibrationSeq()
     if (m_updateFiltersTaskHandle == NULL)
     {
         m_control.setup();
-        xTaskCreate(&STATE_MACHINE::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
+        xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
     }
 
     SemaphoreGuard guard(m_stateMutex);
@@ -256,7 +256,7 @@ void STATE_MACHINE::calibrationSeq()
     }
 }
 
-bool STATE_MACHINE::canSleep()
+bool State_Machine::canSleep()
 {
     uint8_t deviceStatus = m_devices.getStatus();
 
@@ -266,23 +266,23 @@ bool STATE_MACHINE::canSleep()
         // check if IMU is enabled
         if ((deviceStatus & IMU_BIT) == IMU_BIT)
         {
-            ESP_LOGI("STATE_MACHINE", "Can sleep!");
+            ESP_LOGI("State_Machine", "Can sleep!");
             return true;
         }
         else
         {
-            ESP_LOGI("STATE_MACHINE", "IMU not enabled, cannot enter light sleep!");
+            ESP_LOGI("State_Machine", "IMU not enabled, cannot enter light sleep!");
             return false;
         }
     }
     else
     {
-        ESP_LOGI("STATE_MACHINE", "USB connected, cannot enter light sleep!");
+        ESP_LOGI("State_Machine", "USB connected, cannot enter light sleep!");
         return false;
     }
 }
 
-void STATE_MACHINE::lightSleepSeq()
+void State_Machine::lightSleepSeq()
 {
     if (canSleep())
     {
@@ -298,11 +298,11 @@ void STATE_MACHINE::lightSleepSeq()
 
         if (m_devices.sleepMode())
         {
-            ESP_LOGI("STATE_MACHINE", "Entering Light Sleep!");
+            ESP_LOGI("State_Machine", "Entering Light Sleep!");
             // Enter Light Sleep
             esp_light_sleep_start();
 
-            ESP_LOGI("STATE_MACHINE", "Waking up from light sleep!");
+            ESP_LOGI("State_Machine", "Waking up from light sleep!");
             m_devices.wakeMode();
         }
     }
@@ -314,27 +314,27 @@ void STATE_MACHINE::lightSleepSeq()
     }
 }
 
-void STATE_MACHINE::controlSeq()
+void State_Machine::controlSeq()
 {
     if (m_logTaskHandle == NULL)
     {
-        xTaskCreate(&STATE_MACHINE::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
+        xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
     }
 
     if (m_balanceTaskHandle == NULL)
     {
-        ESP_LOGI("STATE_MACHINE", "Starting balance Task");
-        xTaskCreate(&STATE_MACHINE::balanceTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
+        ESP_LOGI("State_Machine", "Starting balance Task");
+        xTaskCreate(&State_Machine::balanceTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
     }
 
     if (m_BLDCTaskHandle == NULL)
     {
-        ESP_LOGI("STATE_MACHINE", "Starting BLDC Task");
-        xTaskCreate(&STATE_MACHINE::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
+        ESP_LOGI("State_Machine", "Starting BLDC Task");
+        xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
     }
 }
 
-STATES STATE_MACHINE::getCurrentState()
+STATES State_Machine::getCurrentState()
 {
     STATES currState;
 
@@ -349,10 +349,10 @@ STATES STATE_MACHINE::getCurrentState()
     return currState;
 }
 
-void STATE_MACHINE::idleSeq()
+void State_Machine::idleSeq()
 {
     vTaskDelay(pdMS_TO_TICKS(100));
-    ESP_LOGI("STATE_MACHINE", "Idle Sequence!");
+    ESP_LOGI("State_Machine", "Idle Sequence!");
 
     unsigned long startTime = millis();
 

@@ -1,38 +1,38 @@
 
 #include "CONTROLLER.hpp"
 
-CONTROLLER::CONTROLLER(DEVICES &devicesRef) : m_devicesRef(devicesRef),
-                                              m_filters{FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f), FILTER(0.1f, 1.0f, 1.0f, 0.0f)},
+Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
+                                              m_filters{Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f)},
                                               m_estimator(devicesRef, aquisition_dt_ms),
                                               m_controllableAngleThreshold(AngleThresh)
 {
 }
 
-CONTROLLER::~CONTROLLER()
+Controller::~Controller()
 {
 }
 
-void CONTROLLER::setup()
+void Controller::setup()
 {
-    ESP_LOGI("CONTROLLER", "Setting up controller!");
+    ESP_LOGI("Controller", "Setting up Controller!");
     m_estimator.selectDevice();
 }
 
-bool CONTROLLER::checkStatus()
+bool Controller::checkStatus()
 {
     return true;
 }
 
-bool CONTROLLER::controllableAngle()
+bool Controller::controllableAngle()
 {
     float angle = m_filters.filter_theta.getValue();
 
-    ESP_LOGI("CONTROLLER", "Current angle: %f", angle);
+    ESP_LOGI("Controller", "Current angle: %f", angle);
 
     return (fabs(angle) < m_controllableAngleThreshold);
 }
 
-void CONTROLLER::updateFilters()
+void Controller::updateFilters()
 {
     m_estimator.estimate();
     m_filters.filter_omega.update(m_estimator.getOmega());
@@ -40,12 +40,12 @@ void CONTROLLER::updateFilters()
     m_filters.filter_mag.update(0.0f); // !!! MAG ENCODER NOT IMPLEMENTED YET !!!
 }
 
-void CONTROLLER::updateBalanceControl()
+void Controller::updateBalanceControl()
 {
     // get errors, apply gains and all that jazz
 }
 
-void CONTROLLER::updateBLDC()
+void Controller::updateBLDC()
 {
     // update the BLDC motor
 }

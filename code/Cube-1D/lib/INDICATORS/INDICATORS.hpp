@@ -23,11 +23,11 @@ struct Colour
     int value; // Colour Hex code
 };
 
-class INDICATORS
+class Indicators
 {
 public:
-    INDICATORS();
-    ~INDICATORS();
+    Indicators();
+    ~Indicators();
 
     void setupBuzzer(uint8_t buzzerPin);
     void setupRGBLed(uint8_t ledNeo);

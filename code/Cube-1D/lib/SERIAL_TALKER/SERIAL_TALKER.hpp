@@ -5,11 +5,11 @@
 #include "Arduino.h"
 #include "esp_log.h"
 
-class SERIAL_TALKER
+class Serial_Talker
 {
 public:
-    SERIAL_TALKER(size_t bufferSize = 512);
-    ~SERIAL_TALKER();
+    Serial_Talker(size_t bufferSize = 512);
+    ~Serial_Talker();
     bool checkStatus();
     bool begin();
     bool writeToBuffer(String dataString);

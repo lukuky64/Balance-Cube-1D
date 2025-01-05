@@ -6,10 +6,10 @@
 #include "esp_log.h"
 #include "SemaphoreGuard.hpp"
 
-class FILTER
+class Filter
 {
 public:
-    FILTER(float processNoise, float measurementNoise, float estimatedError, float initialValue);
+    Filter(float processNoise, float measurementNoise, float estimatedError, float initialValue);
 
     void update(float measurement);
     void update(float measurement, float controlInput, float controlEffect); // With control input

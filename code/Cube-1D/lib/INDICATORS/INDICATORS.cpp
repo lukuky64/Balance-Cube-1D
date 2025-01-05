@@ -1,10 +1,10 @@
 #include "INDICATORS.hpp"
 
-INDICATORS::INDICATORS()
+Indicators::Indicators()
 {
 }
 
-INDICATORS::~INDICATORS()
+Indicators::~Indicators()
 {
     // Disable the buzzer and RGB LED
 
@@ -16,7 +16,7 @@ INDICATORS::~INDICATORS()
     vSemaphoreDelete(rgbLedMutex);
 }
 
-void INDICATORS::setupBuzzer(uint8_t buzzerPin)
+void Indicators::setupBuzzer(uint8_t buzzerPin)
 {
     m_buzzerPin = buzzerPin;
     m_buzzerEnabled = true;
@@ -28,7 +28,7 @@ void INDICATORS::setupBuzzer(uint8_t buzzerPin)
     controlBuzzer(tones[6].frequency, 50);
 }
 
-void INDICATORS::setupRGBLed(uint8_t ledNeo)
+void Indicators::setupRGBLed(uint8_t ledNeo)
 {
     m_ledNeo = ledNeo;
     m_RGBLedEnabled = true;
@@ -40,9 +40,9 @@ void INDICATORS::setupRGBLed(uint8_t ledNeo)
     controlRGBLed(colours[1].value, 50); // Green
 }
 
-void INDICATORS::showCriticalError()
+void Indicators::showCriticalError()
 {
-    ESP_LOGI("INDICATORS", "Showing Critical Error!");
+    ESP_LOGI("Indicators", "Showing Critical Error!");
 
     uint16_t duration = 100; // ms
 
@@ -54,9 +54,9 @@ void INDICATORS::showCriticalError()
     }
 }
 
-void INDICATORS::showWarning()
+void Indicators::showWarning()
 {
-    ESP_LOGI("INDICATORS", "Showing Warning!");
+    ESP_LOGI("Indicators", "Showing Warning!");
 
     uint16_t duration = 50; // ms
 
@@ -64,9 +64,9 @@ void INDICATORS::showWarning()
     controlRGBLed(colours[7].value, duration); // Yellow
 }
 
-void INDICATORS::showSuccess()
+void Indicators::showSuccess()
 {
-    ESP_LOGI("INDICATORS", "Showing Success!");
+    ESP_LOGI("Indicators", "Showing Success!");
 
     uint16_t duration = 50; // ms
 
@@ -78,23 +78,23 @@ void INDICATORS::showSuccess()
     }
 }
 
-void INDICATORS::showAllGood()
+void Indicators::showAllGood()
 {
-    ESP_LOGI("INDICATORS", "Showing All Good!");
+    ESP_LOGI("Indicators", "Showing All Good!");
 
     uint16_t duration = 50; // ms
 
     controlRGBLed(colours[1].value, duration);
 }
 
-void INDICATORS::showAllOff()
+void Indicators::showAllOff()
 {
-    ESP_LOGI("INDICATORS", "Turning off all indicators!");
+    ESP_LOGI("Indicators", "Turning off all Indicators!");
 
     controlRGBLed(0, 0);
 }
 
-bool INDICATORS::controlBuzzer(int frequency, int duration)
+bool Indicators::controlBuzzer(int frequency, int duration)
 {
 
     if (m_buzzerEnabled)
@@ -114,7 +114,7 @@ bool INDICATORS::controlBuzzer(int frequency, int duration)
     return false;
 }
 
-bool INDICATORS::controlRGBLed(int hexValue, int duration)
+bool Indicators::controlRGBLed(int hexValue, int duration)
 {
     if (m_RGBLedEnabled)
     {
@@ -138,7 +138,7 @@ bool INDICATORS::controlRGBLed(int hexValue, int duration)
     return false;
 }
 
-bool INDICATORS::checkStatus()
+bool Indicators::checkStatus()
 {
     return m_buzzerEnabled || m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
 }

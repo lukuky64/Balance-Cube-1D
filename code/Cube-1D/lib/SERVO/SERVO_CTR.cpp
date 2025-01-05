@@ -1,15 +1,15 @@
-#include "SERVO_CTR.hpp"
+#include "Servo_CTR.hpp"
 
-SERVO_CTR::SERVO_CTR()
+Servo_CTR::Servo_CTR()
 {
 }
 
-SERVO_CTR::~SERVO_CTR()
+Servo_CTR::~Servo_CTR()
 {
     m_servo.detach(); // Turn the servo off
 }
 
-bool SERVO_CTR::begin(uint8_t servoPin)
+bool Servo_CTR::begin(uint8_t servoPin)
 {
     // Allow allocation of all timers
     ESP32PWM::allocateTimer(0);
@@ -30,12 +30,12 @@ bool SERVO_CTR::begin(uint8_t servoPin)
     return true;
 }
 
-void SERVO_CTR::command(uint8_t angle)
+void Servo_CTR::command(uint8_t angle)
 {
     m_servo.write(angle);
 }
 
-bool SERVO_CTR::checkStatus()
+bool Servo_CTR::checkStatus()
 {
     return true;
 }

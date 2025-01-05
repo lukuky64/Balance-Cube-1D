@@ -1,5 +1,5 @@
-#ifndef DEFINITIONS_HPP
-#define DEFINITIONS_HPP
+#ifndef PIN_DEFS_HPP
+#define PIN_DEFS_HPP
 
 #define MCU_RX GPIO_NUM_44
 #define MCU_TX GPIO_NUM_43
@@ -38,4 +38,4 @@
 
 #define ENC_PPR 600
 
-#endif // DEFINITIONS_HPP
+#endif // PIN_DEFS_HPP

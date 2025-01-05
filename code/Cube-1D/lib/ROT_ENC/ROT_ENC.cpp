@@ -1,20 +1,20 @@
 
-#include "ROT_ENC.hpp"
+#include "Rot_Enc.hpp"
 
-ROT_ENC::ROT_ENC()
+Rot_Enc::Rot_Enc()
 {
 }
 
-ROT_ENC::~ROT_ENC()
+Rot_Enc::~Rot_Enc()
 {
 }
 
-bool ROT_ENC::checkStatus()
+bool Rot_Enc::checkStatus()
 {
     return true;
 }
 
-float ROT_ENC::getAngle()
+float Rot_Enc::getAngle()
 {
     return 0.0;
 }

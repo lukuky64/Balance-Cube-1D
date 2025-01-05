@@ -1,4 +1,3 @@
-
 #ifndef LOG_HPP
 #define LOG_HPP
 
@@ -8,11 +7,11 @@
 #include "SD_TALKER.hpp"
 #include "SERIAL_TALKER.hpp"
 
-class LOG
+class Log
 {
 public:
-    LOG(size_t bufferSize = 512);
-    ~LOG();
+    Log(size_t bufferSize = 512);
+    ~Log();
     void selectLogSD();
     void selectLogSerial();
     // bool beginSerial();
@@ -26,8 +25,8 @@ public:
 
     bool isLogSetup();
 
-    SD_TALKER m_sdTalker;
-    SERIAL_TALKER m_serialTalker;
+    SD_Talker m_sdTalker;
+    Serial_Talker m_serialTalker;
 
 private:
     bool m_sdLog;

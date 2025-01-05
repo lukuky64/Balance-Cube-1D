@@ -7,11 +7,11 @@
 #include "COMMS.hpp"
 #include "SemaphoreGuard.hpp"
 
-class SD_TALKER
+class SD_Talker
 {
 public:
-    SD_TALKER(size_t bufferSize = 512);
-    ~SD_TALKER();
+    SD_Talker(size_t bufferSize = 512);
+    ~SD_Talker();
 
 #if DUMMY_SD
 

@@ -4,11 +4,11 @@
 
 #include "Arduino.h"
 
-class ROT_ENC
+class Rot_Enc
 {
 public:
-    ROT_ENC();
-    ~ROT_ENC();
+    Rot_Enc();
+    ~Rot_Enc();
     bool checkStatus();
     float getAngle();
 

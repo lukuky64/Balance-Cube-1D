@@ -1,15 +1,15 @@
 
-#include "LOG.hpp"
+#include "Log.hpp"
 
-LOG::LOG(size_t bufferSize) : m_sdTalker(bufferSize), m_serialTalker(bufferSize), m_sdLog(false), m_serialLog(false), m_startTime(millis())
+Log::Log(size_t bufferSize) : m_sdTalker(bufferSize), m_serialTalker(bufferSize), m_sdLog(false), m_serialLog(false), m_startTime(millis())
 {
 }
 
-LOG::~LOG()
+Log::~Log()
 {
 }
 
-void LOG::startNewLog()
+void Log::startNewLog()
 {
     setStartTime();
 
@@ -17,35 +17,35 @@ void LOG::startNewLog()
     {
         if (!m_sdTalker.createFile("TEST", "/LOG"))
         {
-            ESP_LOGE("LOG", "Failed to create file on SD card!");
+            ESP_LOGE("Log", "Failed to create file on SD card!");
         }
         else
         {
-            ESP_LOGI("LOG", "Created file on SD card!");
+            ESP_LOGI("Log", "Created file on SD card!");
         }
     }
 }
 
-void LOG::selectLogSD()
+void Log::selectLogSD()
 {
     m_sdLog = true;
 }
 
-void LOG::selectLogSerial()
+void Log::selectLogSerial()
 {
     m_serialLog = true;
 }
 
-void LOG::setStartTime()
+void Log::setStartTime()
 {
     m_startTime = millis();
 }
 
-bool LOG::logData()
+bool Log::logData()
 {
     if (isLogSetup())
     {
-        ESP_LOGI("LOG", "Logging Data");
+        ESP_LOGI("Log", "Logging Data");
         float timeStamp = static_cast<float>(millis() - m_startTime) / 1000.0f; // seconds
         String data = String(timeStamp, 3) + "\n";                              // Ensures three decimal places
         return log(data);
@@ -56,7 +56,7 @@ bool LOG::logData()
     }
 }
 
-bool LOG::log(String dataString)
+bool Log::log(String dataString)
 {
     if (m_sdLog)
     {
@@ -71,7 +71,7 @@ bool LOG::log(String dataString)
     return true;
 }
 
-bool LOG::forceFlush()
+bool Log::forceFlush()
 {
 
     if (m_sdLog)
@@ -87,7 +87,7 @@ bool LOG::forceFlush()
     return true;
 }
 
-bool LOG::isLogSetup()
+bool Log::isLogSetup()
 {
     return (m_sdLog || m_serialLog);
 }

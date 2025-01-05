@@ -3,25 +3,24 @@
 
 #include "Arduino.h"
 #include "esp_log.h"
-#include "DEVICES.hpp"
-#include "FILTER.hpp"
+#include "Devices.hpp"
+#include "Filter.hpp"
 #include "Estimator.hpp"
 
 // create a set of filters for each device
 struct FILTERS
 {
-    FILTER filter_theta;
-    FILTER filter_omega;
-
-    FILTER filter_mag;
+    Filter filter_theta;
+    Filter filter_omega;
+    Filter filter_mag;
 };
 
-class CONTROLLER
+class Controller
 {
 public:
-    CONTROLLER(DEVICES &devicesRef);
+    Controller(Devices &devicesRef);
 
-    ~CONTROLLER();
+    ~Controller();
 
     void setup();
     bool checkStatus();
@@ -31,7 +30,7 @@ public:
     void updateBLDC();
 
 private:
-    DEVICES &m_devicesRef;
+    Devices &m_devicesRef;
     FILTERS m_filters;
     Estimator m_estimator;
 

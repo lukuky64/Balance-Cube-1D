@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-#ifdef DUMMY_IMU
+#if DUMMY_IMU
 #include "esp_log.h"
 #include "driver/gpio.h"
 #include "COMMS.hpp"
@@ -94,7 +94,7 @@ private:
 
     SPICOM *m_SPI_BUS = nullptr;
 
-    bool initialised;
+    bool m_initialised;
 #endif
 };
 

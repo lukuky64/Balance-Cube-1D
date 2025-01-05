@@ -3,9 +3,9 @@
 
 #include "Arduino.h"
 #include "esp_log.h"
-#include "params.hpp"
-#include "DEVICES.hpp"
-#include "FILTER.hpp"
+#include "Params.hpp"
+#include "Devices.hpp"
+#include "Filter.hpp"
 
 #include "SemaphoreGuard.hpp"
 
@@ -14,7 +14,7 @@ class Estimator
 {
 public:
     // Constructor
-    Estimator(DEVICES &devicesRef, uint16_t dt);
+    Estimator(Devices &devicesRef, uint16_t dt);
 
     // Estimate step
     void estimate();
@@ -25,7 +25,7 @@ public:
     bool selectDevice();
 
 private:
-    DEVICES &m_devicesRef;
+    Devices &m_devicesRef;
 
     void estimateIMU();
     void estimateROT_ENC();

@@ -1,15 +1,15 @@
 
 #include "MAG_ENC.hpp"
 
-MAG_ENC::MAG_ENC()
+Mag_Enc::Mag_Enc()
 {
 }
 
-MAG_ENC::~MAG_ENC()
+Mag_Enc::~Mag_Enc()
 {
 }
 
-bool MAG_ENC::checkStatus()
+bool Mag_Enc::checkStatus()
 {
     return true;
 }

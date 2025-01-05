@@ -7,11 +7,11 @@
 #include "esp_log.h"
 #include <ESP32Servo.h>
 
-class SERVO_CTR
+class Servo_CTR
 {
 public:
-    SERVO_CTR();
-    ~SERVO_CTR();
+    Servo_CTR();
+    ~Servo_CTR();
     bool begin(uint8_t servoPin);
     bool checkStatus();
     void command(uint8_t angle);

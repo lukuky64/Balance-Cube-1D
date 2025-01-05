@@ -5,7 +5,7 @@
 
 #else
 
-IMU::IMU() : initialised(false)
+IMU::IMU() : m_initialised(false)
 {
     m_accelRange = LSM6DS_ACCEL_RANGE_2_G;
     m_gyroRange = LSM6DS_GYRO_RANGE_250_DPS;
@@ -38,10 +38,10 @@ bool IMU::begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin)
             m_imu.setGyroRange(m_gyroRange);
             m_imu.setAccelDataRate(m_dataRate);
             m_imu.setGyroDataRate(m_dataRate);
-            initialised = configureInturrupt(intPin);
+            m_initialised = configureInturrupt(intPin);
         }
     }
-    return initialised;
+    return m_initialised;
 }
 
 bool IMU::update()

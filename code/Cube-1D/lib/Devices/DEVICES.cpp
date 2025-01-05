@@ -1,6 +1,6 @@
 #include "DEVICES.hpp"
 
-DEVICES::DEVICES()
+Devices::Devices()
 {
     m_SPIComSensors.mutex = xSemaphoreCreateMutex();
     m_SPIComSD.mutex = xSemaphoreCreateMutex();
@@ -9,14 +9,14 @@ DEVICES::DEVICES()
     m_prefMaskMutex = xSemaphoreCreateMutex();
 }
 
-// bool DEVICES::setupIndication(bool silentIndication)
+// bool Devices::setupIndication(bool silentIndication)
 // {
 //     return true;
 // }
 
-DEVICES::~DEVICES()
+Devices::~Devices()
 {
-    // Disable or de-initialize all devices if necessary
+    // Disable or de-initialize all Devices if necessary
 
     // Delete mutexes
     if (m_SPIComSensors.mutex != NULL)
@@ -44,17 +44,17 @@ DEVICES::~DEVICES()
     }
 }
 
-bool DEVICES::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
+bool Devices::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 {
     return true;
 }
 
-bool DEVICES::setupBLDC()
+bool Devices::setupBLDC()
 {
     return true;
 }
 
-bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
+bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
 {
 
     SemaphoreGuard guard(SPIBus.mutex);
@@ -72,7 +72,7 @@ bool DEVICES::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM 
     return SPIBus.begun;
 }
 
-bool DEVICES::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
+bool Devices::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
 {
     if (!setupSPI(MISO, MOSI, CLK, m_SPIComSensors))
     {
@@ -85,28 +85,28 @@ bool DEVICES::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num
 
     if (interrupt_setup != ESP_OK)
     {
-        ESP_LOGE("DEVICES", "Failed to set up IMU interrupt pin %d", intPin);
+        ESP_LOGE("Devices", "Failed to set up IMU interrupt pin %d", intPin);
         return false;
     }
     else
     {
-        ESP_LOGI("DEVICES", "IMU interrupt pin %d set up successfully", intPin);
+        ESP_LOGI("Devices", "IMU interrupt pin %d set up successfully", intPin);
     }
 
     return m_imu.begin(CS, m_SPIComSensors, intPin);
 }
 
-bool DEVICES::setupROT_ENC()
+bool Devices::setupROT_ENC()
 {
     return true;
 }
 
-bool DEVICES::setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
+bool Devices::setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
     return true;
 }
 
-bool DEVICES::setupSerialLog()
+bool Devices::setupSerialLog()
 {
     if (m_logger.m_serialTalker.begin())
     {
@@ -117,7 +117,7 @@ bool DEVICES::setupSerialLog()
     return false;
 }
 
-bool DEVICES::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
+bool Devices::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
     if (setupSPI(MISO, MOSI, CLK, m_SPIComSD))
     {
@@ -131,12 +131,12 @@ bool DEVICES::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_n
     return false;
 }
 
-bool DEVICES::setupServo(gpio_num_t servoPin)
+bool Devices::setupServo(gpio_num_t servoPin)
 {
     return m_servo.begin(servoPin);
 }
 
-bool DEVICES::indicateStatus()
+bool Devices::indicateStatus()
 {
     bool requirementsMet = checkRequirementsMet();
 
@@ -151,7 +151,7 @@ bool DEVICES::indicateStatus()
 
     if ((statusMask & prefMask) != prefMask)
     {
-        ESP_LOGI("DEVICES", "Not all prefs met!");
+        ESP_LOGI("Devices", "Not all prefs met!");
         m_indicators.showWarning();
         return requirementsMet;
     }
@@ -160,9 +160,9 @@ bool DEVICES::indicateStatus()
     return requirementsMet;
 }
 
-void DEVICES::refreshStatusAll()
+void Devices::refreshStatusAll()
 {
-    ESP_LOGI("DEVICES", "Checking all device statuses...");
+    ESP_LOGI("Devices", "Checking all device statuses...");
 
     uint8_t statusMask = 0;
     statusMask |= (m_indicators.checkStatus() ? INDICATION_BIT : 0);
@@ -178,7 +178,7 @@ void DEVICES::refreshStatusAll()
     setStatus(statusMask);
 }
 
-bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC)
+bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servoBraking, bool useIMU, bool useROT_ENC)
 {
     vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -300,12 +300,12 @@ bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
     return result;
 }
 
-bool DEVICES::calibrateSeq()
+bool Devices::calibrateSeq()
 {
     return true;
 }
 
-bool DEVICES::checkRequirementsMet()
+bool Devices::checkRequirementsMet()
 {
     uint8_t statusMask = getStatus();
 
@@ -313,14 +313,14 @@ bool DEVICES::checkRequirementsMet()
     // bool isUsbpdOk = (statusMask & USBPD_BIT) == USBPD_BIT;
     bool isBldcOk = (statusMask & BLDC_BIT) == BLDC_BIT;
     bool isImuOrEncOk = ((statusMask & IMU_BIT) == IMU_BIT) || ((statusMask & ROT_ENC_BIT) == ROT_ENC_BIT);
-    // ESP_LOGI("DEVICES", "Indication: %d, USBPD: %d, BLDC: %d, IMU/ENC: %d", isIndicationOk, isUsbpdOk, isBldcOk, isImuOrEncOk);
+    // ESP_LOGI("Devices", "Indication: %d, USBPD: %d, BLDC: %d, IMU/ENC: %d", isIndicationOk, isUsbpdOk, isBldcOk, isImuOrEncOk);
 
     return isIndicationOk && isBldcOk && isImuOrEncOk; // isUsbpdOk !!! for now we will remove this
 }
 
-void DEVICES::setStatus(uint8_t status)
+void Devices::setStatus(uint8_t status)
 {
-    ESP_LOGI("DEVICES", "Setting Status: %d", status);
+    ESP_LOGI("Devices", "Setting Status: %d", status);
     {
         SemaphoreGuard guard(m_statusMaskMutex);
         if (guard.acquired())
@@ -330,7 +330,7 @@ void DEVICES::setStatus(uint8_t status)
     }
 }
 
-void DEVICES::setPref(uint8_t pref)
+void Devices::setPref(uint8_t pref)
 {
     {
         SemaphoreGuard guard(m_prefMaskMutex);
@@ -341,7 +341,7 @@ void DEVICES::setPref(uint8_t pref)
     }
 }
 
-uint8_t DEVICES::getStatus()
+uint8_t Devices::getStatus()
 {
     uint8_t status = 0;
     {
@@ -351,11 +351,11 @@ uint8_t DEVICES::getStatus()
             status = m_statusMask;
         }
     }
-    ESP_LOGI("DEVICES", "Status: %d", status);
+    ESP_LOGI("Devices", "Status: %d", status);
     return status;
 }
 
-uint8_t DEVICES::getPref()
+uint8_t Devices::getPref()
 {
     uint8_t pref = 0;
     {
@@ -365,11 +365,11 @@ uint8_t DEVICES::getPref()
             pref = m_prefMask;
         }
     }
-    ESP_LOGI("DEVICES", "Pref: %d", pref);
+    ESP_LOGI("Devices", "Pref: %d", pref);
     return pref;
 }
 
-bool DEVICES::sleepMode()
+bool Devices::sleepMode()
 {
     bool deviceSLeepSucc = true;
 
@@ -377,17 +377,17 @@ bool DEVICES::sleepMode()
 
     if (!deviceSLeepSucc)
     {
-        ESP_LOGE("STATE_MACHINE", "Failed to sleep devices!");
+        ESP_LOGE("STATE_MACHINE", "Failed to sleep Devices!");
         // Handle error accordingly
     }
     else
     {
-        ESP_LOGI("STATE_MACHINE", "Sleeping devices!");
+        ESP_LOGI("STATE_MACHINE", "Sleeping Devices!");
     }
 
     return deviceSLeepSucc;
 }
 
-void DEVICES::wakeMode()
+void Devices::wakeMode()
 {
 }

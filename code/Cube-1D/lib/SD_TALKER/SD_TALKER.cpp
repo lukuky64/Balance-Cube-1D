@@ -1,21 +1,21 @@
-#include "SD_TALKER.hpp"
+#include "SD_Talker.hpp"
 
 #if DUMMY_SD
-SD_TALKER::SD_TALKER(size_t bufferSize)
+SD_Talker::SD_Talker(size_t bufferSize)
 {
 }
 
-SD_TALKER::~SD_TALKER()
+SD_Talker::~SD_Talker()
 {
 }
 
 #else
 
-SD_TALKER::SD_TALKER(size_t bufferSize) : isFileOpen(false), initialised(false), maxBufferSize(bufferSize)
+SD_Talker::SD_Talker(size_t bufferSize) : isFileOpen(false), initialised(false), maxBufferSize(bufferSize)
 {
 }
 
-SD_TALKER::~SD_TALKER()
+SD_Talker::~SD_Talker()
 {
     // Ensure the file is closed and buffer is flushed upon object destruction
     flushBuffer();
@@ -25,7 +25,7 @@ SD_TALKER::~SD_TALKER()
     }
 }
 
-bool SD_TALKER::checkStatus()
+bool SD_Talker::checkStatus()
 {
     SemaphoreGuard guard(m_SPI_BUS->mutex);
     if (guard.acquired())
@@ -35,23 +35,23 @@ bool SD_TALKER::checkStatus()
 
         if (cardType == CARD_NONE)
         {
-            ESP_LOGI("SD_TALKER", "SD card not connected.");
+            ESP_LOGI("SD_Talker", "SD card not connected.");
             return false;
         }
         else
         {
-            ESP_LOGI("SD_TALKER", "SD card connected. Type: %d", cardType);
+            ESP_LOGI("SD_Talker", "SD card connected. Type: %d", cardType);
             return true;
         }
     }
     else
     {
-        ESP_LOGI("SD_TALKER", "Failed to acquire SD mutex for status check.");
+        ESP_LOGI("SD_Talker", "Failed to acquire SD mutex for status check.");
         return false;
     }
 }
 
-bool SD_TALKER::begin(uint8_t CS, SPICOM &SPI_BUS)
+bool SD_Talker::begin(uint8_t CS, SPICOM &SPI_BUS)
 {
     m_SPI_BUS = &SPI_BUS;
 
@@ -71,7 +71,7 @@ bool SD_TALKER::begin(uint8_t CS, SPICOM &SPI_BUS)
     return initialised;
 }
 
-bool SD_TALKER::createNestedDirectories(String prefix)
+bool SD_Talker::createNestedDirectories(String prefix)
 {
     bool success = true;
 
@@ -128,7 +128,7 @@ bool SD_TALKER::createNestedDirectories(String prefix)
     return success;
 }
 
-bool SD_TALKER::createFile(String StartMsg, String prefix)
+bool SD_Talker::createFile(String StartMsg, String prefix)
 {
     bool success = false;
 
@@ -160,7 +160,7 @@ bool SD_TALKER::createFile(String StartMsg, String prefix)
     return success;
 }
 
-bool SD_TALKER::writeToBuffer(String dataString)
+bool SD_Talker::writeToBuffer(String dataString)
 {
     buffer += dataString; // Add newline for each entry
 
@@ -173,7 +173,7 @@ bool SD_TALKER::writeToBuffer(String dataString)
     return true;
 }
 
-void SD_TALKER::flushBuffer()
+void SD_Talker::flushBuffer()
 {
     if (isFileOpen && buffer.length() > 0)
     {
@@ -183,7 +183,7 @@ void SD_TALKER::flushBuffer()
     }
 }
 
-String SD_TALKER::createUniqueLogFile(String prefix)
+String SD_Talker::createUniqueLogFile(String prefix)
 {
     String uniqueFileName;
     uint32_t currentLogIndex = 0;
@@ -204,7 +204,7 @@ String SD_TALKER::createUniqueLogFile(String prefix)
     return "";
 }
 
-bool SD_TALKER::isInitialized()
+bool SD_Talker::isInitialized()
 {
     return isFileOpen;
 }

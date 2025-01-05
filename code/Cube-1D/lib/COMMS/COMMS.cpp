@@ -1,6 +1,6 @@
 // COMMS.cpp
 
-#include "COMMS.hpp"
+#include "Comms.hpp"
 
 // Define SPI bus identifiers based on ESP32-S3
 #define MY_FSPI FSPI // FSPI is defined as 0 for ESP32-S3

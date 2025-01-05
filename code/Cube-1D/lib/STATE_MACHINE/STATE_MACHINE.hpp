@@ -5,14 +5,14 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_sleep.h"
 #include "SemaphoreGuard.hpp"
-#include "threading.hpp"
+#include "Threading.hpp"
 
 #include "Arduino.h"
 #include "esp_log.h"
 
-#include "DEVICES.hpp"
+#include "Devices.hpp"
 
-#include "CONTROLLER.hpp"
+#include "Controller.hpp"
 
 enum STATES
 {
@@ -24,11 +24,11 @@ enum STATES
     CONTROL = 5,
 };
 
-class STATE_MACHINE
+class State_Machine
 {
 public:
-    STATE_MACHINE();
-    ~STATE_MACHINE();
+    State_Machine();
+    ~State_Machine();
 
     void begin();
     void loop();
@@ -56,8 +56,8 @@ public:
 private:
     SemaphoreHandle_t m_stateMutex = NULL;
     STATES m_currState;
-    DEVICES m_devices;
-    CONTROLLER m_control;
+    Devices m_devices;
+    Controller m_control;
 
     // FreeRTOS Handles
     TaskHandle_t m_indicationLoopTaskHandle = NULL;

@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include "esp_log.h"
-#include "STATE_MACHINE.hpp"
+#include "State_Machine.hpp"
 
 // Create an instance of the STATEMACHINE class
-STATE_MACHINE stateMachine;
+State_Machine stateMachine;
 
 void setup()
 {

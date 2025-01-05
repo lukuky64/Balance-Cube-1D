@@ -1,6 +1,6 @@
 #include "FILTER.hpp"
 
-FILTER::FILTER(float processNoise, float measurementNoise, float estimatedError, float initialValue)
+Filter::Filter(float processNoise, float measurementNoise, float estimatedError, float initialValue)
     : isInitialised(true)
 {
     m_dataMutex = xSemaphoreCreateMutex();
@@ -16,7 +16,7 @@ FILTER::FILTER(float processNoise, float measurementNoise, float estimatedError,
     }
 }
 
-void FILTER::update(float measurement)
+void Filter::update(float measurement)
 {
     if (!isInitialised)
     {
@@ -45,7 +45,7 @@ void FILTER::update(float measurement)
     }
 }
 
-void FILTER::update(float measurement, float controlInput, float controlEffect)
+void Filter::update(float measurement, float controlInput, float controlEffect)
 {
     if (!isInitialised)
     {
@@ -76,7 +76,7 @@ void FILTER::update(float measurement, float controlInput, float controlEffect)
     }
 }
 
-float FILTER::getValue()
+float Filter::getValue()
 {
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
@@ -87,12 +87,12 @@ float FILTER::getValue()
 }
 
 // Setters
-void FILTER::setProcessNoise(float processNoise) { Q = processNoise; }
-void FILTER::setMeasurementNoise(float measurementNoise) { R = measurementNoise; }
-void FILTER::setEstimatedError(float estimatedError) { P = estimatedError; }
+void Filter::setProcessNoise(float processNoise) { Q = processNoise; }
+void Filter::setMeasurementNoise(float measurementNoise) { R = measurementNoise; }
+void Filter::setEstimatedError(float estimatedError) { P = estimatedError; }
 
 // Getters
-float FILTER::getProcessNoise()
+float Filter::getProcessNoise()
 {
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
@@ -102,7 +102,7 @@ float FILTER::getProcessNoise()
     return 0.0f; // or some other default value
 }
 
-float FILTER::getMeasurementNoise()
+float Filter::getMeasurementNoise()
 {
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
@@ -112,7 +112,7 @@ float FILTER::getMeasurementNoise()
     return 0.0f; // or some other default value
 }
 
-float FILTER::getEstimatedError()
+float Filter::getEstimatedError()
 {
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
@@ -122,8 +122,8 @@ float FILTER::getEstimatedError()
     return 0.0f; // or some other default value
 }
 
-// Reset filter
-void FILTER::reset(float initialValue, float initialError)
+// Reset Filter
+void Filter::reset(float initialValue, float initialError)
 {
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
