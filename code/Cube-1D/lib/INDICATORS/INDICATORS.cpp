@@ -28,15 +28,11 @@ void INDICATORS::setupBuzzer(uint8_t buzzerPin)
     controlBuzzer(tones[6].frequency, 50);
 }
 
-void INDICATORS::setupRGBLed(uint8_t ledR, uint8_t ledG, uint8_t ledB)
+void INDICATORS::setupRGBLed(uint8_t ledNeo)
 {
-    m_ledR = ledR;
-    m_ledG = ledG;
-    m_ledB = ledB;
+    m_ledNeo = ledNeo;
     m_RGBLedEnabled = true;
-    pinMode(m_ledR, OUTPUT);
-    pinMode(m_ledG, OUTPUT);
-    pinMode(m_ledB, OUTPUT);
+    pinMode(m_ledNeo, OUTPUT);
 
     rgbLedMutex = xSemaphoreCreateMutex(); // Create the RGB LED mutex
 
@@ -65,7 +61,7 @@ void INDICATORS::showWarning()
     uint16_t duration = 50; // ms
 
     controlBuzzer(tones[3].frequency, duration);
-    controlRGBLed(colours[3].value, duration); // Yellow
+    controlRGBLed(colours[7].value, duration); // Yellow
 }
 
 void INDICATORS::showSuccess()
@@ -89,6 +85,13 @@ void INDICATORS::showAllGood()
     uint16_t duration = 50; // ms
 
     controlRGBLed(colours[1].value, duration);
+}
+
+void INDICATORS::showAllOff()
+{
+    ESP_LOGI("INDICATORS", "Turning off all indicators!");
+
+    controlRGBLed(0, 0);
 }
 
 bool INDICATORS::controlBuzzer(int frequency, int duration)
@@ -115,25 +118,20 @@ bool INDICATORS::controlRGBLed(int hexValue, int duration)
 {
     if (m_RGBLedEnabled)
     {
-        // Take the mutex before accessing the RGB LED
-        if (xSemaphoreTake(rgbLedMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+
+        SemaphoreGuard guard(rgbLedMutex);
+        if (guard.acquired())
         {
             uint8_t red = (hexValue >> 16) & 0xFF;
             uint8_t green = (hexValue >> 8) & 0xFF;
             uint8_t blue = hexValue & 0xFF;
 
-            analogWrite(m_ledR, red);
-            analogWrite(m_ledG, green);
-            analogWrite(m_ledB, blue);
+            neopixelWrite(RGB_BUILTIN, red, green, blue); // Red
 
             vTaskDelay(pdMS_TO_TICKS(duration));
 
-            analogWrite(m_ledR, 0);
-            analogWrite(m_ledG, 0);
-            analogWrite(m_ledB, 0);
+            neopixelWrite(RGB_BUILTIN, 0, 0, 0); // Red
 
-            // Release the mutex
-            xSemaphoreGive(rgbLedMutex);
             return true;
         }
     }

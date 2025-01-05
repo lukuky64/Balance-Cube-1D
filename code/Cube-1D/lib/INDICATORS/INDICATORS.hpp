@@ -5,6 +5,8 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_log.h"
+#include "SemaphoreGuard.hpp"
+#include "esp32-hal-rgb-led.h"
 
 #include "Arduino.h"
 #include <vector>
@@ -28,7 +30,7 @@ public:
     ~INDICATORS();
 
     void setupBuzzer(uint8_t buzzerPin);
-    void setupRGBLed(uint8_t ledR, uint8_t ledG, uint8_t ledB);
+    void setupRGBLed(uint8_t ledNeo);
 
     bool controlBuzzer(int frequency, int duration);
     bool controlRGBLed(int hexValue, int duration);
@@ -37,7 +39,7 @@ public:
     void showWarning();
     void showSuccess();
     void showAllGood();
-    void showIdle();
+    void showAllOff();
 
     bool checkStatus();
 
@@ -50,9 +52,7 @@ private:
 
     uint8_t m_buzzerPin;
 
-    uint8_t m_ledR;
-    uint8_t m_ledG;
-    uint8_t m_ledB;
+    uint8_t m_ledNeo;
 
     // C major scale for buzzer
     const std::vector<Tone> tones = {

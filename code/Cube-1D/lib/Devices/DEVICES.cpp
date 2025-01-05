@@ -189,7 +189,7 @@ bool DEVICES::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
 
     // set up indication. If silent indication is enabled, only set up RGB LED
     {
-        m_indicators.setupRGBLed(LED_R, LED_G, LED_B);
+        m_indicators.setupRGBLed(LED_NEO);
 
         if (!SilentIndication)
         {
@@ -372,6 +372,8 @@ uint8_t DEVICES::getPref()
 bool DEVICES::sleepMode()
 {
     bool deviceSLeepSucc = true;
+
+    m_indicators.showAllOff();
 
     if (!deviceSLeepSucc)
     {

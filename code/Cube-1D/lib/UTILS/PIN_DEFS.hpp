@@ -23,14 +23,18 @@
 #define BLDC_EN GPIO_NUM_16
 #define BLDC_nFLT GPIO_NUM_17
 #define BLDC_nRST GPIO_NUM_8
-#define LED_R GPIO_NUM_39
-#define LED_G GPIO_NUM_40
-#define LED_B GPIO_NUM_41
 #define BUZZER GPIO_NUM_14
 #define ENC_3V3_A GPIO_NUM_47
-#define ENC_3V3_B GPIO_NUM_48
 #define IMU_INT1 GPIO_NUM_42
 #define SERVO GPIO_NUM_21
+
+#if DEVBOARD
+#define LED_NEO GPIO_NUM_48
+#define ENC_3V3_B GPIO_NUM_39
+#else
+#define LED_NEO GPIO_NUM_39
+#define ENC_3V3_B GPIO_NUM_48
+#endif
 
 #define ENC_PPR 600
 
