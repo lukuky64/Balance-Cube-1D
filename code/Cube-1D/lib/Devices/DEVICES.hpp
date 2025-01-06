@@ -13,7 +13,7 @@
 
 #include "Indicators.hpp"
 #include "USB_PD.hpp"
-#include "BLDC.hpp"
+#include "BLDC_CTR.hpp"
 #include "IMU.hpp"
 #include "Rot_Enc.hpp"
 #include "Mag_Enc.hpp"
@@ -69,7 +69,7 @@ public:
     // devices. Making public for now
     Indicators &m_indicators = *new Indicators();
     USB_PD &m_usbPD = *new USB_PD();
-    BLDC &m_bldc = *new BLDC();
+    BLDC_CTR &m_bldc = *new BLDC_CTR();
     IMU &m_imu = *new IMU();
     Rot_Enc &m_rotEnc = *new Rot_Enc();
     Mag_Enc &m_magEnc = *new Mag_Enc();

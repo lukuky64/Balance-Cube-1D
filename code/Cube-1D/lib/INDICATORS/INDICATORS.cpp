@@ -126,11 +126,11 @@ bool Indicators::controlRGBLed(int hexValue, int duration)
             uint8_t green = (hexValue >> 8) & 0xFF;
             uint8_t blue = hexValue & 0xFF;
 
-            neopixelWrite(RGB_BUILTIN, red, green, blue); // Red
+            neopixelWrite(m_ledNeo, red, green, blue); // Red
 
             vTaskDelay(pdMS_TO_TICKS(duration));
 
-            neopixelWrite(RGB_BUILTIN, 0, 0, 0); // Red
+            neopixelWrite(m_ledNeo, 0, 0, 0); // Red
 
             return true;
         }
