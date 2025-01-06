@@ -46,12 +46,17 @@ Devices::~Devices()
 
 bool Devices::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 {
-    return true;
+    return m_usbPD.begin();
 }
 
-bool Devices::setupBLDC()
+bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
-    return true;
+    if (!setupSPI(MISO, MOSI, CLK, m_SPIComSensors))
+    {
+        return false;
+    }
+
+    return m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_SPIComSensors, m_usbPD.getVoltage()); // probably should be getting all these variables from function params
 }
 
 bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
@@ -272,7 +277,7 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
     }
 
     // set up BLDC
-    if (setupBLDC())
+    if (setupBLDC(SPI_CS_MAG, SPI_MISO, SPI_MOSI, SPI_CLK))
     {
         statusMask |= BLDC_BIT;
         prefMask |= BLDC_BIT;

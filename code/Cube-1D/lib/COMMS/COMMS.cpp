@@ -15,8 +15,8 @@ SemaphoreHandle_t mutexFSPI = NULL;
 SemaphoreHandle_t mutexHSPI = NULL;
 
 // Instantiate SPICOM structs (Definitions)
-SPICOM m_SPIComSensors = {&SPI_FSPI, false, NULL, 40000000}; // 40 MHz
-SPICOM m_SPIComSD = {&SPI_HSPI, false, NULL, 40000000};      // SD will use a different bus  // 40 MHz
+SPICOM m_SPIComSensors = {&SPI_FSPI, false, NULL, 1000000}; // 1 MHz, (this is kinda low atm but the magnetic sensor is defaulted to this)
+SPICOM m_SPIComSD = {&SPI_HSPI, false, NULL, 40000000};     // SD will use a different bus  // 40 MHz
 
 // doing this externally at the moment
 // // Function to initialize mutexes (Definitions)

@@ -14,7 +14,7 @@
 #include <Arduino.h>
 #include "USB_PD.hpp"
 
-USB_PD::USB_PD(void)
+USB_PD::USB_PD(void) : m_voltage(0.0)
 {
 }
 
@@ -51,4 +51,15 @@ void USB_PD::writeWord(byte reg_addr, word data)
 bool USB_PD::checkStatus()
 {
     return true;
+}
+
+bool USB_PD::begin()
+{
+    m_voltage = 20.0;
+    return true;
+}
+
+float USB_PD::getVoltage()
+{
+    return m_voltage;
 }

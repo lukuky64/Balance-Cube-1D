@@ -29,6 +29,11 @@ public:
     word readWord(byte reg_addr);
     void writeWord(byte reg_addr, word data);
     bool checkStatus();
+    bool begin();
+    float getVoltage();
+
+private:
+    float m_voltage;
 };
 
 #endif // USB_PD_HPP

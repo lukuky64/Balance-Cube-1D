@@ -5,6 +5,8 @@
 #include "Arduino.h"
 #include "esp_log.h"
 #include <SimpleFOC.h>
+#include "Params.hpp"
+#include "COMMS.hpp"
 
 class BLDC_CTR
 {
@@ -13,19 +15,21 @@ public:
     ~BLDC_CTR();
     bool checkStatus();
     void enableMotor(bool enable);
-    void begin();
+    bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, SPICOM &SPI_BUS, float voltage);
+    void loop(float target);
+    void updateVoltageLimits(float voltage);
 
 private:
-    // 24N22P, how many pole pairs are there?
+    BLDCMotor *m_motor;
+    BLDCDriver3PWM *m_driver;
+    MagneticSensorSPI *m_sensor;
+    InlineCurrentSense *m_current_sense;
 
-    // setting pp and R since i can find them in the datasheet
-    BLDCMotor motor = BLDCMotor(11, 11.1);
-    BLDCDriver3PWM driver = BLDCDriver3PWM(6, 10, 5, 8);
-    // Encoder encoder = Encoder(2, 3, 500);
-    MagneticSensorSPI sensor = MagneticSensorSPI(AS5147_SPI, 10);
+    float m_voltage;
 
-    // ACS712-05B has the resolution of 0.185mV per Amp
-    InlineCurrentSense current_sense = InlineCurrentSense(185.0f, A0, A2);
+    SPICOM *m_SPI_BUS = nullptr;
+
+    void setMotorSettings();
 };
 
 #endif // BLDC_CTR_HPP
