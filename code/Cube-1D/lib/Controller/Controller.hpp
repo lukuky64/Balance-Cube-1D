@@ -6,6 +6,7 @@
 #include "Devices.hpp"
 #include "Filter.hpp"
 #include "Estimator.hpp"
+#include "Params.hpp"
 
 // create a set of filters for each device
 struct FILTERS
@@ -29,12 +30,16 @@ public:
     void updateBalanceControl();
     void updateBLDC();
 
+    float (&getDataBuffer())[3];
+
 private:
     Devices &m_devicesRef;
     FILTERS m_filters;
     Estimator m_estimator;
 
     float m_controllableAngleThreshold;
+
+    float m_dataBuffer[log_columns];
 };
 
 #endif // CONTROLLER_HPP

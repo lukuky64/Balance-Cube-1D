@@ -81,7 +81,7 @@ void Estimator::estimateIMU()
     // Get angular velocity from IMU gyroscope data
     float omega_measured = m_devicesRef.m_imu.getGyroY();
 
-    ESP_LOGI("ESTIMATOR", "Omega measured: %f", omega_measured);
+    // ESP_LOGI("ESTIMATOR", "Omega measured: %f", omega_measured);
 
     // Predict step
     predict(omega_measured);

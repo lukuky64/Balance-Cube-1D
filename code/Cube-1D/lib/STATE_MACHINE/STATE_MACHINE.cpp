@@ -181,9 +181,16 @@ void State_Machine::logTask(void *pvParameters)
 
     machine->m_devices.m_logger.startNewLog();
 
+    unsigned long startUS;
+    unsigned long endUS = micros();
+
     while (true)
     {
-        machine->m_devices.m_logger.logData();
+        // startUS = micros();
+        machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), log_columns); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
+        // endUS = micros();
+        // float passed_time_us = (endUS - startUS);
+        // ESP_LOGI("State_Machine", "Logging Time: %f us", passed_time_us);
         vTaskDelay(pdMS_TO_TICKS(log_dt_ms));
     }
 }
@@ -202,7 +209,7 @@ void State_Machine::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
+        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 4096, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
     }
     if (m_refreshStatusTaskHandle == NULL)
     {

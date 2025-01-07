@@ -49,3 +49,14 @@ void Controller::updateBLDC()
 {
     // update the BLDC motor
 }
+
+float (&Controller::getDataBuffer())[log_columns]
+{
+    // get data from the filters. Should match log_columns
+    m_dataBuffer[0] = m_filters.filter_theta.getValue();
+    m_dataBuffer[1] = m_filters.filter_omega.getValue();
+    m_dataBuffer[2] = m_filters.filter_mag.getValue();
+    // probably want to add setpoint
+
+    return m_dataBuffer;
+}

@@ -8,35 +8,40 @@ BLDC_CTR::~BLDC_CTR()
 {
 }
 
-bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, SPICOM &SPI_BUS, float voltage)
+#if DUMMY_BLDC
+
+#else
+
+bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc mag_enc, float voltage)
 {
+
     m_motor = new BLDCMotor(num_poles, phase_res);
     m_driver = new BLDCDriver3PWM(phA, phB, phC, enable);
-    m_sensor = new MagneticSensorSPI(AS5147_SPI, MAG_CS);
-    m_current_sense = new InlineCurrentSense(sense_mVpA, senseA, senseB);
+    m_sensor = &mag_enc;
+    m_current_sense = new InlineCurrentSense(sense_mVpA, senseA, senseB, NOT_SET);
 
-    m_SPI_BUS = &SPI_BUS;
     m_voltage = voltage;
 
     updateVoltageLimits(m_voltage);
 
-    m_sensor->init(m_SPI_BUS->BUS);
     m_motor->linkSensor(m_sensor);
 
-    bool success = ((m_driver->init()) != 0);
+    bool driverSucc = ((m_driver->init()) != 0);
     m_motor->linkDriver(m_driver);
     m_current_sense->linkDriver(m_driver);
 
-    success &= ((m_current_sense->init()) != 0);
+    bool currentSucc = ((m_current_sense->init()) != 0);
     m_motor->linkCurrentSense(m_current_sense);
 
     setMotorSettings();
-    success &= ((m_motor->init()) != 0);
-    success &= ((m_motor->initFOC()) != 0);
+    bool motorSucc = ((m_motor->init()) != 0);
+    bool FOCSucc = ((m_motor->initFOC()) != 0);
 
-    enableMotor(false); // Disable motor by default
+    enableMotor(false); // Disable motor initially
 
-    return success;
+    ESP_LOGI("BLDC_CTR", "Driver: %d, Motor: %d, FOC: %d, Current: %d", driverSucc, motorSucc, FOCSucc, currentSucc);
+
+    return driverSucc && currentSucc && motorSucc && FOCSucc;
 }
 
 bool BLDC_CTR::checkStatus()
@@ -90,3 +95,5 @@ void BLDC_CTR::setMotorSettings()
     // set the inital target value
     m_motor->target = 0;
 }
+
+#endif

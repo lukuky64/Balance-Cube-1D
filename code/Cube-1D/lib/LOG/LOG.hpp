@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include "esp_log.h"
+#include "Params.hpp"
 
 #include "SD_TALKER.hpp"
 #include "SERIAL_TALKER.hpp"
@@ -10,7 +11,7 @@
 class Log
 {
 public:
-    Log(size_t bufferSize = 512);
+    Log();
     ~Log();
     void selectLogSD();
     void selectLogSerial();
@@ -18,10 +19,12 @@ public:
     // bool beginSD();
     void startNewLog();
 
-    bool log(String dataString);
-    bool logData();
-    bool forceFlush();
+    bool log(int len);
+    bool logData(float *data, int dataSize);
     void setStartTime();
+    void forceFlush();
+
+    bool writeBufferAll();
 
     bool isLogSetup();
 
@@ -31,8 +34,11 @@ public:
 private:
     bool m_sdLog;
     bool m_serialLog;
-
     unsigned long m_startTime;
+
+    static constexpr size_t m_bufferSize = 4096; // ensure mulitple of 512 bytes
+    char charBuffer[m_bufferSize];
+    size_t currentBufferPos; // Track current position in buffer
 };
 
 #endif // LOG_HPP

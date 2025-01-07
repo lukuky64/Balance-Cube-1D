@@ -1,7 +1,7 @@
 #include "SD_Talker.hpp"
 
 #if DUMMY_SD
-SD_Talker::SD_Talker(size_t bufferSize)
+SD_Talker::SD_Talker()
 {
 }
 
@@ -11,17 +11,21 @@ SD_Talker::~SD_Talker()
 
 #else
 
-SD_Talker::SD_Talker(size_t bufferSize) : isFileOpen(false), initialised(false), maxBufferSize(bufferSize)
+SD_Talker::SD_Talker() : isFileOpen(false), initialised(false)
 {
 }
 
 SD_Talker::~SD_Talker()
 {
     // Ensure the file is closed and buffer is flushed upon object destruction
-    flushBuffer();
+    // flushBuffer();
     if (isFileOpen)
     {
-        dataFile.close();
+        SemaphoreGuard guard(m_SPI_BUS->mutex);
+        if (guard.acquired())
+        {
+            dataFile.close();
+        }
     }
 }
 
@@ -142,44 +146,66 @@ bool SD_Talker::createFile(String StartMsg, String prefix)
         if (guard.acquired())
         {
             dataFile = SD.open(fileName.c_str(), FILE_WRITE);
+            if (dataFile)
+            {
+                dataFile.println(StartMsg);
+                dataFile.flush();
+                isFileOpen = true;
+                success = true;
+            }
+            else
+            {
+                success = false;
+            }
         }
-    }
-
-    if (dataFile)
-    {
-        dataFile.println(StartMsg);
-        dataFile.flush();
-        isFileOpen = true;
-        success = true;
-    }
-    else
-    {
-        success = false;
     }
 
     return success;
 }
 
-bool SD_Talker::writeToBuffer(String dataString)
-{
-    buffer += dataString; // Add newline for each entry
+// bool SD_Talker::writeToBuffer(String dataString)
+// {
+//     buffer += dataString; // Add newline for each entry
 
-    // Check if buffer size exceeds the maximum size
-    if (buffer.length() >= maxBufferSize)
+//     // Check if buffer size exceeds the maximum size
+//     if (buffer.length() >= maxBufferSize)
+//     {
+//         flushBuffer(); // Write to SD card if buffer is full
+//     }
+
+//     return true;
+// }
+
+bool SD_Talker::writeBuffer(const char *buffer, size_t bufferIndex)
+{
+    if (isFileOpen)
     {
-        flushBuffer(); // Write to SD card if buffer is full
+        SemaphoreGuard guard(m_SPI_BUS->mutex);
+        if (guard.acquired())
+        {
+            size_t bytesWritten = dataFile.write((const uint8_t *)buffer, bufferIndex);
+            dataFile.flush();
+            if (bytesWritten != bufferIndex)
+            {
+                ESP_LOGE("SD_Talker", "Failed to write all bytes to SD card.");
+                return false;
+            }
+            else
+            {
+                ESP_LOGI("SD_Talker", "Successfully wrote %d bytes to SD card.", bytesWritten);
+                return true;
+            }
+        }
+        else
+        {
+            ESP_LOGE("SD_Talker", "Failed to acquire SD mutex for writing.");
+            return false;
+        }
     }
-
-    return true;
-}
-
-void SD_Talker::flushBuffer()
-{
-    if (isFileOpen && buffer.length() > 0)
+    else
     {
-        dataFile.print(buffer); // Write buffer content to file
-        buffer = "";            // Clear the buffer
-        dataFile.flush();       // Ensure data is written to the card
+        ESP_LOGE("SD_Talker", "Attempted to write to SD card, but file is not open.");
+        return false;
     }
 }
 

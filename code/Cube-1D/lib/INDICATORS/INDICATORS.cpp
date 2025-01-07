@@ -2,6 +2,7 @@
 
 Indicators::Indicators()
 {
+    statusMutex = xSemaphoreCreateMutex(); // Create the status mutex
 }
 
 Indicators::~Indicators()
@@ -14,6 +15,7 @@ Indicators::~Indicators()
     // Delete the mutexes
     vSemaphoreDelete(buzzerMutex);
     vSemaphoreDelete(rgbLedMutex);
+    vSemaphoreDelete(statusMutex);
 }
 
 void Indicators::setupBuzzer(uint8_t buzzerPin)
@@ -24,7 +26,7 @@ void Indicators::setupBuzzer(uint8_t buzzerPin)
 
     buzzerMutex = xSemaphoreCreateMutex(); // Create buzzer mutex
 
-    // quick test
+    // quick chirp
     controlBuzzer(tones[6].frequency, 50);
 }
 
@@ -50,7 +52,7 @@ void Indicators::showCriticalError()
     {
         controlBuzzer(tones[0].frequency, duration);
         controlRGBLed(colours[0].value, duration); // Red
-        vTaskDelay(pdMS_TO_TICKS(duration));
+        vTaskDelay(pdMS_TO_TICKS(duration));       // off period
     }
 }
 
@@ -96,18 +98,14 @@ void Indicators::showAllOff()
 
 bool Indicators::controlBuzzer(int frequency, int duration)
 {
-
     if (m_buzzerEnabled)
     {
-        // Take the mutex before accessing the buzzer
-        if (xSemaphoreTake(buzzerMutex, pdMS_TO_TICKS(100)) == pdTRUE)
+        SemaphoreGuard guard(buzzerMutex);
+        if (guard.acquired())
         {
             tone(m_buzzerPin, frequency);
             vTaskDelay(pdMS_TO_TICKS(duration));
             noTone(m_buzzerPin);
-
-            // Release the mutex
-            xSemaphoreGive(buzzerMutex);
             return true;
         }
     }
@@ -138,7 +136,32 @@ bool Indicators::controlRGBLed(int hexValue, int duration)
     return false;
 }
 
-bool Indicators::checkStatus()
+bool Indicators::checkStatusEither()
 {
-    return m_buzzerEnabled || m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
+    SemaphoreGuard guard(statusMutex);
+    if (guard.acquired())
+    {
+        return m_buzzerEnabled || m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
+    }
+    return false;
+}
+
+bool Indicators::checkStatusBuzzer()
+{
+    SemaphoreGuard guard(statusMutex);
+    if (guard.acquired())
+    {
+        return m_buzzerEnabled; // !!! Do we need to do mutexing, probably
+    }
+    return false;
+}
+
+bool Indicators::checkStatusLed()
+{
+    SemaphoreGuard guard(statusMutex);
+    if (guard.acquired())
+    {
+        return m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
+    }
+    return false;
 }

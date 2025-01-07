@@ -56,7 +56,7 @@ bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_nu
         return false;
     }
 
-    return m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_SPIComSensors, m_usbPD.getVoltage()); // probably should be getting all these variables from function params
+    return m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_magEnc, m_usbPD.getVoltage()); // probably should be getting all these variables from function params
 }
 
 bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
@@ -84,8 +84,6 @@ bool Devices::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num
         return false;
     }
 
-    intPin = GPIO_NUM_14;
-
     esp_err_t interrupt_setup = esp_sleep_enable_ext0_wakeup(intPin, 1); // 1 = High level wake-up using the IMU's interrupt pin
 
     if (interrupt_setup != ESP_OK)
@@ -108,7 +106,12 @@ bool Devices::setupROT_ENC()
 
 bool Devices::setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
-    return true;
+    if (!setupSPI(MISO, MOSI, CLK, m_SPIComSensors))
+    {
+        return false;
+    }
+
+    return m_magEnc.init(CS, m_SPIComSensors, AS5047_mag);
 }
 
 bool Devices::setupSerialLog()
@@ -170,7 +173,7 @@ void Devices::refreshStatusAll()
     ESP_LOGI("Devices", "Checking all device statuses...");
 
     uint8_t statusMask = 0;
-    statusMask |= (m_indicators.checkStatus() ? INDICATION_BIT : 0);
+    statusMask |= (m_indicators.checkStatusEither() ? INDICATION_BIT : 0);
     statusMask |= (m_usbPD.checkStatus() ? USBPD_BIT : 0);                  // need to implement
     statusMask |= (m_bldc.checkStatus() ? BLDC_BIT : 0);                    // need to implement
     statusMask |= (m_imu.checkStatus() ? IMU_BIT : 0);                      // need to implement
@@ -194,11 +197,17 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
 
     // set up indication. If silent indication is enabled, only set up RGB LED
     {
-        m_indicators.setupRGBLed(LED_NEO);
-
-        if (!SilentIndication)
+        if (!m_indicators.checkStatusLed())
         {
-            m_indicators.setupBuzzer(BUZZER);
+            m_indicators.setupRGBLed(LED_NEO);
+        }
+
+        if (!m_indicators.checkStatusBuzzer())
+        {
+            if (!SilentIndication)
+            {
+                m_indicators.setupBuzzer(BUZZER);
+            }
         }
 
         statusMask |= INDICATION_BIT;

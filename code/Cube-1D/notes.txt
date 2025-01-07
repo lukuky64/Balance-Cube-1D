@@ -18,9 +18,9 @@ refreshStatusAll, we need to implement all the function used in this
 
 
 For future:
-- the inturrpt has been setup in IMU.cpp. We it should be active HIGH but the library described it strangely. Also once inturrpt is HIGH, do we need to manually set it back to LOW?
+- the inturrpt has been setup in IMU.cpp. It should be active HIGH but the library described it strangely. Also once inturrpt is HIGH, do we need to manually set it back to LOW?
 - removed USBPD check from requirements for now
 - need to implement timestamps into kalman fiter, the imu data has this associated with it
-- convert estimator to 2D case
 - fusing the encoder with IMU in estimator estimate function
 - need to consider the orientation of the imu for estimator correct function
+- logging to SD - would be good to define all logging stuff in one file (like header, names, etc) but this isn't as memory efficient

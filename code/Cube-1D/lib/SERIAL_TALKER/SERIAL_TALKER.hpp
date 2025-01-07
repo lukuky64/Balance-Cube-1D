@@ -8,12 +8,13 @@
 class Serial_Talker
 {
 public:
-    Serial_Talker(size_t bufferSize = 512);
+    Serial_Talker();
     ~Serial_Talker();
     bool checkStatus();
     bool begin();
     bool writeToBuffer(String dataString);
     void flushBuffer();
+    bool writeBuffer(const char *buffer, size_t bufferIndex);
 
 private:
     size_t maxBufferSize;
