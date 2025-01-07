@@ -10,7 +10,7 @@
 class SD_Talker
 {
 public:
-    SD_Talker(size_t bufferSize = 512);
+    SD_Talker();
     ~SD_Talker();
 
 #if DUMMY_SD
@@ -30,8 +30,8 @@ public:
 
     bool createFile(String StartMsg, String prefix);
 
-    bool writeToBuffer(String dataString);
-    void flushBuffer();
+    // bool writeToBuffer(String dataString);
+    bool writeBuffer(const char *buffer, size_t bufferIndex);
     bool isInitialized();
 
     String createUniqueLogFile(String prefix);
@@ -42,7 +42,6 @@ private:
     String fileName;
     bool isFileOpen;
     String buffer;
-    size_t maxBufferSize;
     bool initialised;
 
     SPICOM *m_SPI_BUS = nullptr;

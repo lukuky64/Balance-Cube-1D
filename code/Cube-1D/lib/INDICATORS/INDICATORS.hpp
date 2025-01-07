@@ -41,12 +41,15 @@ public:
     void showAllGood();
     void showAllOff();
 
-    bool checkStatus();
+    bool checkStatusEither();
+    bool checkStatusBuzzer();
+    bool checkStatusLed();
 
 private:
     SemaphoreHandle_t buzzerMutex; // Mutex for buzzer
     SemaphoreHandle_t rgbLedMutex; // Mutex for RGB LED
 
+    SemaphoreHandle_t statusMutex;
     bool m_buzzerEnabled = false;
     bool m_RGBLedEnabled = false;
 

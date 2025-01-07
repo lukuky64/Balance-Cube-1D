@@ -4,7 +4,7 @@
 #define aquisitionFreq 10 // Hz
 #define balanceFreq 5     // Hz
 #define BLDCFreq 5        // Hz
-#define logFreq 10        // Hz
+#define logFreq 100       // Hz
 
 #define refreshStatusFreq 0.2 // Hz
 #define indicationFreq 1      // Hz
@@ -28,8 +28,8 @@
 #define AngleThresh 0.5 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 
 // BLDC motor parameters
-#define num_poles 11   // pole pairs. 24N22P - how many pole pairs are there?
-#define phase_res 11.1 // phase resistance
-#define sense_mVpA 185.0     // ACS712-05B has the resolution of 0.185mV per Amp
+#define num_poles 11     // pole pairs. 24N22P - how many pole pairs are there?
+#define phase_res 11.1   // phase resistance
+#define sense_mVpA 185.0 // ACS712-05B has the resolution of 0.185mV per Amp
 
 #endif // PARAMS_HPP
