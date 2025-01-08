@@ -1,0 +1,5 @@
+// ESP_LOGI("CHECK", "CPU FREQ [%d] MHz", ESP.getCpuFreqMHz());
+// ESP_LOGI("CHECK", "NUM CORES [%d]", ESP.getChipCores());
+
+// heap_caps_check_integrity_all(true);
+// heap_caps_print_heap_info(MALLOC_CAP_8BIT);

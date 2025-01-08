@@ -67,14 +67,14 @@ public:
     bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus);
 
     // devices. Making public for now
-    Indicators &m_indicators = *new Indicators();
-    USB_PD &m_usbPD = *new USB_PD();
-    BLDC_CTR &m_bldc = *new BLDC_CTR();
-    IMU &m_imu = *new IMU();
-    Rot_Enc &m_rotEnc = *new Rot_Enc();
-    Mag_Enc &m_magEnc = *new Mag_Enc();
-    Log &m_logger = *new Log();
-    Servo_CTR &m_servo = *new Servo_CTR();
+    Indicators m_indicators;
+    USB_PD m_usbPD;
+    BLDC_CTR m_bldc;
+    IMU m_imu;
+    Rot_Enc m_rotEnc;
+    Mag_Enc m_magEnc;
+    Log m_logger;
+    Servo_CTR m_servo;
 
 private:
     void setStatus(uint8_t status);
