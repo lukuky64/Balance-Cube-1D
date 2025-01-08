@@ -15,10 +15,10 @@
 #define SERVO_BRAKING 0
 #define USE_ROT_ENC 0
 
-#define DUMMY_IMU 0
+#define DUMMY_IMU 1
 #define DUMMY_SERVO 1
-#define DUMMY_BLDC 0
-#define DUMMY_MAG 0
+#define DUMMY_BLDC 1
+#define DUMMY_MAG 1
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
 #define DUMMY_SERIAL 1
