@@ -5,8 +5,8 @@
 #include "esp_log.h"
 #include "Params.hpp"
 
-#include "SD_TALKER.hpp"
-#include "SERIAL_TALKER.hpp"
+#include "SD_Talker/SD_Talker.hpp"
+#include "Serial_Talker/Serial_Talker.hpp"
 
 class Log
 {

@@ -11,15 +11,15 @@
 
 #include "Pin_Defs.hpp"
 
-#include "Indicators.hpp"
-#include "USB_PD.hpp"
-#include "BLDC_CTR.hpp"
-#include "IMU.hpp"
-#include "Rot_Enc.hpp"
-#include "Mag_Enc.hpp"
-#include "LOG.hpp"
-#include "Servo_CTR.hpp"
-#include "Comms.hpp"
+#include "Indicators/Indicators.hpp"
+#include "USB_PD/USB_PD.hpp"
+#include "BLDC/BLDC_CTR.hpp"
+#include "IMU/IMU.hpp"
+#include "Rot_Enc/Rot_Enc.hpp"
+#include "Mag_Enc/Mag_Enc.hpp"
+#include "Log/LOG.hpp"
+#include "Servo/Servo_CTR.hpp"
+#include "Comms/Comms.hpp"
 
 enum DeviceBit
 {

@@ -6,7 +6,7 @@
 #include "common/base_classes/Sensor.h"
 #include "common/foc_utils.h"
 #include "common/time_utils.h"
-#include "Comms.hpp"
+#include "Comms/Comms.hpp"
 #include "SemaphoreGuard.hpp"
 
 #define DEF_ANGLE_REGISTER 0x3FFF

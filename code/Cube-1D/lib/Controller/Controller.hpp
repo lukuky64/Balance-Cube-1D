@@ -29,6 +29,7 @@ public:
     void updateFilters();
     void updateBalanceControl();
     void updateBLDC();
+    float getTargetAccel();
 
     float (&getDataBuffer())[3];
 
@@ -37,7 +38,7 @@ private:
     FILTERS m_filters;
     Estimator m_estimator;
 
-    float m_controllableAngleThreshold;
+    const float m_controllableAngleThreshold;
 
     float m_dataBuffer[log_columns];
 };

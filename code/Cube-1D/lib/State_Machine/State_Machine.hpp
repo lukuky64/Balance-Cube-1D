@@ -11,7 +11,6 @@
 #include "esp_log.h"
 
 #include "Devices.hpp"
-
 #include "Controller.hpp"
 
 enum STATES

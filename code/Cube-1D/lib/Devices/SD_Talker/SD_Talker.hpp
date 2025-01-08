@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "esp_log.h"
 #include <SD.h>
-#include "COMMS.hpp"
+#include "Comms/Comms.hpp"
 #include "SemaphoreGuard.hpp"
 
 class SD_Talker

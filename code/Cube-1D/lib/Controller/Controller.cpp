@@ -47,6 +47,7 @@ void Controller::updateBalanceControl()
 
 void Controller::updateBLDC()
 {
+    m_devicesRef.m_bldc.loop(getTargetAccel());
     // update the BLDC motor
 }
 
@@ -59,4 +60,10 @@ float (&Controller::getDataBuffer())[log_columns]
     // probably want to add setpoint
 
     return m_dataBuffer;
+}
+
+float Controller::getTargetAccel()
+{
+    // maths probably
+    return 0.0f;
 }

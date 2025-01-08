@@ -2,15 +2,14 @@
 #define IMU_HPP
 
 #include "Arduino.h"
+#include "Comms/Comms.hpp"
 
 #if DUMMY_IMU
 #include "esp_log.h"
 #include "driver/gpio.h"
-#include "COMMS.hpp"
 
 #else
 #include <Adafruit_LSM6DSOX.h>
-#include "COMMS.hpp"
 #include "SemaphoreGuard.hpp"
 #endif
 

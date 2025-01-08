@@ -84,7 +84,7 @@ void State_Machine::BLDCTask(void *pvParameters)
 
     while (machine->m_control.controllableAngle())
     {
-        machine->m_control.updateBLDC();
+        machine->m_control.updateBLDC(); // !!! We want to loop over FOC as fast as possible, so might need to seperate the internals
         vTaskDelay(pdMS_TO_TICKS(BLDC_dt_ms));
     }
 

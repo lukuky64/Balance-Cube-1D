@@ -1,4 +1,3 @@
-
 #ifndef BLDC_CTR_HPP
 #define BLDC_CTR_HPP
 
@@ -6,8 +5,8 @@
 #include "esp_log.h"
 #include <SimpleFOC.h>
 #include "Params.hpp"
-#include "COMMS.hpp"
-#include "Mag_Enc.hpp"
+#include "Comms/Comms.hpp"
+#include "Mag_Enc/Mag_Enc.hpp"
 
 class BLDC_CTR
 {
