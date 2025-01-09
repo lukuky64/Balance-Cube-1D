@@ -1,7 +1,4 @@
-
-
-#ifndef SERVO_CTR_HPP
-#define SERVO_CTR_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -20,5 +17,3 @@ private:
     uint8_t m_servoPin;
     Servo m_servo;
 };
-
-#endif // SERVO_CTR_HPP

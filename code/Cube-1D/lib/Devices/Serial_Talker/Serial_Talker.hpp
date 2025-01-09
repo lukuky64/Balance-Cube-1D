@@ -1,6 +1,4 @@
-
-#ifndef SERIAL_TALKER_HPP
-#define SERIAL_TALKER_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -19,5 +17,3 @@ public:
 private:
     size_t maxBufferSize;
 };
-
-#endif // SERIAL_TALKER_HPP

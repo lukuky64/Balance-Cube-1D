@@ -73,9 +73,9 @@ void Estimator::calibrate()
     }
 }
 
-void Estimator::estimateIMU()
+void Estimator::estimateWithIMU()
 {
-    // Update latest readings
+    // Update to latest readings
     m_devicesRef.m_imu.update();
 
     // Get angular velocity from IMU gyroscope data
@@ -83,22 +83,14 @@ void Estimator::estimateIMU()
 
     // ESP_LOGI("ESTIMATOR", "Omega measured: %f", omega_measured);
 
-    // Predict step
+    // Predict theta step
     predict(omega_measured);
 
     // Get linear acceleration from IMU accelerometer data
     float ax = m_devicesRef.m_imu.getAccelX(); // Assuming X-axis
     float ay = m_devicesRef.m_imu.getAccelY(); // Assuming Y-axis
 
-    // Normalize linear acceleration
-    float a_norm = sqrt(ax * ax + ay * ay);
-    if (a_norm == 0)
-        a_norm = 1; // Prevent division by zero
-
-    ax /= a_norm;
-    ay /= a_norm;
-
-    // Correct step
+    // Correct theta prediction using acceleration
     correct(ax, ay);
 
     // WrapTheta(); // wrap theta to [-π, π]
@@ -123,18 +115,18 @@ void Estimator::estimate()
 
     if (m_imuSelected)
     {
-        estimateIMU();
+        estimateWithIMU();
     }
 
     if (m_rotEncSelected)
     {
-        estimateROT_ENC();
+        estimateWithRot_Enc();
     }
 
     // !!! need to somehow fuse these two, if they are both selected
 }
 
-void Estimator::estimateROT_ENC()
+void Estimator::estimateWithRot_Enc()
 {
     // Example: Read encoder value and convert to angle
     float encoder_angle = m_devicesRef.m_rotEnc.getAngle();
@@ -144,29 +136,32 @@ void Estimator::estimateROT_ENC()
 // Predict step
 void Estimator::predict(float omega_measured)
 {
-    SemaphoreGuard guard(m_theta_mutex);
-    if (guard.acquired())
+    SemaphoreGuard guard1(m_theta_mutex);
+    SemaphoreGuard guard2(m_omega_mutex);
+    if (guard1.acquired() && guard2.acquired())
     {
-        SemaphoreGuard guard(m_omega_mutex);
-        if (guard.acquired())
-        {
-            // Correct the measured angular velocity with bias
-            float omega_corrected = omega_measured - m_omegaBias;
-            // Update orientation
-            m_theta += omega_corrected * m_dt;
-            // Optionally, you can also update omega if you want to track it
-            m_omega = omega_corrected;
-        }
+        // Correct the measured angular velocity with bias
+        float omega_corrected = omega_measured - m_omegaBias;
+
+        m_theta += omega_corrected * m_dt;
+        m_omega = omega_corrected;
     }
 }
 
 // Correct step
 void Estimator::correct(float ax, float ay)
 {
+
+    // Normalize linear acceleration
+    float a_norm = sqrt(ax * ax + ay * ay);
+    a_norm = (a_norm == 0) ? 1 : a_norm; // avoid division by zero
+    ax /= a_norm;
+    ay /= a_norm;
+
     SemaphoreGuard guard(m_theta_mutex);
     if (guard.acquired())
     {
-        // Assuming ax and ay are normalized
+        // should we account acceleration induced by motor?
         // Calculate the expected gravity direction
         float gravity_est_x = cos(m_theta);
         float gravity_est_y = sin(m_theta);
@@ -179,7 +174,7 @@ void Estimator::correct(float ax, float ay)
         float error_theta = atan2(error_y, error_x);
 
         // Apply correction
-        m_theta += m_lds * error_theta * m_dt;
+        m_theta += m_lds * error_theta * m_dt; // multiply by time to ensure time scaling and consistency
     }
 }
 

@@ -1,5 +1,4 @@
-#ifndef PIN_DEFS_HPP
-#define PIN_DEFS_HPP
+#pragma once
 
 #define MCU_RX GPIO_NUM_44
 #define MCU_TX GPIO_NUM_43
@@ -35,5 +34,3 @@
 #define LED_NEO GPIO_NUM_39
 #define ENC_3V3_B GPIO_NUM_48
 #endif
-
-#endif // PIN_DEFS_HPP

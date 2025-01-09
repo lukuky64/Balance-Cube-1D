@@ -61,10 +61,14 @@ void BLDC_CTR::enableMotor(bool enable)
     }
 }
 
-void BLDC_CTR::loop(float target)
+void BLDC_CTR::loopFOC()
 {
-    m_motor->loopFOC();    // we want this to loop as fast as possible
-    m_motor->move(target); // this can loop less frequently
+    m_motor->loopFOC(); // we want this to loop as fast as possible
+}
+
+void BLDC_CTR::moveTarget(float target)
+{
+    m_motor->move(target);
 }
 
 void BLDC_CTR::updateVoltageLimits(float voltage)
@@ -94,6 +98,12 @@ void BLDC_CTR::setMotorSettings()
 
     // set the inital target value
     m_motor->target = 0;
+}
+
+// !!! Need to implement
+float BLDC_CTR::getMaxTau()
+{
+    return 2.0f;
 }
 
 #endif

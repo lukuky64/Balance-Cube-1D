@@ -1,17 +1,11 @@
-#ifndef IMU_HPP
-#define IMU_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "Comms/Comms.hpp"
-
-#if DUMMY_IMU
-#include "esp_log.h"
-#include "driver/gpio.h"
-
-#else
 #include <Adafruit_LSM6DSOX.h>
 #include "SemaphoreGuard.hpp"
-#endif
+#include "esp_log.h"
+#include "driver/gpio.h"
 
 // Define constants for dummy IMU
 #if DUMMY_IMU
@@ -85,6 +79,10 @@ private:
     gyro_range m_gyroRange;
     data_rate m_dataRate;
 
+    SemaphoreHandle_t m_accelMutex = NULL;
+    SemaphoreHandle_t m_gyroMutex = NULL;
+    SemaphoreHandle_t m_tempMutex = NULL;
+
     sensors_event_t m_accel;
     sensors_event_t m_gyro;
     sensors_event_t m_temp;
@@ -96,5 +94,3 @@ private:
     bool m_initialised;
 #endif
 };
-
-#endif // IMU_HPP

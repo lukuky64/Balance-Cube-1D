@@ -24,3 +24,5 @@ For future:
 - fusing the encoder with IMU in estimator estimate function
 - need to consider the orientation of the imu for estimator correct function
 - logging to SD - would be good to define all logging stuff in one file (like header, names, etc) but this isn't as memory efficient
+- need to create a target angle based on centre of mass (manual calibration)
+- need to define torque limit in BLDC - getMaxTau()

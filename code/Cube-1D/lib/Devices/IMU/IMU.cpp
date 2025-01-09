@@ -10,6 +10,10 @@ IMU::IMU() : m_initialised(false)
     m_accelRange = LSM6DS_ACCEL_RANGE_2_G;
     m_gyroRange = LSM6DS_GYRO_RANGE_250_DPS;
     m_dataRate = LSM6DS_RATE_104_HZ;
+
+    m_accelMutex = xSemaphoreCreateMutex();
+    m_gyroMutex = xSemaphoreCreateMutex();
+    m_tempMutex = xSemaphoreCreateMutex();
 }
 
 /*****************************************************************************/
@@ -51,7 +55,14 @@ bool IMU::update()
     SemaphoreGuard guard(m_SPI_BUS->mutex);
     if (guard.acquired())
     {
-        success = m_imu.getEvent(&m_accel, &m_gyro, &m_temp);
+        SemaphoreGuard guard1(m_accelMutex);
+        SemaphoreGuard guard2(m_gyroMutex);
+        SemaphoreGuard guard3(m_tempMutex);
+
+        if (guard1.acquired() && guard2.acquired() && guard3.acquired())
+        {
+            success = m_imu.getEvent(&m_accel, &m_gyro, &m_temp); // updating all data
+        }
     }
 
     return success;
@@ -59,32 +70,62 @@ bool IMU::update()
 
 float IMU::getAccelX()
 {
-    return m_accel.acceleration.x;
+    SemaphoreGuard guard(m_accelMutex);
+    if (guard.acquired())
+    {
+        return m_accel.acceleration.x;
+    }
+    return 0.0f;
 }
 
 float IMU::getAccelY()
 {
-    return m_accel.acceleration.y;
+    SemaphoreGuard guard(m_accelMutex);
+    if (guard.acquired())
+    {
+        return m_accel.acceleration.y;
+    }
+    return 0.0f;
 }
 
 float IMU::getAccelZ()
 {
-    return m_accel.acceleration.z;
+    SemaphoreGuard guard(m_accelMutex);
+    if (guard.acquired())
+    {
+        return m_accel.acceleration.z;
+    }
+    return 0.0f;
 }
 
 float IMU::getGyroX()
 {
-    return m_gyro.gyro.x;
+    SemaphoreGuard guard(m_gyroMutex);
+    if (guard.acquired())
+    {
+        return m_gyro.gyro.x;
+    }
+    return 0.0f;
 }
 
 float IMU::getGyroY()
 {
-    return m_gyro.gyro.y;
+    SemaphoreGuard guard(m_gyroMutex);
+    if (guard.acquired())
+    {
+        return m_gyro.gyro.y;
+    }
+    return 0.0f;
 }
 
 float IMU::getGyroZ()
 {
-    return m_gyro.gyro.z;
+    SemaphoreGuard guard(m_gyroMutex);
+    if (guard.acquired())
+    {
+        return m_gyro.gyro.z;
+    }
+    return 0.0f;
 }
 
 /**************************************************************************/

@@ -1,5 +1,4 @@
-#ifndef USB_PD_HPP
-#define USB_PD_HPP
+#pragma once
 
 // this is for the CYPD3177
 
@@ -35,5 +34,3 @@ public:
 private:
     float m_voltage;
 };
-
-#endif // USB_PD_HPP

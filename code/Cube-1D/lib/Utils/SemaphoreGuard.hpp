@@ -1,5 +1,4 @@
-#ifndef SEMAPHORE_GUARD_HPP
-#define SEMAPHORE_GUARD_HPP
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -32,5 +31,3 @@ private:
     SemaphoreHandle_t m_semaphore;
     bool m_acquired;
 };
-
-#endif // SEMAPHORE_GUARD_HPP

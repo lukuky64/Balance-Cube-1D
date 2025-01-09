@@ -1,6 +1,4 @@
-
-#ifndef FILTER_HPP
-#define FILTER_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -38,5 +36,3 @@ private:
 
     bool isInitialised; // Initialization flag
 };
-
-#endif // KALMANFILTER_HPP

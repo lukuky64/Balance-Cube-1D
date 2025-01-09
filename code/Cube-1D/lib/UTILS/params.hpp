@@ -1,5 +1,4 @@
-#ifndef PARAMS_HPP
-#define PARAMS_HPP
+#pragma once
 
 /*
 ===============================
@@ -15,9 +14,9 @@
 #define SERVO_BRAKING 0
 #define USE_ROT_ENC 0
 
-#define DUMMY_IMU 1
+#define DUMMY_IMU 0
 #define DUMMY_SERVO 1
-#define DUMMY_BLDC 1
+#define DUMMY_BLDC 0
 #define DUMMY_MAG 1
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
@@ -26,10 +25,10 @@
 #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define aquisitionFreq 10     // Hz
-#define balanceFreq 5         // Hz
-#define BLDCFreq 5            // Hz
-#define logFreq 100           // Hz
+#define aquisitionFreq 100    // Hz
+#define balanceFreq 25        // Hz
+#define BLDCFreq 250          // Hz
+#define logFreq 25            // Hz
 #define refreshStatusFreq 0.2 // Hz
 #define indicationFreq 1      // Hz
 
@@ -50,6 +49,14 @@
 #define f_ay 1.0086
 #define AngleThresh 0.5 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 
+#define wheel_J 0.0001 // kg*m^2. Moment of inertia of the wheel
+
+#define balanceAngle 0.0 // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
+
+#define balance_Kp 1.0
+#define balance_Kd 0.0
+// #define balance_Ki 0.0 // using PD control for now
+
 #define ENC_PPR 600
 
 /*
@@ -64,5 +71,3 @@
 #define log_dt_ms (1000.0 / logFreq)                     // ms
 #define refreshStatus_dt_ms (1000.0 / refreshStatusFreq) // ms
 #define indication_dt_ms (1000.0 / indicationFreq)       // ms
-
-#endif // PARAMS_HPP

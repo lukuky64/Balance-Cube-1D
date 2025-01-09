@@ -1,5 +1,4 @@
-#ifndef COMMS_HPP
-#define COMMS_HPP
+#pragma once
 
 #include <SPI.h>
 #include "freertos/FreeRTOS.h"
@@ -29,5 +28,3 @@ extern SPICOM m_SPIComSD;
 
 // // Function to initialize mutexes
 // void initialiseMutexes();
-
-#endif // COMMS_HPP

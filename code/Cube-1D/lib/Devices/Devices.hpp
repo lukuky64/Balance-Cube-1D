@@ -1,6 +1,4 @@
-
-#ifndef DEVICES_HPP
-#define DEVICES_HPP
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "SemaphoreGuard.hpp"
@@ -85,5 +83,3 @@ private:
     SemaphoreHandle_t m_prefMaskMutex = NULL;
     uint8_t m_prefMask = 0;
 };
-
-#endif // DEVICES_HPP

@@ -1,6 +1,4 @@
-
-#ifndef STATE_MACHINE_HPP
-#define STATE_MACHINE_HPP
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "esp_sleep.h"
@@ -68,5 +66,3 @@ private:
 
     TaskHandle_t m_logTaskHandle = NULL;
 };
-
-#endif // STATE_MACHINE_HPP

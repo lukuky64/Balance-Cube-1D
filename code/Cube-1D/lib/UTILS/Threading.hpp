@@ -1,5 +1,4 @@
-#ifndef THREADING_HPP
-#define THREADING_HPP
+#pragma once
 
 enum PRIORITY
 {
@@ -7,5 +6,3 @@ enum PRIORITY
     PRIORITY_MEDIUM = 2,
     PRIORITY_LOW = 1,
 };
-
-#endif // THREADING_HPP

@@ -1,5 +1,4 @@
-#ifndef SD_TALKER_HPP
-#define SD_TALKER_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -48,5 +47,3 @@ private:
 
 #endif
 };
-
-#endif // SD_TALKER_HPP

@@ -1,5 +1,4 @@
-#ifndef INDICATORS_HPP
-#define INDICATORS_HPP
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -77,5 +76,3 @@ private:
         {'W', 0xFFFFFF},
         {'O', 0xFFA500}};
 };
-
-#endif // INDICATORS_HPP

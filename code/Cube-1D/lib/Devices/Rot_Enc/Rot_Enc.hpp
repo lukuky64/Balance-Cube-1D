@@ -1,6 +1,4 @@
-
-#ifndef ROT_ENC_HPP
-#define ROT_ENC_HPP
+#pragma once
 
 #include "Arduino.h"
 
@@ -14,5 +12,3 @@ public:
 
 private:
 };
-
-#endif // ROT_ENC_HPP

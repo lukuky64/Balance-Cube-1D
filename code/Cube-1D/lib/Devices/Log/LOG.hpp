@@ -1,5 +1,4 @@
-#ifndef LOG_HPP
-#define LOG_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -40,5 +39,3 @@ private:
     char charBuffer[m_bufferSize];
     size_t currentBufferPos; // Track current position in buffer
 };
-
-#endif // LOG_HPP

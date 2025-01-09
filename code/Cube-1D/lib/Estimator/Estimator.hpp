@@ -1,5 +1,4 @@
-#ifndef estimator_attitude_h
-#define estimator_attitude_h
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -27,8 +26,8 @@ public:
 private:
     Devices &m_devicesRef;
 
-    void estimateIMU();
-    void estimateROT_ENC();
+    void estimateWithIMU();
+    void estimateWithRot_Enc();
 
     // Angular velocity bias calibration
     void calibrate();
@@ -49,13 +48,11 @@ private:
     float m_omegaBias; // Angular velocity bias (rad/s)
 
     // Estimator gains
-    float m_lds;
-    float m_ldw;
+    const float m_lds;
+    const float m_ldw;
 
     bool m_imuSelected;
     bool m_rotEncSelected;
 
     uint16_t m_dt;
 };
-
-#endif

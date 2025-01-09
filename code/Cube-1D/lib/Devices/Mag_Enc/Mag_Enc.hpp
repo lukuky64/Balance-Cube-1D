@@ -1,5 +1,4 @@
-#ifndef MAG_ENC_H
-#define MAG_ENC_H
+#pragma once
 
 #include "Arduino.h"
 #include <SPI.h>
@@ -81,5 +80,3 @@ private:
 
   SPICOM *m_SPI_BUS = nullptr;
 };
-
-#endif // MAG_ENC_H

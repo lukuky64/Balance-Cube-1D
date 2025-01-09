@@ -1,5 +1,4 @@
-#ifndef BLDC_CTR_HPP
-#define BLDC_CTR_HPP
+#pragma once
 
 #include "Arduino.h"
 #include "esp_log.h"
@@ -17,14 +16,18 @@ public:
     bool checkStatus() { return true; }
     void enableMotor(bool enable) { return; }
     bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc mag_enc, float voltage) { return true; }
-    void loop(float target) { return; }
+    void loopFOC() { return; }
+    void moveTarget(float target) { return; }
     void updateVoltageLimits(float voltage) { return; }
+    float getMaxTau() { return 2.0f; }
 #else
     bool checkStatus();
     void enableMotor(bool enable);
     bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc mag_enc, float voltage);
-    void loop(float target);
+    void loopFOC();
+    void moveTarget(float target);
     void updateVoltageLimits(float voltage);
+    float getMaxTau();
 #endif
 
 private:
@@ -37,5 +40,3 @@ private:
 
     void setMotorSettings();
 };
-
-#endif // BLDC_CTR_HPP

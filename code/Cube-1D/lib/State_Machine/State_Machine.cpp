@@ -114,7 +114,7 @@ void State_Machine::balanceTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateBalanceControl();
+        machine->m_control.updateBalanceControl(balance_dt_ms);
         vTaskDelay(pdMS_TO_TICKS(balance_dt_ms));
     }
 }
@@ -129,7 +129,7 @@ void State_Machine::updateFiltersTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateFilters();
+        machine->m_control.updateData();
         vTaskDelay(pdMS_TO_TICKS(aquisitionFreq));
     }
 }

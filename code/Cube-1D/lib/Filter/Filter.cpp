@@ -49,7 +49,6 @@ void Filter::update(float measurement, float controlInput, float controlEffect)
 {
     if (!isInitialised)
     {
-        // Optionally handle uninitialized state
         return;
     }
 
