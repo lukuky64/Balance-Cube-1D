@@ -29,6 +29,7 @@ SD_Talker::~SD_Talker()
     }
 }
 
+// !!! this doesn't work as intended
 bool SD_Talker::checkStatus()
 {
     SemaphoreGuard guard(m_SPI_BUS->mutex);

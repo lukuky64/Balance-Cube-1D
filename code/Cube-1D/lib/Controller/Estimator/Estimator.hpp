@@ -45,11 +45,10 @@ private:
     SemaphoreHandle_t m_theta_mutex = nullptr;
     SemaphoreHandle_t m_omega_mutex = nullptr;
 
-    float m_omegaBias; // Angular velocity bias (rad/s)
+    const float m_omegaBias; // Angular velocity bias (rad/s)
 
     // Estimator gains
     const float m_lds;
-    const float m_ldw;
 
     bool m_imuSelected;
     bool m_rotEncSelected;

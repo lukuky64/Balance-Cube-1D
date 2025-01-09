@@ -7,6 +7,7 @@
 #include "common/time_utils.h"
 #include "Comms/Comms.hpp"
 #include "SemaphoreGuard.hpp"
+#include "Params.hpp"
 
 #define DEF_ANGLE_REGISTER 0x3FFF
 

@@ -55,8 +55,13 @@ bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_nu
     {
         return false;
     }
+    ESP_LOGI("Devices", "SPI for BLDC set up successfully!, now doing begin");
 
-    return m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_magEnc, m_usbPD.getVoltage()); // probably should be getting all these variables from function params
+    bool succ = m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_magEnc, m_usbPD.getVoltage());
+
+    ESP_LOGI("Devices", "BLDC begin returned %d", succ);
+
+    return succ; // probably should be getting all these variables from function params
 }
 
 bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
@@ -197,17 +202,11 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
 
     // set up indication. If silent indication is enabled, only set up RGB LED
     {
-        if (!m_indicators.checkStatusLed())
-        {
-            m_indicators.setupRGBLed(LED_NEO);
-        }
+        m_indicators.setupRGBLed(LED_NEO);
 
-        if (!m_indicators.checkStatusBuzzer())
+        if (!SilentIndication)
         {
-            if (!SilentIndication)
-            {
-                m_indicators.setupBuzzer(BUZZER);
-            }
+            m_indicators.setupBuzzer(BUZZER);
         }
 
         statusMask |= INDICATION_BIT;

@@ -11,6 +11,8 @@
 #include "Devices.hpp"
 #include "Controller.hpp"
 
+#include "TimerGuard.hpp"
+
 enum STATES
 {
     INITIALISATION = 0,

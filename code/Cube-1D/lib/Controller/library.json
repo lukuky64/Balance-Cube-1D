@@ -1,0 +1,10 @@
+{
+    "name": "Controller",
+    "version": "1.0.0",
+    "description": "Inverted Cube Controller",
+    "authors": [
+        {
+            "name": "Lucas Moore"
+        }
+    ]
+}

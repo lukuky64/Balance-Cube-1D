@@ -7,28 +7,24 @@ Estimator::Estimator(Devices &devicesRef, uint16_t dt)
       m_rotEncSelected(false),
       m_dt(dt),
       m_lds(0.02),
-      m_ldw(50.0)
+      m_omegaBias(0.0)
 {
     m_theta_mutex = xSemaphoreCreateMutex();
     m_omega_mutex = xSemaphoreCreateMutex();
 
     // Estimator gains
 
-    SemaphoreGuard guard(m_theta_mutex);
-    if (guard.acquired())
-    {
-        SemaphoreGuard guard(m_omega_mutex);
-        if (guard.acquired())
-        {
-            // Set initial orientation angle
-            m_theta = 0.0;
-            // Set initial angular velocity
-            m_omega = 0.0;
-        }
-    }
+    SemaphoreGuard guard1(m_theta_mutex);
+    SemaphoreGuard guard2(m_omega_mutex);
 
-    // Set initial angular velocity bias
-    m_omegaBias = 0.0;
+    if (guard1.acquired() && guard2.acquired())
+    {
+
+        // Set initial orientation angle
+        m_theta = 0.0;
+        // Set initial angular velocity
+        m_omega = 0.0;
+    }
 }
 
 bool Estimator::selectDevice()
@@ -58,19 +54,24 @@ bool Estimator::selectDevice()
 }
 
 // Angular velocity bias calibration for IMU
+// void Estimator::calibrate()
+// {
+//     if (m_imuSelected)
+//     {
+//         // Calculate angular velocity bias by averaging n samples for 0.5 seconds
+//         int n = aquisitionFreq / 2;
+//         for (int i = 0; i < n; i++)
+//         {
+//             m_devicesRef.m_imu.update();
+//             m_omegaBias += m_devicesRef.m_imu.getGyroY() / n;
+//             vTaskDelay(pdMS_TO_TICKS(m_dt));
+//         }
+//     }
+// }
+
 void Estimator::calibrate()
 {
-    if (m_imuSelected)
-    {
-        // Calculate angular velocity bias by averaging n samples for 0.5 seconds
-        int n = aquisitionFreq / 2;
-        for (int i = 0; i < n; i++)
-        {
-            m_devicesRef.m_imu.update();
-            m_omegaBias += m_devicesRef.m_imu.getGyroY() / n;
-            vTaskDelay(pdMS_TO_TICKS(m_dt));
-        }
-    }
+    return; // !!! THIS IS FOR TESTING, REMOVE THIS LINE
 }
 
 void Estimator::estimateWithIMU()

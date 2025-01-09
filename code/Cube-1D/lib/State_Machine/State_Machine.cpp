@@ -82,9 +82,16 @@ void State_Machine::BLDCTask(void *pvParameters)
 
     machine->m_devices.m_bldc.enableMotor(true); // Enable motor
 
+    unsigned long startUS;
+    unsigned long endUS = micros();
+
     while (machine->m_control.controllableAngle())
     {
-        machine->m_control.updateBLDC(); // !!! We want to loop over FOC as fast as possible, so might need to seperate the internals
+        {
+            // TimerGuard guard("State_Machine", "update BLDC task");
+            machine->m_control.updateBLDC(); // currently only takes ~ 5uS or 200kHz
+        }
+
         vTaskDelay(pdMS_TO_TICKS(BLDC_dt_ms));
     }
 
@@ -112,9 +119,11 @@ void State_Machine::balanceTask(void *pvParameters)
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
+    machine->m_control.setState(); // must set the current and target angle plus time constant for trajectory plan
+
     while (true)
     {
-        machine->m_control.updateBalanceControl(balance_dt_ms);
+        machine->m_control.updateBalanceControl(balance_dt_ms); // currently only takes ~ 27uS or 33kHz
         vTaskDelay(pdMS_TO_TICKS(balance_dt_ms));
     }
 }
@@ -130,7 +139,7 @@ void State_Machine::updateFiltersTask(void *pvParameters)
     while (true)
     {
         machine->m_control.updateData();
-        vTaskDelay(pdMS_TO_TICKS(aquisitionFreq));
+        vTaskDelay(pdMS_TO_TICKS(aquisition_dt_ms));
     }
 }
 

@@ -14,9 +14,9 @@
 #define SERVO_BRAKING 0
 #define USE_ROT_ENC 0
 
-#define DUMMY_IMU 0
+#define DUMMY_IMU 1
 #define DUMMY_SERVO 1
-#define DUMMY_BLDC 0
+#define DUMMY_BLDC 1
 #define DUMMY_MAG 1
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
@@ -51,7 +51,8 @@
 
 #define wheel_J 0.0001 // kg*m^2. Moment of inertia of the wheel
 
-#define balanceAngle 0.0 // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
+#define balanceAngle 0.0  // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
+#define balancePeriod 2.0 // seconds. This is the period of the balance trajectory
 
 #define balance_Kp 1.0
 #define balance_Kd 0.0

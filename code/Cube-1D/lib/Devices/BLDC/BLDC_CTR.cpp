@@ -14,15 +14,12 @@ BLDC_CTR::~BLDC_CTR()
 
 bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc mag_enc, float voltage)
 {
-
     m_motor = new BLDCMotor(num_poles, phase_res);
     m_driver = new BLDCDriver3PWM(phA, phB, phC, enable);
     m_sensor = &mag_enc;
     m_current_sense = new InlineCurrentSense(sense_mVpA, senseA, senseB, NOT_SET);
 
-    m_voltage = voltage;
-
-    updateVoltageLimits(m_voltage);
+    updateVoltageLimits(voltage);
 
     m_motor->linkSensor(m_sensor);
 
@@ -34,8 +31,10 @@ bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int sens
     m_motor->linkCurrentSense(m_current_sense);
 
     setMotorSettings();
+
     bool motorSucc = ((m_motor->init()) != 0);
-    bool FOCSucc = ((m_motor->initFOC()) != 0);
+
+    bool FOCSucc = ((m_motor->initFOC()) != 0); // !!! there was an issue here... but not anymore apparently
 
     enableMotor(false); // Disable motor initially
 

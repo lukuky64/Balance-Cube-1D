@@ -98,6 +98,8 @@ byte Mag_Enc::spiCalcEvenParity(word value)
 word Mag_Enc::read(word angle_register)
 {
 
+  //ESP_LOGI("MAG_ENC", "Reading register: %x", angle_register);
+
   word command = angle_register;
 
   if (command_rw_bit > 0)

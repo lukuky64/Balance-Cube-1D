@@ -8,14 +8,15 @@
 
 #include "SemaphoreGuard.hpp"
 
-struct stateDyamics
+// 5th-order polynomial
+struct PolyCoeffs
 {
-    float pos;
-    float vel;
-    float acc;
-    float jer;
-    float sna;
-    float cra;
+    float a0{0.0f};
+    float a1{0.0f};
+    float a2{0.0f};
+    float a3{0.0f};
+    float a4{0.0f};
+    float a5{0.0f};
 };
 
 struct trajRefs
@@ -43,11 +44,16 @@ public:
     bool selectDevice();
 
     trajRefs getRefs();
-    void setTrajDyn(float pos, float vel, float acc, float jer, float sna, float cra);
+    // void setTrajDyn(float pos, float vel, float acc, float jer, float sna, float cra);
     void setRefs(float theta_r, float omega_r, float alpha_r);
 
-    SemaphoreHandle_t m_state_mutex = nullptr;
-    stateDyamics m_stateDyn;
+    void setTargetAngle(float startAngle, float targetAngle, float totalTime);
+
+    SemaphoreHandle_t m_coeff_mutex = nullptr;
+    PolyCoeffs m_coeffs;
+    
+    float m_elapsed{0.0f};
+    float m_totalTime{1.0f}; // Some default
 
     SemaphoreHandle_t m_ref_mutex = nullptr;
     trajRefs m_Ref;

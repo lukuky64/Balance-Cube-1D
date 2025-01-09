@@ -98,6 +98,12 @@ float Controller::linearRegulator(float dt)
     return tau;
 }
 
+void Controller::setState()
+{
+    float currentAngle = m_filters.filter_theta.getValue();
+    m_traj_gen.setTargetAngle(currentAngle, balanceAngle, balancePeriod);
+}
+
 // void Controller::setTargetTau(float tau)
 // {
 //     SemaphoreGuard guard(m_target_tau_mutex);

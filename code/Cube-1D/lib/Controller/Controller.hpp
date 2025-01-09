@@ -4,8 +4,8 @@
 #include "esp_log.h"
 #include "Devices.hpp"
 #include "Filter.hpp"
-#include "Estimator.hpp"
-#include "TrajGenerator.hpp"
+#include "Estimator/Estimator.hpp"
+#include "TrajGenerator/TrajGenerator.hpp"
 #include "Params.hpp"
 #include <algorithm>
 
@@ -35,6 +35,8 @@ public:
     float linearRegulator(float dt);
 
     float (&getDataBuffer())[3];
+
+    void setState();
 
     // void setTargetTau(float tau);
     // float getTargetTau();
