@@ -5,6 +5,8 @@
         User Defined
 ===============================
 */
+#define ALLOW_SLEEP = 1
+#define sleepTimeout_ms 6000 // ms
 
 // Device selection
 #define USE_IMU 1
@@ -25,13 +27,13 @@
 #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define aquisitionFreq 100    // Hz
-#define balanceFreq 25        // Hz
-#define BLDCFreq 250          // Hz
-#define logFreq 25            // Hz
-#define refreshStatusFreq 0.2 // Hz
-#define indicationFreq 1      // Hz
-#define checkBoundaryFreq 10  // Hz
+#define aquisitionFreq 25   // Hz
+#define balanceFreq 25      // Hz
+#define BLDCFreq 250        // Hz
+#define logFreq 25          // Hz
+#define refreshStatusFreq 1 // Hz
+#define indicationFreq 1    // Hz
+#define taskManagerFreq 20  // Hz
 
 // Log parameters
 #define log_header "Time(s),Theta(rad),Omega(rad/s),Mag(rad)"
@@ -73,4 +75,4 @@
 #define log_dt_ms (1000.0 / logFreq)                     // ms
 #define refreshStatus_dt_ms (1000.0 / refreshStatusFreq) // ms
 #define indication_dt_ms (1000.0 / indicationFreq)       // ms
-#define checkBoundary_dt_ms (1000.0 / checkBoundaryFreqw) // ms
+#define taskManager_dt_ms (1000.0 / taskManagerFreq)     // ms

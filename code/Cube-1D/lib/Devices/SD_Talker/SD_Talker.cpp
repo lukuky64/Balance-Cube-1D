@@ -32,27 +32,35 @@ SD_Talker::~SD_Talker()
 // !!! this doesn't work as intended
 bool SD_Talker::checkStatus()
 {
-    SemaphoreGuard guard(m_SPI_BUS->mutex);
-    if (guard.acquired())
+    if (!initialised)
     {
-        // Retrieve the card type
-        uint8_t cardType = SD.cardType();
+        return false;
+    }
 
-        if (cardType == CARD_NONE)
+    uint8_t cardType;
+    {
+        SemaphoreGuard guard(m_SPI_BUS->mutex);
+        if (guard.acquired())
         {
-            ESP_LOGI("SD_Talker", "SD card not connected.");
-            return false;
+            // Retrieve the card type
+            uint8_t cardType = SD.cardType();
         }
         else
         {
-            ESP_LOGI("SD_Talker", "SD card connected. Type: %d", cardType);
-            return true;
+            ESP_LOGI("SD_Talker", "Failed to acquire SD mutex for status check.");
+            return false;
         }
+    }
+
+    if (cardType == CARD_NONE)
+    {
+        ESP_LOGI("SD_Talker", "SD card not connected.");
+        return false;
     }
     else
     {
-        ESP_LOGI("SD_Talker", "Failed to acquire SD mutex for status check.");
-        return false;
+        ESP_LOGI("SD_Talker", "SD card connected. Type: %d", cardType);
+        return true;
     }
 }
 
@@ -229,11 +237,6 @@ String SD_Talker::createUniqueLogFile(String prefix)
         }
     }
     return "";
-}
-
-bool SD_Talker::isInitialized()
-{
-    return isFileOpen;
 }
 
 #endif

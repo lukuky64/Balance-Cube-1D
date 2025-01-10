@@ -62,6 +62,8 @@ public:
     bool sleepMode();
     void wakeMode();
 
+    bool canSleep();
+
     bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus);
 
     // devices. Making public for now

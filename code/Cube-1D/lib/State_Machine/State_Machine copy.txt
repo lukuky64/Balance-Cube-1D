@@ -35,16 +35,20 @@ public:
 
     // void cpuUsageMonitorSeq();
 
-    void initialisationSeq();
-    void calibrationSeq();
-    void controlSeq();
-    void lightSleepSeq();
-    void idleSeq();
+    bool initialisationSeq();
+    bool calibrationSeq();
+    bool controlSeq();
+    bool lightSleepSeq();
+    bool idleSeq();
     void checkActivityTask();
+    bool canSleep();
 
     STATES getCurrentState();
 
     void criticalErrorSeq();
+
+    void setState(STATES state);
+    STATES getState();
 
     // FreeRTOS Tasks
     static void indicationTask(void *pvParameters);
@@ -53,14 +57,10 @@ public:
     static void balanceTask(void *pvParameters);
     static void BLDCTask(void *pvParameters);
     static void logTask(void *pvParameters);
-    static void ControlabilityTask(void *pvParameters);
-    static void checkControllableTask(void *pvParameters);
+    static void taskManagerTask(void *pvParameters);
 
 private:
     SemaphoreHandle_t m_stateMutex = NULL;
-
-    // SemaphoreHandle_t m_controllableMutex = NULL;
-    // bool m_controllable;
 
     STATES m_currState;
     Devices m_devices;

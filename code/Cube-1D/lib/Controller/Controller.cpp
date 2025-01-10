@@ -5,15 +5,18 @@ Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
                                               m_filters{Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f)},
                                               m_estimator(devicesRef, aquisition_dt_ms),
                                               m_controllableAngleThreshold(AngleThresh),
-                                              m_wheel_J(wheel_J)
+                                              m_wheel_J(wheel_J),
+                                              m_controlable(false)
 {
-    m_target_tau_mutex = xSemaphoreCreateMutex();
+    // m_target_tau_mutex = xSemaphoreCreateMutex();
+    m_controllableMutex = xSemaphoreCreateMutex();
     m_maxTau = m_devicesRef.m_bldc.getMaxTau();
 }
 
 Controller::~Controller()
 {
-    vSemaphoreDelete(m_target_tau_mutex);
+    // vSemaphoreDelete(m_target_tau_mutex);
+    vSemaphoreDelete(m_controllableMutex);
 }
 
 void Controller::setup()
@@ -27,11 +30,28 @@ bool Controller::checkStatus()
     return true;
 }
 
-bool Controller::controllableAngle()
+bool Controller::getControllable()
 {
-    float angle = m_filters.filter_theta.getValue();
-    ESP_LOGI("Controller", "Current angle: %f", angle);
-    return (fabs(angle) < m_controllableAngleThreshold);
+    SemaphoreGuard guard(m_controllableMutex);
+    if (guard.acquired())
+    {
+        return m_controlable;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void Controller::updateControlability()
+{
+    SemaphoreGuard guard(m_controllableMutex);
+    if (guard.acquired())
+    {
+        float angle = m_filters.filter_theta.getValue();
+        ESP_LOGI("Controller", "Current angle: %f", angle);
+        m_controlable = (fabs(angle) < m_controllableAngleThreshold);
+    }
 }
 
 // this needs to be called frequently
@@ -41,6 +61,7 @@ void Controller::updateData()
     m_estimator.estimate();
     m_filters.filter_omega.update(m_estimator.getOmega());
     m_filters.filter_theta.update(m_estimator.getTheta());
+    updateControlability();
 }
 
 void Controller::updateBalanceControl(float dt)

@@ -27,7 +27,7 @@ public:
 
     void setup();
     bool checkStatus();
-    bool controllableAngle();
+    bool getControllable();
     void updateData();
     void updateBalanceControl(float dt);
     void updateBLDC();
@@ -42,13 +42,18 @@ public:
     // float getTargetTau();
 
 private:
+    void updateControlability();
+
+    SemaphoreHandle_t m_controllableMutex = nullptr;
+    bool m_controlable;
+
     Devices &m_devicesRef;
     FILTERS m_filters;
     Estimator m_estimator;
     TrajGenerator m_traj_gen;
 
-    SemaphoreHandle_t m_target_tau_mutex = nullptr;
-    float m_target_tau;
+    // SemaphoreHandle_t m_target_tau_mutex = nullptr;
+    // float m_target_tau;
 
     // Moment of inertia
     const float m_wheel_J;

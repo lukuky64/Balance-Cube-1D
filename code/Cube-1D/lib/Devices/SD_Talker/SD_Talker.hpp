@@ -31,7 +31,6 @@ public:
 
     // bool writeToBuffer(String dataString);
     bool writeBuffer(const char *buffer, size_t bufferIndex);
-    bool isInitialized();
 
     String createUniqueLogFile(String prefix);
     bool createNestedDirectories(String prefix);

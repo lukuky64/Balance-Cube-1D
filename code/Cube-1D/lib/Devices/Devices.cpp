@@ -404,3 +404,29 @@ bool Devices::sleepMode()
 void Devices::wakeMode()
 {
 }
+
+bool Devices::canSleep()
+{
+    uint8_t deviceStatus = getStatus();
+
+    // If we don't have HV supply, we are connected to a PC and sleep is not possible via USB OTG if we want to maintain communication
+    if ((deviceStatus & USBPD_BIT) == USBPD_BIT)
+    {
+        // check if IMU is enabled
+        if ((deviceStatus & IMU_BIT) == IMU_BIT)
+        {
+            ESP_LOGI("Devices", "Can sleep!");
+            return true;
+        }
+        else
+        {
+            ESP_LOGI("Devices", "IMU not enabled, cannot enter light sleep!");
+            return false;
+        }
+    }
+    else
+    {
+        ESP_LOGI("Devices", "USB connected, cannot enter light sleep!");
+        return false;
+    }
+}
