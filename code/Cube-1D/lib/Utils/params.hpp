@@ -31,6 +31,7 @@
 #define logFreq 25            // Hz
 #define refreshStatusFreq 0.2 // Hz
 #define indicationFreq 1      // Hz
+#define checkBoundaryFreq 10  // Hz
 
 // Log parameters
 #define log_header "Time(s),Theta(rad),Omega(rad/s),Mag(rad)"
@@ -72,3 +73,4 @@
 #define log_dt_ms (1000.0 / logFreq)                     // ms
 #define refreshStatus_dt_ms (1000.0 / refreshStatusFreq) // ms
 #define indication_dt_ms (1000.0 / indicationFreq)       // ms
+#define checkBoundary_dt_ms (1000.0 / checkBoundaryFreqw) // ms

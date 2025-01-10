@@ -49,11 +49,11 @@ public:
 
     void setTargetAngle(float startAngle, float targetAngle, float totalTime);
 
+    float m_elapsed{0.0f};
+    float m_totalTime{1.0f}; // Some defaults
+
     SemaphoreHandle_t m_coeff_mutex = nullptr;
     PolyCoeffs m_coeffs;
-    
-    float m_elapsed{0.0f};
-    float m_totalTime{1.0f}; // Some default
 
     SemaphoreHandle_t m_ref_mutex = nullptr;
     trajRefs m_Ref;

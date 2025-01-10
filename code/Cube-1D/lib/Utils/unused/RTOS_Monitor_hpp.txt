@@ -1,0 +1,23 @@
+#pragma once
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+#include "Arduino.h"
+
+class RTOS_Monitor
+{
+public:
+    RTOS_Monitor() {}
+    ~RTOS_Monitor() {}
+
+    // Initialize the CPU monitoring task
+    void begin();
+
+    // CPU monitoring task
+    static void cpuUsageTask(void *pvParameters);
+
+private:
+    // CPU monitoring function
+    float getCPUUsage();
+};

@@ -22,6 +22,7 @@ void State_Machine::begin()
     while (true)
     {
         loop();
+        vTaskDelay(pdMS_TO_TICKS(40)); // so we don't hog the CPU
     }
 }
 
@@ -119,7 +120,7 @@ void State_Machine::balanceTask(void *pvParameters)
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
-    machine->m_control.setState(); // must set the current and target angle plus time constant for trajectory plan
+    machine->m_control.setState();
 
     while (true)
     {
@@ -203,6 +204,25 @@ void State_Machine::logTask(void *pvParameters)
         vTaskDelay(pdMS_TO_TICKS(log_dt_ms));
     }
 }
+
+// void State_Machine::ControlabilityTask(void *pvParameters)
+// {
+//     vTaskDelay(pdMS_TO_TICKS(100));
+//     // Convert generic pointer back to State_Machine*
+//     auto *machine = static_cast<State_Machine *>(pvParameters);
+
+//     while (true)
+//     {
+        
+//         if (machine->m_control.controllableAngle())
+//         {
+
+//         }
+//         vTaskDelay(pdMS_TO_TICKS(checkBoundary_dt_ms));
+//     }
+
+    
+// }
 
 void State_Machine::initialisationSeq()
 {
@@ -406,3 +426,12 @@ void State_Machine::idleSeq()
 
     vTaskDelay(pdMS_TO_TICKS(100));
 }
+
+// // Setup CPU Usage Monitoring
+// void State_Machine::cpuUsageMonitorSeq()
+// {
+//     if (m_cpuUsageTaskHandle == NULL)
+//     {
+//         xTaskCreate(&RTOS_Monitor::cpuUsageTask, "CPUUsageTask", 2048, this, 1, &m_cpuUsageTaskHandle);
+//     }
+// }

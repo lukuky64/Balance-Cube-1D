@@ -1,0 +1,65 @@
+#include "RTOS_Monitor.hpp"
+
+// Function to calculate CPU Usage
+float RTOS_Monitor::getCPUUsage()
+{
+    const UBaseType_t uxTaskStatusArraySize = 10;
+    TaskStatus_t xTaskStatusArray[uxTaskStatusArraySize];
+    volatile UBaseType_t uxArraySize, x;
+    unsigned long ulTotalRunTime, ulIdleRunTime;
+    float cpuUsage;
+
+    // Get system state
+    uxArraySize = uxTaskGetSystemState(xTaskStatusArray, uxTaskStatusArraySize, &ulTotalRunTime);
+
+    ulIdleRunTime = 0;
+
+    for (x = 0; x < uxArraySize; x++)
+    {
+        if (strcmp(xTaskStatusArray[x].pcTaskName, "IDLE") == 0)
+        {
+            ulIdleRunTime = xTaskStatusArray[x].ulRunTimeCounter;
+            break;
+        }
+    }
+
+    if (ulTotalRunTime == 0)
+    {
+        return 0.0f;
+    }
+
+    // CPU Usage is 100 - (Idle Run Time / Total Run Time * 100)
+    cpuUsage = 100.0f - ((float)ulIdleRunTime / (float)ulTotalRunTime) * 100.0f;
+
+    return cpuUsage;
+}
+
+// CPU Usage Monitoring Task
+void RTOS_Monitor::cpuUsageTask(void *pvParameters)
+{
+    RTOS_Monitor *monitor = static_cast<RTOS_Monitor *>(pvParameters);
+    while (true)
+    {
+        float usage = monitor->getCPUUsage();
+        ESP_LOGI("CPUMonitor", "CPU Usage: %.2f%%", usage);
+        vTaskDelay(pdMS_TO_TICKS(1000)); // Update every second
+    }
+}
+
+// Initialize the CPU monitoring task
+void RTOS_Monitor::begin()
+{
+    BaseType_t result = xTaskCreate(
+        RTOS_Monitor::cpuUsageTask, // Task function
+        "CPUUsageTask",             // Task name
+        2048,                       // Stack size (adjust as needed)
+        this,                       // Task parameter
+        1,                          // Priority
+        NULL                        // Task handle (optional)
+    );
+
+    if (result != pdPASS)
+    {
+        ESP_LOGE("RTOS_Monitor", "Failed to create CPUUsageTask");
+    }
+}

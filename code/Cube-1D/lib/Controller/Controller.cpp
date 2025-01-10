@@ -8,7 +8,6 @@ Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
                                               m_wheel_J(wheel_J)
 {
     m_target_tau_mutex = xSemaphoreCreateMutex();
-
     m_maxTau = m_devicesRef.m_bldc.getMaxTau();
 }
 
@@ -31,9 +30,7 @@ bool Controller::checkStatus()
 bool Controller::controllableAngle()
 {
     float angle = m_filters.filter_theta.getValue();
-
     ESP_LOGI("Controller", "Current angle: %f", angle);
-
     return (fabs(angle) < m_controllableAngleThreshold);
 }
 

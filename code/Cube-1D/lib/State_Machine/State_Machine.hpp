@@ -1,17 +1,18 @@
 #pragma once
 
+#include "Arduino.h"
+
 #include "freertos/FreeRTOS.h"
 #include "esp_sleep.h"
-#include "SemaphoreGuard.hpp"
-#include "Threading.hpp"
 
-#include "Arduino.h"
 #include "esp_log.h"
 
 #include "Devices.hpp"
 #include "Controller.hpp"
 
 #include "TimerGuard.hpp"
+#include "Threading.hpp"
+#include "SemaphoreGuard.hpp"
 
 enum STATES
 {
@@ -32,6 +33,8 @@ public:
     void begin();
     void loop();
 
+    // void cpuUsageMonitorSeq();
+
     void initialisationSeq();
     void calibrationSeq();
     void controlSeq();
@@ -51,9 +54,11 @@ public:
     static void balanceTask(void *pvParameters);
     static void BLDCTask(void *pvParameters);
     static void logTask(void *pvParameters);
+    static void ControlabilityTask(void *pvParameters);
 
 private:
     SemaphoreHandle_t m_stateMutex = NULL;
+
     STATES m_currState;
     Devices m_devices;
     Controller m_control;
@@ -67,4 +72,6 @@ private:
     TaskHandle_t m_BLDCTaskHandle = NULL;
 
     TaskHandle_t m_logTaskHandle = NULL;
+
+    TaskHandle_t m_cpuUsageTaskHandle = NULL;
 };
