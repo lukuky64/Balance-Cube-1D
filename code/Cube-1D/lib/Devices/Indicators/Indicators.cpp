@@ -82,7 +82,7 @@ void Indicators::showSuccess()
 
 void Indicators::showAllGood()
 {
-    ESP_LOGI("Indicators", "Showing All Good!");
+    // ESP_LOGI("Indicators", "Showing All Good!");
 
     uint16_t duration = 50; // ms
 

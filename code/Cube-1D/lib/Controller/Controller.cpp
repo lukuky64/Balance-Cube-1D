@@ -49,7 +49,7 @@ void Controller::updateControlability()
     if (guard.acquired())
     {
         float angle = m_filters.filter_theta.getValue();
-        ESP_LOGI("Controller", "Current angle: %f", angle);
+        // ESP_LOGI("Controller", "Current angle: %f", angle);
         m_controlable = (fabs(angle) < m_controllableAngleThreshold);
     }
 }

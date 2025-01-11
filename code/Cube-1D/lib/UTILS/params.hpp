@@ -27,13 +27,13 @@
 #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define aquisitionFreq 25   // Hz
-#define balanceFreq 25      // Hz
-#define BLDCFreq 250        // Hz
-#define logFreq 25          // Hz
-#define refreshStatusFreq 1 // Hz
-#define indicationFreq 1    // Hz
-#define taskManagerFreq 20  // Hz
+#define aquisitionFreq 25     // Hz
+#define balanceFreq 25        // Hz
+#define BLDCFreq 250          // Hz
+#define logFreq 50            // Hz
+#define refreshStatusFreq 0.5 // Hz
+#define indicationFreq 1      // Hz
+#define taskManagerFreq 20    // Hz
 
 // Log parameters
 #define log_header "Time(s),Theta(rad),Omega(rad/s),Mag(rad)"

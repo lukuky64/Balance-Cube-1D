@@ -37,30 +37,27 @@ bool SD_Talker::checkStatus()
         return false;
     }
 
-    uint8_t cardType;
+    SemaphoreGuard guard(m_SPI_BUS->mutex);
+    if (guard.acquired())
     {
-        SemaphoreGuard guard(m_SPI_BUS->mutex);
-        if (guard.acquired())
+        // Retrieve the card type
+        uint8_t cardType = SD.cardType();
+
+        if (cardType == CARD_NONE)
         {
-            // Retrieve the card type
-            uint8_t cardType = SD.cardType();
+            ESP_LOGE("SD_Talker", "SD card not connected.");
+            return false;
         }
         else
         {
-            ESP_LOGI("SD_Talker", "Failed to acquire SD mutex for status check.");
-            return false;
+            // ESP_LOGI("SD_Talker", "SD card connected. Type: %d", cardType);
+            return true;
         }
-    }
-
-    if (cardType == CARD_NONE)
-    {
-        ESP_LOGI("SD_Talker", "SD card not connected.");
-        return false;
     }
     else
     {
-        ESP_LOGI("SD_Talker", "SD card connected. Type: %d", cardType);
-        return true;
+        ESP_LOGE("SD_Talker", "Failed to acquire SD mutex for status check.");
+        return false;
     }
 }
 

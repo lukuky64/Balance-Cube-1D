@@ -53,6 +53,7 @@ void State_Machine::loop()
     case CALIBRATION:
     {
         calibrationSeq();
+        logSeq(); // initial logging start
     }
     break;
     case IDLE:
@@ -63,6 +64,7 @@ void State_Machine::loop()
     case LIGHT_SLEEP:
     {
         lightSleepSeq();
+        logSeq(); // go back to logging after sleep
     }
     break;
     case CONTROL:
@@ -131,9 +133,7 @@ void State_Machine::balanceTask(void *pvParameters)
 
 void State_Machine::updateFiltersTask(void *pvParameters)
 {
-    ESP_LOGI("State_Machine", "Starting Filters Task");
-
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -156,7 +156,6 @@ void State_Machine::indicationTask(void *pvParameters)
 
         if (!requirementsMet)
         {
-
             {
                 SemaphoreGuard guard(machine->m_stateMutex);
                 if (guard.acquired())
@@ -165,6 +164,10 @@ void State_Machine::indicationTask(void *pvParameters)
                 }
             }
         }
+
+        // UBaseType_t uxHighWaterMark;
+        // uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+        // printf("Remaining stack: %u words\n", uxHighWaterMark);
 
         vTaskDelay(pdMS_TO_TICKS(indication_dt_ms));
     }
@@ -189,10 +192,12 @@ void State_Machine::logTask(void *pvParameters)
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
+    ESP_LOGI("State_Machine", "Starting log Task apparently");
+
     machine->m_devices.m_logger.startNewLog();
 
-    unsigned long startUS;
-    unsigned long endUS = micros();
+    // unsigned long startUS;
+    // unsigned long endUS = micros();
 
     while (true)
     {
@@ -237,7 +242,7 @@ void State_Machine::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 4096, this, PRIORITY_LOW, &m_indicationLoopTaskHandle);
+        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
     }
     if (m_refreshStatusTaskHandle == NULL)
     {
@@ -306,8 +311,7 @@ void State_Machine::lightSleepSeq()
     if (m_devices.sleepMode())
     {
         ESP_LOGI("State_Machine", "Entering Light Sleep!");
-        // Enter Light Sleep
-        esp_light_sleep_start();
+        esp_light_sleep_start(); // Enter Light Sleep
 
         ESP_LOGI("State_Machine", "Waking up from light sleep!");
         m_devices.wakeMode();
@@ -322,10 +326,7 @@ void State_Machine::lightSleepSeq()
 
 void State_Machine::controlSeq()
 {
-    if (m_logTaskHandle == NULL)
-    {
-        xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
-    }
+    ESP_LOGI("State_Machine", "Control Sequence!");
 
     if (m_balanceTaskHandle == NULL)
     {
@@ -337,6 +338,14 @@ void State_Machine::controlSeq()
     {
         ESP_LOGI("State_Machine", "Starting BLDC Task");
         xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
+    }
+}
+
+void State_Machine::logSeq()
+{
+    if (m_logTaskHandle == NULL)
+    {
+        xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
     }
 }
 
@@ -368,7 +377,7 @@ void State_Machine::idleSeq()
         vTaskDelay(pdMS_TO_TICKS(200));
 
         // if here for more than 1 minute, enter light sleep. !!! Currently 6 seconds
-        if (millis() - startTime > 6000)
+        if (millis() - startTime > sleepTimeout_ms)
         {
             if (m_devices.canSleep())
             {

@@ -19,7 +19,7 @@ public:
     void startNewLog();
 
     bool log(int len);
-    bool logData(float *data, int dataSize);
+    bool logData(const float *data, int dataSize);
     void setStartTime();
     void forceFlush();
 

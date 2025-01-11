@@ -42,64 +42,91 @@ void Log::setStartTime()
     m_startTime = millis();
 }
 
-bool Log::logData(float *data, int dataSize)
+bool Log::logData(const float *data, int dataSize)
 {
     // Ensure logging is set up
     if (!isLogSetup())
     {
+        ESP_LOGE("Log", "Logging not set up.");
         return false;
     }
 
-    // Calculate time stamp in seconds
+    // Calculate timestamp in seconds
     float timeStamp = static_cast<float>(millis() - m_startTime) / 1000.0f;
 
-    // 1) Write the timestamp with a trailing comma
-    int remaining = m_bufferSize - currentBufferPos;
-    int len = snprintf(&charBuffer[currentBufferPos], remaining, "%.3f,", timeStamp);
-    if (len < 0 || len >= remaining)
+    // Function to write formatted string to buffer with overflow protection
+    auto writeToBuffer = [&](const char *format, float value, bool isLast = false) -> bool
     {
-        ESP_LOGE("Log", "Failed to format timestamp or buffer overflow.");
-        return false;
-    }
-    currentBufferPos += len;
-    remaining -= len;
+        // Estimate maximum required length for the formatted string
+        // "%.3f," -> up to 12 characters including null terminator
+        // Adjust maxFloatLen if necessary based on expected float range
+        constexpr size_t maxFloatLen = 12;
+        size_t remaining = m_bufferSize - currentBufferPos;
 
-    // 2) Handle each data element
-    for (int i = 0; i < dataSize; ++i)
-    {
-        // Estimate maximum size needed for a single float + comma (e.g., "-1234.567,\0")
-        // This is conservative—adjust for your max float format width
-        const int maxFloatLen = 12;
-
-        // If insufficient space remains, flush then retry once
+        // Check if there is enough space for the new data
         if (maxFloatLen > remaining)
         {
-            // Attempt to flush buffer
+            // Flush current buffer
             if (!writeBufferAll())
             {
-                ESP_LOGE("Log", "Failed to write buffer before retrying data element.");
+                ESP_LOGE("Log", "Failed to flush buffer.");
                 return false;
             }
 
-            // Reset buffer pointers
+            // Reset buffer pointers after flushing
             currentBufferPos = 0;
             remaining = m_bufferSize;
         }
 
-        // Now safe to write the float (with snprintf)
-        len = snprintf(&charBuffer[currentBufferPos], remaining, "%.3f,", data[i]);
-        if (len < 0 || len >= remaining)
+        // Determine the actual character to append (comma or newline)
+        char suffix = isLast ? '\n' : ',';
+
+        // Write the formatted float to the buffer
+        int written = snprintf(&charBuffer[currentBufferPos], remaining, format, value);
+        if (written < 0)
         {
-            ESP_LOGE("Log", "Data element too large or formatting error.");
+            ESP_LOGE("Log", "Formatting error while writing float.");
             return false;
         }
-        currentBufferPos += len;
-        remaining -= len;
+
+        // Ensure we don't write beyond the buffer
+        if (static_cast<size_t>(written) >= remaining)
+        {
+            ESP_LOGE("Log", "Buffer overflow detected while writing float.");
+            return false;
+        }
+
+        // Update buffer position
+        currentBufferPos += written;
+        remaining -= written;
+
+        // Replace the trailing comma with the appropriate suffix
+        if (currentBufferPos > 0)
+        {
+            charBuffer[currentBufferPos - 1] = suffix;
+        }
+
+        return true;
+    };
+
+    // Step 1: Write the timestamp with a trailing comma
+    if (!writeToBuffer("%.3f,", timeStamp))
+    {
+        return false;
     }
 
-    // 3) If we wrote at least one float, replace trailing comma with newline
-    //    (if dataSize == 0, we only have the timestamp comma)
-    if (currentBufferPos > 0)
+    // Step 2: Write each data element with a trailing comma
+    for (int i = 0; i < dataSize; ++i)
+    {
+        bool isLast = (i == dataSize - 1);
+        if (!writeToBuffer("%.3f,", data[i], isLast))
+        {
+            return false;
+        }
+    }
+
+    // If there are no data elements, ensure the timestamp line ends with a newline
+    if (dataSize == 0 && currentBufferPos > 0)
     {
         charBuffer[currentBufferPos - 1] = '\n';
     }

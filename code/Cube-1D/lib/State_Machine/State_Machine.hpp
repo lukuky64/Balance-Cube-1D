@@ -41,10 +41,9 @@ public:
     void lightSleepSeq();
     void idleSeq();
     void checkActivityTask();
-
     STATES getCurrentState();
-
     void criticalErrorSeq();
+    void logSeq();
 
     // FreeRTOS Tasks
     static void indicationTask(void *pvParameters);

@@ -333,7 +333,7 @@ bool Devices::checkRequirementsMet()
 
 void Devices::setStatus(uint8_t status)
 {
-    ESP_LOGI("Devices", "Setting Status: %d", status);
+    // ESP_LOGI("Devices", "Setting Status: %d", status);
     {
         SemaphoreGuard guard(m_statusMaskMutex);
         if (guard.acquired())
@@ -364,7 +364,7 @@ uint8_t Devices::getStatus()
             status = m_statusMask;
         }
     }
-    ESP_LOGI("Devices", "Status: %d", status);
+    // ESP_LOGI("Devices", "Status: %u", status);
     return status;
 }
 
@@ -378,7 +378,7 @@ uint8_t Devices::getPref()
             pref = m_prefMask;
         }
     }
-    ESP_LOGI("Devices", "Pref: %d", pref);
+    // ESP_LOGI("Devices", "Pref: %d", pref);
     return pref;
 }
 
