@@ -36,7 +36,7 @@ public:
     ~TrajGenerator();
 
     // Estimate steps
-    void generate(float dt);
+    trajRefs generate(float dt);
 
     float getTheta();
     float getOmega();

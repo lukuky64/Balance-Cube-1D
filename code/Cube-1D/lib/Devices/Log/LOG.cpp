@@ -10,7 +10,7 @@ Log::~Log()
 {
 }
 
-void Log::startNewLog()
+bool Log::startNewLog()
 {
     setStartTime();
 
@@ -19,12 +19,15 @@ void Log::startNewLog()
         if (!m_sdTalker.createFile(log_header, log_file_prefix))
         {
             ESP_LOGE("Log", "Failed to create file on SD card!");
+            return false;
         }
         else
         {
             ESP_LOGI("Log", "Created file on SD card!");
+            return true;
         }
     }
+    return false;
 }
 
 void Log::selectLogSD()

@@ -1,8 +1,8 @@
 
-#include "CONTROLLER.hpp"
+#include "Controller.hpp"
 
 Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
-                                              m_filters{Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f), Filter(0.1f, 1.0f, 1.0f, 0.0f)},
+                                              m_filters{Filter(0.5f, 0.5f, 1.0f, 0.0f), Filter(0.5f, 0.5f, 1.0f, 0.0f), Filter(0.5f, 0.5f, 1.0f, 0.0f), Filter(0.5f, 0.5f, 1.0f, 0.0f)},
                                               m_estimator(devicesRef, aquisition_dt_ms),
                                               m_controllableAngleThreshold(AngleThresh),
                                               m_wheel_J(wheel_J),
@@ -60,7 +60,7 @@ void Controller::updateData()
     // update a time step variable
     m_estimator.estimate();
     m_filters.filter_omega.update(m_estimator.getOmega());
-    m_filters.filter_theta.update(m_estimator.getTheta());
+    m_filters.filter_theta.update(m_estimator.getTheta()); // we can also add the control effort here
     updateControlability();
 }
 
@@ -69,7 +69,7 @@ void Controller::updateBalanceControl(float dt)
     m_devicesRef.m_bldc.moveTarget(linearRegulator(dt));
 }
 
-// this needs to be called fast as possible
+// this needs to be called as fast as possible
 void Controller::updateBLDC()
 {
     m_devicesRef.m_bldc.loopFOC();
@@ -88,11 +88,8 @@ float (&Controller::getDataBuffer())[log_columns]
 
 float Controller::linearRegulator(float dt)
 {
-    m_traj_gen.generate(dt); // the purpose of this is to generate smoother control
+    trajRefs refs = m_traj_gen.generate(dt); // the purpose of this is to generate smoother control
 
-    // get necessary data
-
-    trajRefs refs = m_traj_gen.getRefs();
     float theta = m_filters.filter_theta.getValue();
     float omega = m_filters.filter_omega.getValue();
 

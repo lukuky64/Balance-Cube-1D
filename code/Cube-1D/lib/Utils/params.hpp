@@ -5,7 +5,7 @@
         User Defined
 ===============================
 */
-#define ALLOW_SLEEP = 1
+#define ALLOW_SLEEP 1
 #define sleepTimeout_ms 6000 // ms
 
 // Device selection

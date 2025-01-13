@@ -1,4 +1,3 @@
-
 #include "IMU.hpp"
 
 #if DUMMY_IMU

@@ -194,19 +194,20 @@ void State_Machine::logTask(void *pvParameters)
 
     ESP_LOGI("State_Machine", "Starting log Task apparently");
 
-    machine->m_devices.m_logger.startNewLog();
+    bool successLog = machine->m_devices.m_logger.startNewLog();
 
-    // unsigned long startUS;
-    // unsigned long endUS = micros();
-
-    while (true)
+    if (successLog)
     {
-        // startUS = micros();
-        machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), log_columns); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
-        // endUS = micros();
-        // float passed_time_us = (endUS - startUS);
-        // ESP_LOGI("State_Machine", "Logging Time: %f us", passed_time_us);
-        vTaskDelay(pdMS_TO_TICKS(log_dt_ms));
+        while (true)
+        {
+            machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), log_columns); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
+            vTaskDelay(pdMS_TO_TICKS(log_dt_ms));
+        }
+    }
+    else
+    {
+        machine->m_logTaskHandle = NULL; // clear the handle
+        vTaskDelete(NULL);
     }
 }
 
@@ -374,13 +375,13 @@ void State_Machine::idleSeq()
     // if angle is out of bounds, we will disable active control; stay here and monitor angle
     while (!m_control.getControllable())
     {
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(100));
 
-        // if here for more than 1 minute, enter light sleep. !!! Currently 6 seconds
         if (millis() - startTime > sleepTimeout_ms)
         {
-            if (m_devices.canSleep())
+            if (ALLOW_SLEEP == 1) // m_devices.canSleep()
             {
+                ESP_LOGI("State_Machine", "Sleep is allowed!");
                 SemaphoreGuard guard(m_stateMutex);
                 if (guard.acquired())
                 {

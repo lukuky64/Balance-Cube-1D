@@ -1,4 +1,4 @@
-#include "DEVICES.hpp"
+#include "Devices.hpp"
 
 Devices::Devices()
 {
@@ -55,11 +55,8 @@ bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_nu
     {
         return false;
     }
-    ESP_LOGI("Devices", "SPI for BLDC set up successfully!, now doing begin");
 
     bool succ = m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_magEnc, m_usbPD.getVoltage());
-
-    ESP_LOGI("Devices", "BLDC begin returned %d", succ);
 
     return succ; // probably should be getting all these variables from function params
 }
@@ -409,7 +406,6 @@ bool Devices::canSleep()
 {
     uint8_t deviceStatus = getStatus();
 
-    // If we don't have HV supply, we are connected to a PC and sleep is not possible via USB OTG if we want to maintain communication
     if ((deviceStatus & USBPD_BIT) == USBPD_BIT)
     {
         // check if IMU is enabled

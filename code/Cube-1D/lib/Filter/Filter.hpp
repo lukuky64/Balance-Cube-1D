@@ -7,7 +7,7 @@
 class Filter
 {
 public:
-    Filter(float processNoise, float measurementNoise, float estimatedError, float initialValue);
+    Filter(float processNoise, float measurementNoise, float estimatedError = 0.0f, float initialValue = 0.0f);
 
     void update(float measurement);
     void update(float measurement, float controlInput, float controlEffect); // With control input

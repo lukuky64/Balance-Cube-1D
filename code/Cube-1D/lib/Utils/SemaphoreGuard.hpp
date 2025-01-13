@@ -4,10 +4,12 @@
 #include "freertos/semphr.h"
 #include "esp_log.h"
 
+#define mutexTimeOut pdMS_TO_TICKS(1000)
+
 class SemaphoreGuard
 {
 public:
-    SemaphoreGuard(SemaphoreHandle_t semaphore, TickType_t timeout = portMAX_DELAY)
+    SemaphoreGuard(SemaphoreHandle_t semaphore, TickType_t timeout = mutexTimeOut)
         : m_semaphore(semaphore), m_acquired(false)
     {
         m_acquired = (xSemaphoreTake(m_semaphore, timeout) == pdTRUE);

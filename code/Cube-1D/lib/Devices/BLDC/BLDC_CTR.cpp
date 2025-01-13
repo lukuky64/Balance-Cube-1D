@@ -75,12 +75,13 @@ void BLDC_CTR::updateVoltageLimits(float voltage)
     m_voltage = voltage;
     m_driver->voltage_power_supply = m_voltage;
     m_motor->voltage_limit = m_voltage;
+    motor.voltage_sensor_align = 5;
 }
 
 void BLDC_CTR::setMotorSettings()
 {
     m_motor->controller = MotionControlType::torque;
-    // m_motor.torque_controller = TorqueControlType::foc_current; // added this in, might not be needed
+    m_motor->torque_controller = TorqueControlType::foc_current; // added this in, might not be needed
 
     // controller configuration based on the control type
     m_motor->PID_velocity.P = 0.05f;

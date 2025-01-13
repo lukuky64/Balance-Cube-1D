@@ -16,7 +16,7 @@ public:
     void selectLogSerial();
     // bool beginSerial();
     // bool beginSD();
-    void startNewLog();
+    bool startNewLog();
 
     bool log(int len);
     bool logData(const float *data, int dataSize);

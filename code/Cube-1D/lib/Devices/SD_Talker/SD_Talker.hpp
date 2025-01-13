@@ -42,7 +42,10 @@ private:
     String buffer;
     bool initialised;
 
-    SPICOM *m_SPI_BUS = nullptr;
+    SPICOM *m_SPI = nullptr;
+    uint8_t m_CS;
+
+    bool sdWait(int timeout);
 
 #endif
 };

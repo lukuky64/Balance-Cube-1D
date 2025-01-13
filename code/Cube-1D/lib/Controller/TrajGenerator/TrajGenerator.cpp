@@ -15,7 +15,7 @@ TrajGenerator::~TrajGenerator()
 }
 
 // Generate step
-void TrajGenerator::generate(float dt)
+trajRefs TrajGenerator::generate(float dt)
 {
     // Update elapsed time
     m_elapsed += dt;
@@ -39,6 +39,12 @@ void TrajGenerator::generate(float dt)
         m_Ref.omega_r = (m_coeffs.a1) + (2.0f * m_coeffs.a2) * t + (3.0f * m_coeffs.a3) * t2 + (4.0f * m_coeffs.a4) * t3 + (5.0f * m_coeffs.a5) * t4;
         // Acceleration (angular)
         m_Ref.alpha_r = (2.0f * m_coeffs.a2) + (6.0f * m_coeffs.a3) * t + (12.0f * m_coeffs.a4) * t2 + (20.0f * m_coeffs.a5) * t3;
+
+        return m_Ref;
+    }
+    else
+    {
+        return trajRefs(0, 0, 0);
     }
 }
 

@@ -16,35 +16,6 @@ Filter::Filter(float processNoise, float measurementNoise, float estimatedError,
     }
 }
 
-void Filter::update(float measurement)
-{
-    if (!isInitialised)
-    {
-        // Optionally handle uninitialized state
-        return;
-    }
-
-    SemaphoreGuard guard(m_dataMutex);
-    if (guard.acquired())
-    {
-        // Prediction update
-        P = P + Q;
-
-        // Measurement update
-        if ((P + R) == 0)
-        {
-            // Prevent division by zero
-            K = 0;
-        }
-        else
-        {
-            K = P / (P + R);
-        }
-        X = X + K * (measurement - X);
-        P = (1 - K) * P;
-    }
-}
-
 void Filter::update(float measurement, float controlInput, float controlEffect)
 {
     if (!isInitialised)
