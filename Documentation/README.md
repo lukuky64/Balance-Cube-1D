@@ -1,1 +1,2 @@
-[View System Modelling](./model.ipynb)
+# Mathematical Modelling of System:
+[Notebook](./model.ipynb)
