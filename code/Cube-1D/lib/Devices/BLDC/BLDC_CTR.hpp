@@ -20,6 +20,8 @@ public:
     void moveTarget(float target) { return; }
     void updateVoltageLimits(float voltage) { return; }
     float getMaxTau() { return 2.0f; }
+    float getTheta() { return 0.0f; }
+    float getOmega() { return 10.0f; }
 #else
     bool checkStatus();
     void enableMotor(bool enable);
@@ -28,6 +30,9 @@ public:
     void moveTarget(float target);
     void updateVoltageLimits(float voltage);
     float getMaxTau();
+    float getTheta();
+    float getOmega();
+
 #endif
 
 private:

@@ -27,13 +27,13 @@ struct trajRefs
 };
 
 // Attitude estimator class
-class TrajGenerator
+class MinJerkController
 {
 public:
     // Constructor
-    TrajGenerator();
+    MinJerkController();
 
-    ~TrajGenerator();
+    ~MinJerkController();
 
     // Estimate steps
     trajRefs generate(float dt);

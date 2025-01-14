@@ -5,7 +5,9 @@
 #include "Devices.hpp"
 #include "Filter.hpp"
 #include "Estimator/Estimator.hpp"
-#include "TrajGenerator/TrajGenerator.hpp"
+#include "MinJerkController/MinJerkController.hpp"
+#include "LQRController/LQRController.hpp"
+#include "RateLimiter/RateLimiter.hpp"
 #include "Params.hpp"
 #include <algorithm>
 
@@ -38,32 +40,35 @@ public:
 
     void setState();
 
+    float LQRegulator(float dt);
+
     // void setTargetTau(float tau);
     // float getTargetTau();
 
 private:
     void updateControlability();
+    float SoftClamp(float u);
 
     SemaphoreHandle_t m_controllableMutex = nullptr;
     bool m_controlable;
 
+    LQRController m_lqrController;
+    MinJerkController m_minJerkController;
+
+    RateLimiter m_rateLimiter;
+
     Devices &m_devicesRef;
     FILTERS m_filters;
     Estimator m_estimator;
-    TrajGenerator m_traj_gen;
 
     // SemaphoreHandle_t m_target_tau_mutex = nullptr;
     // float m_target_tau;
 
-    // Moment of inertia
-    const float m_wheel_J;
     float m_maxTau;
 
     // State for integral and derivative
     float integral_error;
     float previous_error;
-
-    const float m_controllableAngleThreshold;
 
     float m_dataBuffer[log_columns];
 };

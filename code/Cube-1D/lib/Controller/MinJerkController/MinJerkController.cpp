@@ -1,6 +1,6 @@
-#include "TrajGenerator.hpp"
+#include "MinJerkController.hpp"
 
-TrajGenerator::TrajGenerator()
+MinJerkController::MinJerkController()
 {
     m_coeff_mutex = xSemaphoreCreateMutex();
     m_ref_mutex = xSemaphoreCreateMutex();
@@ -8,14 +8,14 @@ TrajGenerator::TrajGenerator()
     setRefs(0.0, 0.0, 0.0);
 }
 
-TrajGenerator::~TrajGenerator()
+MinJerkController::~MinJerkController()
 {
     vSemaphoreDelete(m_coeff_mutex);
     vSemaphoreDelete(m_ref_mutex);
 }
 
 // Generate step
-trajRefs TrajGenerator::generate(float dt)
+trajRefs MinJerkController::generate(float dt)
 {
     // Update elapsed time
     m_elapsed += dt;
@@ -48,7 +48,7 @@ trajRefs TrajGenerator::generate(float dt)
     }
 }
 
-trajRefs TrajGenerator::getRefs()
+trajRefs MinJerkController::getRefs()
 {
     SemaphoreGuard guard(m_ref_mutex);
     if (guard.acquired())
@@ -61,7 +61,7 @@ trajRefs TrajGenerator::getRefs()
     }
 }
 
-void TrajGenerator::setRefs(float theta_r, float omega_r, float alpha_r)
+void MinJerkController::setRefs(float theta_r, float omega_r, float alpha_r)
 {
     SemaphoreGuard guard(m_ref_mutex);
     if (guard.acquired())
@@ -72,7 +72,7 @@ void TrajGenerator::setRefs(float theta_r, float omega_r, float alpha_r)
     }
 }
 
-void TrajGenerator::setTargetAngle(float startAngle, float targetAngle, float totalTime)
+void MinJerkController::setTargetAngle(float startAngle, float targetAngle, float totalTime)
 {
     m_totalTime = totalTime;
     m_elapsed = 0.0f; // reset time

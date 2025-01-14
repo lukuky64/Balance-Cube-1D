@@ -75,7 +75,7 @@ void BLDC_CTR::updateVoltageLimits(float voltage)
     m_voltage = voltage;
     m_driver->voltage_power_supply = m_voltage;
     m_motor->voltage_limit = m_voltage;
-    motor.voltage_sensor_align = 5;
+    m_motor->voltage_sensor_align = 5;
 }
 
 void BLDC_CTR::setMotorSettings()
@@ -103,7 +103,17 @@ void BLDC_CTR::setMotorSettings()
 // !!! Need to implement
 float BLDC_CTR::getMaxTau()
 {
-    return 2.0f;
+    return 1.0f;
+}
+
+float BLDC_CTR::getTheta()
+{
+    return m_motor->shaft_angle; // does this need to be mutex locked?
+}
+
+float BLDC_CTR::getOmega()
+{
+    return m_motor->shaft_velocity; // does this need to be mutex locked?
 }
 
 #endif
