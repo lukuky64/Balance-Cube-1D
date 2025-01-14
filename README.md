@@ -1,5 +1,5 @@
 # Balance-Cube-1D
-This project implements IMU sensor fusion, system modelling and closed loop feedback to balance a cube on its corner. This device uses a custom made PCB which implements an ESP32-S3, BLDC motor with torque control, 6-axis IMU, all powered via a USB-C with onboard power delivery control.
+This project implements a 6-DOF IMU (with the possible addition of an optical rotary encoder) and active current sensing and magnetic encoding of a BLDC motor to perform closed-loop feedback control to solve an inverted pendulum problem. This device uses a custom PCB, implementing a dual-core 240MHz ESP32-S3 which is taken advantage of through a FreeRTOS implementation for multithreaded operations. This is all powered via a USB-C port with onboard power delivery control for seamless use.
 
 ## Stats
 
