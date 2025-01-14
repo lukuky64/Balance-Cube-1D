@@ -44,8 +44,10 @@ public:
     STATES getCurrentState();
     void criticalErrorSeq();
     void logSeq();
+    const char *stateToString(STATES state);
 
     // FreeRTOS Tasks
+    static void taskManagerTask(void *pvParameters);
     static void indicationTask(void *pvParameters);
     static void refreshStatusTask(void *pvParameters);
     static void updateFiltersTask(void *pvParameters);
@@ -66,6 +68,7 @@ private:
     Controller m_control;
 
     // FreeRTOS Handles
+    TaskHandle_t m_taskManagerTaskHandle = NULL;
     TaskHandle_t m_indicationLoopTaskHandle = NULL;
     TaskHandle_t m_refreshStatusTaskHandle = NULL;
 

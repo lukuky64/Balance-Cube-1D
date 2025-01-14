@@ -13,7 +13,7 @@
 #define DUMMY_ACCEL_Y 0.0f
 #define DUMMY_ACCEL_Z 1.0f // Assuming static gravity
 #define DUMMY_GYRO_X 0.0f
-#define DUMMY_GYRO_Y 0.1f
+#define DUMMY_GYRO_Y 0.08f
 #define DUMMY_GYRO_Z 0.0f
 #endif
 

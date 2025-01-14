@@ -19,10 +19,26 @@ void State_Machine::begin()
         }
     }
 
+    if (m_taskManagerTaskHandle == NULL)
+    {
+        ESP_LOGI("State_Machine", "Starting Task Manager Task");
+        xTaskCreate(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle);
+    }
+}
+
+void State_Machine::taskManagerTask(void *pvParameters)
+{
+    vTaskDelay(pdMS_TO_TICKS(10));
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
+
     while (true)
     {
-        loop();
-        vTaskDelay(pdMS_TO_TICKS(40)); // so we don't hog the CPU
+        machine->loop();
+
+        ESP_LOGI("State_Machine", "Current state: %s", machine->stateToString(static_cast<STATES>(machine->getCurrentState())));
+
+        vTaskDelay(pdMS_TO_TICKS(taskManager_dt_ms)); // Loop current has blocking in certain functions
     }
 }
 
@@ -58,7 +74,7 @@ void State_Machine::loop()
     break;
     case IDLE:
     {
-        idleSeq();
+        idleSeq(); // this is a blocking function. fine for our case but not good for task manager
     }
     break;
     case LIGHT_SLEEP:
@@ -276,13 +292,13 @@ void State_Machine::criticalErrorSeq()
 
 void State_Machine::calibrationSeq()
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     ESP_LOGI("State_Machine CALIBRATION", "Calibration Sequence!");
 
     bool calibrated = m_devices.calibrateSeq();
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     if (m_updateFiltersTaskHandle == NULL)
     {
@@ -432,3 +448,24 @@ void State_Machine::idleSeq()
 //         xTaskCreate(&RTOS_Monitor::cpuUsageTask, "CPUUsageTask", 2048, this, 1, &m_cpuUsageTaskHandle);
 //     }
 // }
+
+const char *State_Machine::stateToString(STATES state)
+{
+    switch (state)
+    {
+    case INITIALISATION:
+        return "INITIALISATION";
+    case CRITICAL_ERROR:
+        return "CRITICAL_ERROR";
+    case CALIBRATION:
+        return "CALIBRATION";
+    case IDLE:
+        return "IDLE";
+    case LIGHT_SLEEP:
+        return "LIGHT_SLEEP";
+    case CONTROL:
+        return "CONTROL";
+    default:
+        return "UNKNOWN_STATE";
+    }
+}

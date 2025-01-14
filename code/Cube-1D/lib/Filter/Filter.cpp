@@ -8,11 +8,11 @@ Filter::Filter(float processNoise, float measurementNoise, float estimatedError,
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        Q = processNoise;
-        R = measurementNoise;
-        P = estimatedError;
-        X = initialValue;
-        K = 0.0f;
+        Q = processNoise;     // Uuncertainty in the model or process
+        R = measurementNoise; // Uncertainty in the measurement
+        P = estimatedError;   // Uncertainty in the initial state
+        X = initialValue;     // Initial state
+        K = 0.0f;             // Kalman Gain
     }
 }
 

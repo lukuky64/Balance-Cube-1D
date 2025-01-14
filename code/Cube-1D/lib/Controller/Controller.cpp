@@ -2,7 +2,7 @@
 #include "Controller.hpp"
 
 Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
-                                              m_filters{Filter(0.5f, 0.5f, 1.0f, 0.0f), Filter(0.5f, 0.5f, 1.0f, 0.0f), Filter(0.5f, 0.5f, 1.0f, 0.0f), Filter(0.5f, 0.5f, 1.0f, 0.0f)},
+                                              m_filters{Filter(0.5f, 0.1f, 1.0f, 0.0f), Filter(0.5f, 0.1f, 1.0f, 0.0f), Filter(0.5f, 0.1f, 1.0f, 0.0f), Filter(0.5f, 0.1f, 1.0f, 0.0f)},
                                               m_estimator(devicesRef, aquisition_dt_ms),
                                               m_controlable(false)
 {

@@ -33,7 +33,7 @@
 #define logFreq 50            // Hz
 #define refreshStatusFreq 0.2 // Hz
 #define indicationFreq 1      // Hz
-#define taskManagerFreq 20    // Hz !!! unused
+#define taskManagerFreq 10    // Hz
 
 // Log parameters
 #define log_header "Time(s),Theta(rad),Omega(rad/s),Mag(rad)"
@@ -56,7 +56,7 @@
 #define RATE_LIMIT 2.5 // Nm/s
 
 #if LQR
-#define AngleThresh 0.5
+#define AngleThresh 0.3
 
 // LQR Gain Matrix (precomputed offline)
 #define LQR_K1 1.0
@@ -91,4 +91,4 @@
 #define log_dt_ms (1000.0 / logFreq)                     // ms
 #define refreshStatus_dt_ms (1000.0 / refreshStatusFreq) // ms
 #define indication_dt_ms (1000.0 / indicationFreq)       // ms
-#define taskManager_dt_ms (1000.0 / taskManagerFreq)     // ms !!! unused
+#define taskManager_dt_ms (1000.0 / taskManagerFreq)     // ms
