@@ -31,7 +31,7 @@ public:
     bool checkStatus();
     bool getControllable();
     void updateData();
-    void updateBalanceControl(float dt);
+    void updateBalanceControl(float dt_ms);
     void updateBLDC();
     float getTargetAccel();
     float linearRegulator(float dt);

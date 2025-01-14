@@ -126,7 +126,7 @@ void State_Machine::balanceTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateBalanceControl(balance_dt_ms); // currently only takes ~ 27uS or 33kHz
+        machine->m_control.updateBalanceControl(balance_dt_ms); // currently only takes ~ 30uS or 33kHz
         vTaskDelay(pdMS_TO_TICKS(balance_dt_ms));
     }
 }
@@ -139,7 +139,7 @@ void State_Machine::updateFiltersTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateData();
+        machine->m_control.updateData(); // currently only takes ~ 70uS or 14kHz. But we aren't really getting data from sensors
         vTaskDelay(pdMS_TO_TICKS(aquisition_dt_ms));
     }
 }
@@ -327,7 +327,7 @@ void State_Machine::lightSleepSeq()
 
 void State_Machine::controlSeq()
 {
-    ESP_LOGI("State_Machine", "Control Sequence!");
+    // ESP_LOGI("State_Machine", "Control Sequence!");
 
     if (m_balanceTaskHandle == NULL)
     {

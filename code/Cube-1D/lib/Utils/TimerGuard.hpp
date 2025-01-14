@@ -3,6 +3,12 @@
 #include <Arduino.h>
 #include "esp_log.h"
 
+/*
+
+USE: TimerGuard guard("TimerGuard", "Operation");
+
+*/
+
 class TimerGuard
 {
 public:

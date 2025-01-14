@@ -68,8 +68,9 @@ void Controller::updateData()
     updateControlability();
 }
 
-void Controller::updateBalanceControl(float dt)
+void Controller::updateBalanceControl(float dt_ms)
 {
+    float dt = dt_ms / 1000.0f; // convert to seconds
 #if LQR
     m_devicesRef.m_bldc.moveTarget(LQRegulator(dt));
 #else
@@ -98,9 +99,8 @@ float Controller::SoftClamp(float u)
 {
     if (std::abs(u) > m_maxTau)
     {
-        u = std::copysign(m_maxTau - std::exp(-std::abs(u) + m_maxTau), u);
+        u = std::copysign(m_maxTau - std::exp(-std::abs(u) + m_maxTau) + 1, u); // +1 is a correction at the boundary to avoid a discontinuity
     }
-
     return u;
 }
 

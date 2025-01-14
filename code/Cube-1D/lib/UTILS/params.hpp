@@ -18,7 +18,7 @@
 
 #define DUMMY_IMU 1
 #define DUMMY_SERVO 1
-#define DUMMY_BLDC 0
+#define DUMMY_BLDC 1
 #define DUMMY_MAG 1
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
@@ -27,10 +27,10 @@
 #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define aquisitionFreq 100    // Hz
-#define balanceFreq 50        // Hz
+#define aquisitionFreq 250    // Hz
+#define balanceFreq 100       // Hz
 #define BLDCFreq 1000         // Hz
-#define logFreq 25            // Hz
+#define logFreq 50            // Hz
 #define refreshStatusFreq 0.2 // Hz
 #define indicationFreq 1      // Hz
 #define taskManagerFreq 20    // Hz !!! unused
