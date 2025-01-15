@@ -1,7 +1,7 @@
 function [] = simulateSystem(A, B, K, x0, u_max, u_rate_max)
     % Simulation parameters
-    dt = 0.02; % Time step
-    T = 15;    % Simulation duration
+    dt = 0.01; % Time step
+    T = 3;    % Simulation duration
     time = 0:dt:T;
 
     % Initialise state and control input storage
