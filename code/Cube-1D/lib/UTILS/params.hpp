@@ -56,7 +56,7 @@
 #define RATE_LIMIT 2.5 // Nm/s
 
 #if LQR
-#define AngleThresh 0.3
+#define ANGLE_THRESH 0.5 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 
 // LQR Gain Matrix (precomputed offline)
 #define LQR_K1 1.0
@@ -70,7 +70,7 @@
 
 #define wheel_J 1 // Moment of inertia of the wheel
 
-#define AngleThresh 0.5   // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
+#define ANGLE_THRESH 0.5  // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 #define balanceAngle 0.0  // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
 #define balancePeriod 2.0 // seconds. This is the period of the balance trajectory
 #endif

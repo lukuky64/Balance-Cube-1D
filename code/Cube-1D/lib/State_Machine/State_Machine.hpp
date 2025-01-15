@@ -2,7 +2,13 @@
 
 #include "Arduino.h"
 
+#include "driver/gptimer.h"
+
+#include "FreeRTOSConfig.h"
+
 #include "freertos/FreeRTOS.h"
+#include "freeRTOS/task.h"
+
 #include "esp_sleep.h"
 
 #include "esp_log.h"
@@ -35,12 +41,14 @@ public:
 
     // void cpuUsageMonitorSeq();
 
+    void printCpuUsage();
+
     void initialisationSeq();
     void calibrationSeq();
     void controlSeq();
     void lightSleepSeq();
     void idleSeq();
-    void checkActivityTask();
+    // void checkActivityTask();
     STATES getCurrentState();
     void criticalErrorSeq();
     void logSeq();

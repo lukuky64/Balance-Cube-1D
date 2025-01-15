@@ -66,6 +66,7 @@ private:
         {'A', 880},
         {'B', 987}};
 
+    // 0xRRGGBB
     const std::vector<Colour> colours = {
         {'R', 0xFF0000},
         {'G', 0x00FF00},
@@ -74,5 +75,5 @@ private:
         {'M', 0xFF00FF},
         {'C', 0x00FFFF},
         {'W', 0xFFFFFF},
-        {'O', 0xFFA500}};
+        {'O', 0xFF7B00}};
 };

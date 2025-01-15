@@ -46,7 +46,7 @@ void Indicators::showCriticalError()
 {
     ESP_LOGI("Indicators", "Showing Critical Error!");
 
-    uint16_t duration = 100; // ms
+    uint16_t duration = 50; // ms
 
     for (int i = 0; i < 3; i++)
     {
@@ -62,8 +62,12 @@ void Indicators::showWarning()
 
     uint16_t duration = 50; // ms
 
-    controlBuzzer(tones[3].frequency, duration);
-    controlRGBLed(colours[7].value, duration); // Yellow
+    for (int i = 0; i < 2; i++)
+    {
+        controlBuzzer(tones[3].frequency, duration);
+        controlRGBLed(colours[7].value, duration); // Orange
+        vTaskDelay(pdMS_TO_TICKS(duration));       // off period
+    }
 }
 
 void Indicators::showSuccess()
