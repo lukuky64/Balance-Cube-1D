@@ -27,6 +27,13 @@ bool Log::startNewLog()
             return true;
         }
     }
+
+    if (m_serialLog)
+    {
+        m_serialTalker.begin();
+        return true;
+    }
+
     return false;
 }
 

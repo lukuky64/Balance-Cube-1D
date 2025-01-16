@@ -1,23 +1,5 @@
 #include "State_Machine.hpp"
 
-// #include "freertos/event_groups.h"
-
-// extern "C"
-// {
-
-//     // Set up the timer for run-time stats using micros() for simplicity.
-//     void portCONFIGURE_TIMER_FOR_RUN_TIME_STATS(void)
-//     {
-//         // No additional initialisation is required if using micros().
-//     }
-
-//     // Return the current count value using micros().
-//     unsigned long portGET_RUN_TIME_COUNTER_VALUE(void)
-//     {
-//         return micros();
-//     }
-// }
-
 State_Machine::State_Machine() : m_control(m_devices)
 {
     m_stateMutex = xSemaphoreCreateMutex();
@@ -464,15 +446,6 @@ void State_Machine::idleSeq()
 //     }
 // }
 
-// // Setup CPU Usage Monitoring
-// void State_Machine::cpuUsageMonitorSeq()
-// {
-//     if (m_cpuUsageTaskHandle == NULL)
-//     {
-//         xTaskCreate(&RTOS_Monitor::cpuUsageTask, "CPUUsageTask", 2048, this, 1, &m_cpuUsageTaskHandle);
-//     }
-// }
-
 const char *State_Machine::stateToString(STATES state)
 {
     switch (state)
@@ -493,12 +466,3 @@ const char *State_Machine::stateToString(STATES state)
         return "UNKNOWN_STATE";
     }
 }
-
-// void State_Machine::printCpuUsage()
-// {
-//     // Allocate a buffer for the stats string. Adjust size as needed.
-//     char statsBuffer[512] = {0};
-//     // Gather run-time statistics. The stats will be formatted as text.
-//     vTaskGetRunTimeStats(statsBuffer);
-//     ESP_LOGI("Task CPU usage:", "%s", statsBuffer);
-// }

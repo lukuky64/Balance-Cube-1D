@@ -21,21 +21,21 @@ IMU::IMU() : m_initialised(false)
 
     @param  SPI_CS The device's chip select / enable pin
 
-    @param  pSPI_BUS The SPI object to be used for SPI connections.
+    @param  SPI The SPI object to be used for SPI connections.
 
     @return True on successful initialisation
 */
 /*****************************************************************************/
 
-bool IMU::begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin)
+bool IMU::begin(uint8_t SPI_CS, SPICOM &SPI, gpio_num_t intPin)
 {
 
-    m_SPI_BUS = &SPI_BUS;
+    m_SPI = &SPI;
 
-    SemaphoreGuard guard(m_SPI_BUS->mutex);
+    SemaphoreGuard guard(m_SPI->mutex);
     if (guard.acquired())
     {
-        if (m_imu.begin_SPI(SPI_CS, m_SPI_BUS->BUS))
+        if (m_imu.begin_SPI(SPI_CS, m_SPI->BUS))
         {
             m_imu.setAccelRange(m_accelRange);
             m_imu.setGyroRange(m_gyroRange);
@@ -51,7 +51,7 @@ bool IMU::update()
 {
     bool success = false;
 
-    SemaphoreGuard guard(m_SPI_BUS->mutex);
+    SemaphoreGuard guard(m_SPI->mutex);
     if (guard.acquired())
     {
         SemaphoreGuard guard1(m_accelMutex);

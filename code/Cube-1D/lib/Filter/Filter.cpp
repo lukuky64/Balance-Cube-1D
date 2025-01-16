@@ -1,4 +1,4 @@
-#include "FILTER.hpp"
+#include "Filter.hpp"
 
 Filter::Filter(float processNoise, float measurementNoise, float estimatedError, float initialValue)
     : isInitialised(true)

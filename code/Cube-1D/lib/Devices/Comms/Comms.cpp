@@ -10,6 +10,8 @@
 SPIClass SPI_FSPI(MY_FSPI);
 SPIClass SPI_HSPI(MY_HSPI);
 
+// Instantiate I2C objects (Definitions)
+
 // Instantiate mutexes (Definitions)
 SemaphoreHandle_t mutexFSPI = NULL;
 SemaphoreHandle_t mutexHSPI = NULL;
@@ -17,6 +19,9 @@ SemaphoreHandle_t mutexHSPI = NULL;
 // Instantiate SPICOM structs (Definitions)
 SPICOM m_SPIComSensors = {&SPI_FSPI, false, NULL, 1000000}; // 1 MHz, (this is kinda low atm but the magnetic sensor is defaulted to this)
 SPICOM m_SPIComSD = {&SPI_HSPI, false, NULL, 40000000};     // SD will use a different bus  // 40 MHz
+
+// Instantiate I2CCOM structs (Definitions)
+I2CCOM m_I2CComPeripherals = {&Wire, false, 100000}; // 100 kHz
 
 // doing this externally at the moment
 // // Function to initialize mutexes (Definitions)

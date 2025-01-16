@@ -89,7 +89,8 @@ float (&Controller::getDataBuffer())[log_columns]
     // get data from the filters. Should match log_columns
     m_dataBuffer[0] = m_filters.filter_theta.getValue();
     m_dataBuffer[1] = m_filters.filter_omega.getValue();
-    m_dataBuffer[2] = 0.0f;
+    m_dataBuffer[2] = m_filters.filter_motor_theta.getValue();
+    m_dataBuffer[3] = m_filters.filter_motor_omega.getValue();
     // probably want to add setpoint
 
     return m_dataBuffer;

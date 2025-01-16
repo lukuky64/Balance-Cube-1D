@@ -22,7 +22,7 @@ class IMU
 public:
 #if DUMMY_IMU
     // Dummy IMU member functions with inline implementations
-    bool begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin)
+    bool begin(uint8_t SPI_CS, SPICOM &SPI, gpio_num_t intPin)
     {
         ESP_LOGI("IMU", "Dummy IMU initialised.");
         return true;
@@ -57,7 +57,7 @@ private:
 #else
     // Real IMU member functions (declarations only)
     IMU();
-    bool begin(uint8_t SPI_CS, SPICOM &SPI_BUS, gpio_num_t intPin);
+    bool begin(uint8_t SPI_CS, SPICOM &SPI, gpio_num_t intPin);
     bool update();
     void print();
     float getAccelX();
@@ -89,7 +89,7 @@ private:
 
     gpio_num_t m_intPin;
 
-    SPICOM *m_SPI_BUS = nullptr;
+    SPICOM *m_SPI = nullptr;
 
     bool m_initialised;
 #endif

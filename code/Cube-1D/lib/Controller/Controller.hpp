@@ -36,7 +36,7 @@ public:
     float getTargetAccel();
     float linearRegulator(float dt);
 
-    float (&getDataBuffer())[3];
+    float (&getDataBuffer())[log_columns];
 
     void setState();
 

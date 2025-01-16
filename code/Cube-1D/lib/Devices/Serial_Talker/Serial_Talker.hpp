@@ -10,7 +10,7 @@ public:
     ~Serial_Talker();
     bool checkStatus();
     bool begin();
-    bool writeToBuffer(String dataString);
+    // bool writeToBuffer(String dataString);
     void flushBuffer();
     bool writeBuffer(const char *buffer, size_t bufferIndex);
 

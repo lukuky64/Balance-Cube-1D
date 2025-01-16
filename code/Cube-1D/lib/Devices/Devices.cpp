@@ -46,37 +46,50 @@ Devices::~Devices()
 
 bool Devices::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 {
-    return m_usbPD.begin();
+    if (setupI2C(SCL, SDA, m_I2CComPeripherals))
+    {
+        return m_usbPD.begin(m_I2CComPeripherals);
+    }
+    return false;
 }
 
 bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
-    if (!setupSPI(MISO, MOSI, CLK, m_SPIComSensors))
-    {
-        return false;
-    }
-
-    bool succ = m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, m_magEnc, m_usbPD.getVoltage());
-
+    // mag must be setup first
+    bool succ = m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), MOTOR_KV);
     return succ; // probably should be getting all these variables from function params
 }
 
-bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus)
+bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPI)
 {
-
-    SemaphoreGuard guard(SPIBus.mutex);
+    SemaphoreGuard guard(SPI.mutex);
     if (guard.acquired())
     {
         // check if SPI bus is already initialised
-        if (!SPIBus.begun)
+        if (!SPI.begun)
         {
-            SPIBus.BUS->begin(CLK, MISO, MOSI);
-            SPIBus.BUS->setFrequency(SPIBus.frequency); // 40 MHz
-            SPIBus.begun = true;
+            SPI.BUS->begin(CLK, MISO, MOSI);
+            SPI.BUS->setFrequency(SPI.frequency); // 40 MHz
+            SPI.begun = true;
         }
+        return SPI.begun;
     }
+    else
+    {
+        return false;
+    }
+}
 
-    return SPIBus.begun;
+bool Devices::setupI2C(gpio_num_t SCL, gpio_num_t SDA, I2CCOM &I2C)
+{
+    // skipping making mutex because its already doing that inside i2c
+    // check if I2C bus is already initialised
+    if (!I2C.begun)
+    {
+        bool i2c_status = I2C.BUS->begin(SDA, SCL, I2C.frequency);
+        I2C.begun = i2c_status;
+    }
+    return I2C.begun;
 }
 
 bool Devices::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin)
@@ -134,6 +147,7 @@ bool Devices::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_n
         if (m_logger.m_sdTalker.begin(CS, m_SPIComSD))
         {
             m_logger.selectLogSD();
+
             return true;
         }
     }

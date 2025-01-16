@@ -18,6 +18,7 @@
 #include "Log/LOG.hpp"
 #include "Servo/Servo_CTR.hpp"
 #include "Comms/Comms.hpp"
+#include "Device_messages.hpp"
 
 enum DeviceBit
 {
@@ -64,7 +65,8 @@ public:
 
     bool canSleep();
 
-    bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPIBus);
+    bool setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPI);
+    bool setupI2C(gpio_num_t SCL, gpio_num_t SDA, I2CCOM &I2C);
 
     // devices. Making public for now
     Indicators m_indicators;
