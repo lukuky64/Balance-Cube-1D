@@ -24,7 +24,7 @@
 #define DUMMY_SD 0
 #define DUMMY_SERIAL 1
 #define DUMMY_LED 0
-#define DUMMY_USBPD 1
+// #define DUMMY_USBPD 1
 
 // Task loop frequencies
 #define aquisitionFreq 250    // Hz
@@ -36,9 +36,9 @@
 #define taskManagerFreq 10    // Hz
 
 // Log parameters
-#define log_header "Time(s),Theta(rad),Omega(rad/s),Mag(rad)"
+#define log_header "Time(s),Theta(rad),theta_dot(rad/s),phi(rad),phi_dot(rad/s)"
 #define log_file_prefix "/LOG"
-#define log_columns 3
+#define log_columns 4
 
 // BLDC motor parameters
 #define num_poles 11     // pole pairs. 24N22P - how many pole pairs are there?
@@ -54,10 +54,10 @@
 // Control params
 #define LQR 1
 #define RATE_LIMIT 2.5 // Nm/s
+#define MOTOR_KV 52.8  // Nm/A. This is also used to calc max torque (probably not accurate)
 
 #if LQR
 #define ANGLE_THRESH 0.5 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
-
 // LQR Gain Matrix (precomputed offline)
 #define LQR_K1 1.0
 #define LQR_K2 1.0
