@@ -70,12 +70,15 @@ bool USB_PD::updateVoltage()
 {
     uint8_t buffer[1]; // BUS_VOLTAGE is 1 byte
 
-    if (readRegister(Registers::BUS_VOLTAGE, buffer, 1))
+    if (readRegister(Registers::BUS_VOLTAGE, buffer, 1)) //                      !!! reading register twice because it lags behind by 1 for some reason
     {
-        ESP_LOGI("USB_PD", "Raw buffer[0]: 0x%02X", buffer[0]);
-        m_voltage = (float)buffer[0] / 10.0; // Convert to volts (100 mV units)
-        ESP_LOGI("USB_PD", "Voltage: %f", m_voltage);
-        return true;
+        if (readRegister(Registers::BUS_VOLTAGE, buffer, 1))
+        {
+            ESP_LOGI("USB_PD", "Raw buffer[0]: 0x%02X", buffer[0]);
+            m_voltage = (float)buffer[0] / 10.0; // Convert to volts (100 mV units)
+            ESP_LOGI("USB_PD", "Voltage: %f", m_voltage);
+            return true;
+        }
     }
     return false; // Failed to read
 }
