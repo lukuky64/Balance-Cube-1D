@@ -89,7 +89,19 @@ void BLDC_CTR::updateVoltageLimits(float voltage)
     m_voltage = voltage;
     m_driver->voltage_power_supply = m_voltage;
     m_motor->voltage_limit = m_voltage;
-    m_motor->voltage_sensor_align = 5; // 5V for alignment
+
+    if (m_voltage >= 12)
+    {
+        m_motor->voltage_sensor_align = 12; // 12V for alignment. Maybe increase so we get good calibration readings
+    }
+    else if (m_voltage >= 4)
+    {
+        m_motor->voltage_sensor_align = 5;
+    }
+    else
+    {
+        ESP_LOGE("BLDC_CTR", "Voltage too low for sensor alignment.");
+    }
 }
 
 void BLDC_CTR::setMotorSettings()
@@ -103,12 +115,12 @@ void BLDC_CTR::setMotorSettings()
     // Q axis
     m_motor->PID_current_q.P = 3;
     m_motor->PID_current_q.I = 300;
-    m_motor->LPF_current_q.Tf = 0.01;
+    m_motor->LPF_current_q.Tf = 0.01; // play around with these. Value will depend on the sampling time
 
-    // D axis
+    // D axiss
     m_motor->PID_current_d.P = 3;
     m_motor->PID_current_d.I = 300;
-    m_motor->LPF_current_d.Tf = 0.01;
+    m_motor->LPF_current_d.Tf = 0.01; // play around with these. Value will depend on the sampling time: alpha = Tf/(Tf + Ts)
 
     // // foc current control parameters
     // m_motor->PID_velocity.P = 0.05f;

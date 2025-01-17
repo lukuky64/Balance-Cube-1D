@@ -55,7 +55,7 @@ bool Devices::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
 
 bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
 {
-    // mag must be setup first
+    // mag must be setup first. Make sure USBPD gets the voltage before this is used
     bool succ = m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), MOTOR_KV);
     return succ; // probably should be getting all these variables from function params
 }
