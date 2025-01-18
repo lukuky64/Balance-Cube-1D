@@ -8,6 +8,8 @@
 
 #include "SemaphoreGuard.hpp"
 
+#define QUARTER_PI (PI / 4.0f);
+
 // Attitude estimator class
 class Estimator
 {
@@ -23,14 +25,18 @@ public:
 
     bool selectDevice();
 
+    // Angular velocity bias calibration
+    bool calibrate();
+
 private:
     Devices &m_devicesRef;
 
     void estimateWithIMU();
     void estimateWithRot_Enc();
 
-    // Angular velocity bias calibration
-    void calibrate();
+    bool calibrateStartSide();
+    bool calibrateOmegaBias();
+
     // Predict step
     void predict(float omega_y);
     // Correct step
@@ -39,15 +45,17 @@ private:
 
     void WrapTheta();
 
+    float m_startAngle;
+
     float m_theta; // Orientation angle (radians)
     float m_omega; // Angular velocity (rad/s)
 
     SemaphoreHandle_t m_theta_mutex = nullptr;
     SemaphoreHandle_t m_omega_mutex = nullptr;
 
-    const float m_omegaBias; // Angular velocity bias (rad/s)
+    float m_omegaBias; // Angular velocity bias (rad/s)
 
-    // Estimator gains
+    // Estimator gains for acceleration
     const float m_lds;
 
     bool m_imuSelected;

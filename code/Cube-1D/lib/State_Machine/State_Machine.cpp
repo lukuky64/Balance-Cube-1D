@@ -304,11 +304,10 @@ void State_Machine::calibrationSeq()
 
     bool calibrated = m_devices.calibrateSeq();
 
-    vTaskDelay(pdMS_TO_TICKS(10));
+    m_control.setup();
 
     if (m_updateFiltersTaskHandle == NULL)
     {
-        m_control.setup();
         xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
     }
 

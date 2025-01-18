@@ -27,7 +27,7 @@ public:
 
     ~Controller();
 
-    void setup();
+    bool setup();
     bool checkStatus();
     bool getControllable();
     void updateData();
@@ -48,6 +48,7 @@ public:
 private:
     void updateControlability();
     float SoftClamp(float u);
+    bool setupFilters();
 
     SemaphoreHandle_t m_controllableMutex = nullptr;
     bool m_controlable;

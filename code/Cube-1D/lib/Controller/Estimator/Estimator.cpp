@@ -6,8 +6,9 @@ Estimator::Estimator(Devices &devicesRef, uint16_t dt)
       m_imuSelected(false),
       m_rotEncSelected(false),
       m_dt(dt),
-      m_lds(0.02),
-      m_omegaBias(0.0)
+      m_lds(0.2),
+      m_omegaBias(0.0),
+      m_startAngle(0.0)
 {
     m_theta_mutex = xSemaphoreCreateMutex();
     m_omega_mutex = xSemaphoreCreateMutex();
@@ -37,9 +38,6 @@ bool Estimator::selectDevice()
     if ((status & IMU_BIT) == IMU_BIT)
     {
         m_imuSelected = true;
-
-        // Angular velocity bias calibration for IMU
-        calibrate();
     }
     else if ((status & ROT_ENC_BIT) == ROT_ENC_BIT)
 
@@ -54,24 +52,108 @@ bool Estimator::selectDevice()
 }
 
 // Angular velocity bias calibration for IMU
-// void Estimator::calibrate()
-// {
-//     if (m_imuSelected)
-//     {
-//         // Calculate angular velocity bias by averaging n samples for 0.5 seconds
-//         int n = aquisitionFreq / 2;
-//         for (int i = 0; i < n; i++)
-//         {
-//             m_devicesRef.m_imu.update();
-//             m_omegaBias += m_devicesRef.m_imu.getGyroY() / n;
-//             vTaskDelay(pdMS_TO_TICKS(m_dt));
-//         }
-//     }
-// }
-
-void Estimator::calibrate()
+bool Estimator::calibrateOmegaBias()
 {
-    return; // !!! THIS IS FOR TESTING, REMOVE THIS LINE
+    if (m_imuSelected)
+    {
+        // Calculate angular velocity bias by averaging n samples for 0.5 seconds
+        int n_samples = static_cast<int>(500 / (aquisition_dt_ms));
+
+        float omegaBias = 0.0;
+
+        for (int i = 0; i < n_samples; i++)
+        {
+            m_devicesRef.m_imu.update();
+            omegaBias += m_devicesRef.m_imu.getGyroY() / n_samples;
+            vTaskDelay(pdMS_TO_TICKS(m_dt));
+        }
+
+        if (fabs(omegaBias) > 1.0) // !!! arbitrary threshold, but this value should be low
+        {
+            ESP_LOGE("ESTIMATOR", "Cube is moving too much for calibration, Omega = %f", omegaBias);
+            return false;
+        }
+
+        m_omegaBias = omegaBias;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool Estimator::calibrate()
+{
+    bool succ = false;
+
+    succ = calibrateStartSide();  // set the position of the cube to either -90 or deg based on accel readings (where 0 is the upright position)
+    succ &= calibrateOmegaBias(); // calibrate the angular velocity bias
+
+    return succ;
+}
+
+bool Estimator::calibrateStartSide()
+{
+    if (m_imuSelected)
+    {
+        float ay = 0;
+        float ax = 0;
+
+        // averaging n samples for 0.25 seconds
+        int n_samples = 1 / (4 * m_dt);
+
+        for (int i = 0; i < n_samples; i++)
+        {
+            m_devicesRef.m_imu.update();
+            ay += m_devicesRef.m_imu.getAccelY(); // If we read positive values for 'y', cube is upside down and we have to go to critical error state
+            ax += m_devicesRef.m_imu.getAccelX(); // Sign only changes for 'x' when the cube is flipped
+            vTaskDelay(pdMS_TO_TICKS(m_dt));
+        }
+
+        ay /= n_samples;
+        ax /= n_samples;
+
+        if (ay > 0)
+        {
+            ESP_LOGE("ESTIMATOR", "Cube is upside down!, [acel-y] reading: %f", ay);
+            return false;
+        }
+
+        float gravity_45_threshold = GRAVITY_CONST * 0.707; // axes are at 45 degrees to sides.
+
+        if (fabs(ax) < (gravity_45_threshold * 0.9)) // 0.9 is a safety factor
+        {
+            ESP_LOGE("ESTIMATOR", "Cube is not flat on its side!, [acel-x] reading: %f", ax);
+            return false;
+        }
+
+        else if (ax < 0)
+        {
+            m_startAngle = -QUARTER_PI; // pivot point is at -45 (anti-clockwise from upright position)
+        }
+        else
+        {
+            m_startAngle = QUARTER_PI; // pivot point is at 45 (clockwise from upright position)
+        }
+
+        SemaphoreGuard guard(m_theta_mutex);
+        if (guard.acquired())
+        {
+            m_theta = m_startAngle; // theta is always acculumated after this point
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void Estimator::estimateWithIMU()
@@ -121,17 +203,21 @@ void Estimator::estimate()
 
     if (m_rotEncSelected)
     {
-        estimateWithRot_Enc();
+        estimateWithRot_Enc(); // nothing here yet
     }
-
     // !!! need to somehow fuse these two, if they are both selected
 }
 
 void Estimator::estimateWithRot_Enc()
 {
-    // Example: Read encoder value and convert to angle
-    float encoder_angle = m_devicesRef.m_rotEnc.getAngle();
-    // Implement prediction and correction based on encoder data
+    // SemaphoreGuard guard(m_theta_mutex);
+    // if (guard.acquired())
+    // {
+    //     // Example: Read encoder value and convert to angle
+    //     float encoder_angle = m_devicesRef.m_rotEnc.getAngle();
+    //     // Implement prediction and correction based on encoder data
+    //     m_theta = encoder_angle; // multiply by time to ensure time scaling and consistency
+    // }
 }
 
 // Predict step
@@ -162,10 +248,10 @@ void Estimator::correct(float ax, float ay)
     SemaphoreGuard guard(m_theta_mutex);
     if (guard.acquired())
     {
-        // should we account acceleration induced by motor?
+        // should we account acceleration induced by reaction wheel?
         // Calculate the expected gravity direction
-        float gravity_est_x = cos(m_theta);
-        float gravity_est_y = sin(m_theta);
+        float gravity_est_x = sin(m_theta);  // rotate by 90 degrees
+        float gravity_est_y = -cos(m_theta); // expecting y to be negative
 
         // Compute error between measured and estimated gravity
         float error_x = ax - gravity_est_x;
@@ -175,7 +261,7 @@ void Estimator::correct(float ax, float ay)
         float error_theta = atan2(error_y, error_x);
 
         // Apply correction
-        m_theta += m_lds * error_theta * m_dt; // multiply by time to ensure time scaling and consistency
+        m_theta += m_lds * error_theta; // * m_dt; // multiply by time to ensure time scaling and consistency
     }
 }
 

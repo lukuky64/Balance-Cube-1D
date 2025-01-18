@@ -2,13 +2,18 @@
 #include "Controller.hpp"
 
 Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
-                                              m_filters{Filter(0.5f, 0.1f, 1.0f, 0.0f), Filter(0.5f, 0.1f, 1.0f, 0.0f), Filter(0.5f, 0.1f, 1.0f, 0.0f), Filter(0.5f, 0.1f, 1.0f, 0.0f)},
+                                              m_filters{
+                                                  Filter(0.5f, 0.1f, 100.0f, 0.0f), // Theta - don't trust initial values. Set 'P' high
+                                                  Filter(0.5f, 0.1f, 1.0f, 0.0f),   // Omega
+                                                  Filter(0.5f, 0.1f, 1.0f, 0.0f),   // Motor Theta
+                                                  Filter(0.5f, 0.1f, 1.0f, 0.0f)},  // Motor Omega
+
                                               m_estimator(devicesRef, aquisition_dt_ms),
-                                              m_controlable(false)
+                                              m_controlable(false),
+                                              m_maxTau(0.0f)
 {
     // m_target_tau_mutex = xSemaphoreCreateMutex();
     m_controllableMutex = xSemaphoreCreateMutex();
-    m_maxTau = m_devicesRef.m_bldc.getMaxTau();
 }
 
 Controller::~Controller()
@@ -17,10 +22,41 @@ Controller::~Controller()
     vSemaphoreDelete(m_controllableMutex);
 }
 
-void Controller::setup()
+bool Controller::setup()
 {
     ESP_LOGI("Controller", "Setting up Controller!");
-    m_estimator.selectDevice();
+
+    bool succ = false;
+    if (m_estimator.selectDevice())
+        succ = m_estimator.calibrate();
+
+    if (!succ)
+        return false;
+
+    // sample the readings of all the sensors
+    setupFilters();
+
+    m_maxTau = m_devicesRef.m_bldc.getMaxTau();
+}
+
+bool Controller::setupFilters()
+{
+    // averaging n samples for 0.5 seconds
+    int n_samples = static_cast<int>(500 / (aquisition_dt_ms));
+
+    for (int i = 0; i < n_samples; i++)
+    {
+        bool lastData = (i == n_samples - 1);
+
+        m_estimator.estimate();
+
+        m_filters.filter_theta.computeMeasurementVariance(m_estimator.getTheta(), lastData);
+        m_filters.filter_omega.computeMeasurementVariance(m_estimator.getOmega(), lastData);
+        m_filters.filter_motor_theta.computeMeasurementVariance(m_devicesRef.m_bldc.getTheta(), lastData);
+        m_filters.filter_motor_omega.computeMeasurementVariance(m_devicesRef.m_bldc.getOmega(), lastData);
+
+        vTaskDelay(pdMS_TO_TICKS(aquisition_dt_ms));
+    }
 }
 
 bool Controller::checkStatus()

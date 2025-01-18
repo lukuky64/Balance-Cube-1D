@@ -7,6 +7,8 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 
+#define GRAVITY_CONST 9.81f
+
 // Define constants for dummy IMU
 #if DUMMY_IMU
 #define DUMMY_ACCEL_X 0.0f

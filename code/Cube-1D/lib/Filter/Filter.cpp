@@ -46,6 +46,45 @@ void Filter::update(float measurement, float controlInput, float controlEffect)
     }
 }
 
+void Filter::computeMeasurementVariance(float measurement, bool lastData)
+{
+    // Accumulate sums
+    m_sum += measurement;
+    m_sumSq += measurement * measurement;
+    m_count++;
+
+    // If this is the last data point of a batch
+    if (lastData)
+    {
+        SemaphoreGuard guard(m_dataMutex);
+        if (guard.acquired() && m_count > 1)
+        {
+            // Population variance approach
+            float mean = m_sum / m_count;
+            float meanSq = m_sumSq / m_count;
+            float varPop = meanSq - (mean * mean);
+
+            // Sample variance (unbiased) for smaller sample sizes
+            float varSample = varPop * (static_cast<float>(m_count) / (m_count - 1));
+
+            R = varSample;
+
+            // Reset accumulations
+            m_sum = 0.0f;
+            m_sumSq = 0.0f;
+            m_count = 0;
+        }
+        else if (guard.acquired())
+        {
+            // Edge case
+            R = 0.0f;
+            m_sum = 0.0f;
+            m_sumSq = 0.0f;
+            m_count = 0;
+        }
+    }
+}
+
 float Filter::getValue()
 {
     SemaphoreGuard guard(m_dataMutex);

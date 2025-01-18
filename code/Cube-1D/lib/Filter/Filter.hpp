@@ -22,6 +22,8 @@ public:
     float getMeasurementNoise();
     float getEstimatedError();
 
+    void computeMeasurementVariance(float measurement, bool lastData);
+
     // Reset filter
     void reset(float initialValue, float initialError);
 
@@ -34,4 +36,9 @@ private:
     float K; // Kalman Gain
 
     bool isInitialised; // Initialization flag
+
+    // For calculating measurement noise
+    int m_sum = 0;
+    float m_sumSq = 0.0f;
+    int m_count = 0;
 };
