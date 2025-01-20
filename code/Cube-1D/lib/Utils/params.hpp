@@ -46,10 +46,12 @@
 #define sense_mVpA 185.0 // ACS712-05B has the resolution of 0.185mV per Amp
 
 // Sensor parameters
-#define b_ax -0.0664 // Acelerometer bias and scale factor
-#define b_ay 0.1602
-#define f_ax 1.0065
-#define f_ay 1.0086
+// #define b_ax -0.0664 // Acelerometer bias and scale factor
+// #define b_ay 0.1602
+// #define f_ax 1.0065
+// #define f_ay 1.0086
+
+#define OMEGA_SET_Y_AXIS 1 // set to 1 if the omega is measured in the y-axis
 
 // Control params
 #define LQR 1

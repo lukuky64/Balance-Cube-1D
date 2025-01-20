@@ -28,7 +28,7 @@ void State_Machine::begin()
 
 void State_Machine::taskManagerTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -101,7 +101,7 @@ void State_Machine::loop()
 
 void State_Machine::BLDCTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -140,7 +140,7 @@ void State_Machine::BLDCTask(void *pvParameters)
 
 void State_Machine::balanceTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -168,7 +168,7 @@ void State_Machine::updateFiltersTask(void *pvParameters)
 
 void State_Machine::indicationTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -197,7 +197,7 @@ void State_Machine::indicationTask(void *pvParameters)
 
 void State_Machine::refreshStatusTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -210,7 +210,7 @@ void State_Machine::refreshStatusTask(void *pvParameters)
 
 void State_Machine::logTask(void *pvParameters)
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -235,7 +235,7 @@ void State_Machine::logTask(void *pvParameters)
 
 // void State_Machine::ControlabilityTask(void *pvParameters)
 // {
-//     vTaskDelay(pdMS_TO_TICKS(100));
+//     vTaskDelay(pdMS_TO_TICKS(50));
 //     // Convert generic pointer back to State_Machine*
 //     auto *machine = static_cast<State_Machine *>(pvParameters);
 
@@ -298,7 +298,7 @@ void State_Machine::criticalErrorSeq()
 
 void State_Machine::calibrationSeq()
 {
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(50));
 
     ESP_LOGI("State_Machine CALIBRATION", "Calibration Sequence!");
 
@@ -388,7 +388,7 @@ STATES State_Machine::getCurrentState()
 
 void State_Machine::idleSeq()
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
     ESP_LOGI("State_Machine", "Idle Sequence!");
 
     unsigned long startTime = millis();
@@ -396,7 +396,7 @@ void State_Machine::idleSeq()
     // if angle is out of bounds, we will disable active control; stay here and monitor angle
     while (!m_control.getControllable())
     {
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(50));
 
         if (millis() - startTime > sleepTimeout_ms)
         {
@@ -425,13 +425,13 @@ void State_Machine::idleSeq()
         }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(50));
 }
 
 // void State_Machine::checkControllableTask(void *pvParameters)
 // {
 
-//     vTaskDelay(pdMS_TO_TICKS(100));
+//     vTaskDelay(pdMS_TO_TICKS(50));
 //     // Convert generic pointer back to State_Machine*
 //     auto *machine = static_cast<State_Machine *>(pvParameters);
 

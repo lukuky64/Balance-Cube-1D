@@ -22,14 +22,11 @@ void RateLimiter::setLimit(float limit)
 
 float RateLimiter::limit(float input, float dt)
 {
-    // Apply rate limiting
-    float max_rate = m_limit; // Maximum rate of change (Nm/s)
-
     float rate = (input - m_prevInput) / dt; // Compute rate of change
-    if (rate > max_rate)
-        input = m_prevInput + max_rate * dt;
-    else if (rate < -max_rate)
-        input = m_prevInput - max_rate * dt;
+    if (rate > m_limit)
+        input = m_prevInput + m_limit * dt;
+    else if (rate < -m_limit)
+        input = m_prevInput - m_limit * dt;
 
     // Update the previous input
     m_prevInput = input;

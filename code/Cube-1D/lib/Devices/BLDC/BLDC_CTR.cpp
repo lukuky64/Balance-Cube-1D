@@ -1,6 +1,6 @@
 #include "BLDC_CTR.hpp"
 
-BLDC_CTR::BLDC_CTR() : m_Kv()
+BLDC_CTR::BLDC_CTR() : m_torque_constant(0.5) // just to avoid division by zero even though this will be overwritten
 {
 }
 
@@ -12,6 +12,24 @@ BLDC_CTR::~BLDC_CTR()
 
 #else
 
+/*****************************************************************************/
+/*!
+    @brief  Initialize the BLDC motor controller
+
+    @param phA Phase A pin
+    @param phB Phase B pin
+    @param phC Phase C pin
+    @param enable Enable pin
+    @param senseA Current sense A pin
+    @param senseB Current sense B pin
+    @param MAG_CS Magnetic encoder chip select pin
+    @param mag_enc Magnetic encoder object
+    @param voltage Voltage of the motor
+    @param Kv Motor Kv rating
+
+    @return True on success
+*/
+/*****************************************************************************/
 bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv)
 {
     m_max_current = DEF_CURRENT_LIM; // 2A current limit by default
@@ -46,6 +64,13 @@ bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int sens
     return driverSucc && currentSucc && motorSucc && FOCSucc;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Set the torque constant of the motor based on the Kv rating
+
+    @param Kv Motor Kv rating (rpm/V)
+*/
+/*****************************************************************************/
 void BLDC_CTR::setTorqueConstant(float Kv)
 {
     m_torque_constant = 60 / (2 * PI * Kv);
@@ -56,6 +81,13 @@ bool BLDC_CTR::checkStatus()
     return true;
 }
 
+/*****************************************************************************/
+/*!
+    @brief  Enable or disable the motor
+
+    @param bool True to enable, false to disable
+*/
+/*****************************************************************************/
 void BLDC_CTR::enableMotor(bool enable)
 {
     if (enable)
@@ -68,22 +100,50 @@ void BLDC_CTR::enableMotor(bool enable)
     }
 }
 
+/*****************************************************************************/
+/*!
+    @brief  The FOC algorithm loop, should be called as fast as possible
+*/
+/*****************************************************************************/
 void BLDC_CTR::loopFOC()
 {
-    m_motor->loopFOC(); // we want this to loop as fast as possible
+    m_motor->loopFOC();
 }
 
+/*****************************************************************************/
+/*!
+    @brief  Create a new torque setpoint
+
+    @param target The target torque
+*/
+/*****************************************************************************/
 void BLDC_CTR::moveTarget(float target)
 {
     target = torqueToCurrent(target);
     m_motor->move(target);
 }
 
+/***************************************************************************************/
+/*!
+    @brief Convert a torque setpoint to a current setpoint based on the torque constant
+
+    @param tau The torque setpoint
+
+    @return The current setpoint
+*/
+/***************************************************************************************/
 float BLDC_CTR::torqueToCurrent(float tau)
 {
     return tau / m_torque_constant;
 }
 
+/***************************************************************************************/
+/*!
+    @brief Update the voltage limits of the motor controller
+
+    @param voltage The voltage can be supplied
+*/
+/***************************************************************************************/
 void BLDC_CTR::updateVoltageLimits(float voltage)
 {
     m_voltage = voltage;
@@ -104,6 +164,11 @@ void BLDC_CTR::updateVoltageLimits(float voltage)
     }
 }
 
+/***************************************************************************************/
+/*!
+    @brief Sets up all motor settings for FOC Torque control
+*/
+/***************************************************************************************/
 void BLDC_CTR::setMotorSettings()
 {
     // set torque mode:
@@ -143,7 +208,7 @@ void BLDC_CTR::setMotorSettings()
 float BLDC_CTR::getMaxTau()
 {
     return m_torque_constant * m_max_current; // current limit is 2A by default. this is not changed anywehre yet
-    return 0.3f;
+    // return 0.3f;
 }
 
 float BLDC_CTR::getTheta()

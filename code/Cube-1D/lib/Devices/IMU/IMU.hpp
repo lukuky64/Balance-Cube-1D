@@ -6,6 +6,7 @@
 #include "SemaphoreGuard.hpp"
 #include "esp_log.h"
 #include "driver/gpio.h"
+#include "Params.hpp"
 
 #define GRAVITY_CONST 9.81f
 
@@ -40,6 +41,8 @@ public:
     float getGyroY() { return DUMMY_GYRO_Y; }
     float getGyroZ() { return DUMMY_GYRO_Z; }
 
+    float getOmega();
+
     uint32_t getTimestampMS() { return millis(); }
 
     bool checkStatus() { return true; }
@@ -65,9 +68,12 @@ private:
     float getAccelX();
     float getAccelY();
     float getAccelZ();
+
+    float getOmega();
     float getGyroX();
     float getGyroY();
     float getGyroZ();
+
     uint32_t getTimestampMS();
     bool checkStatus();
 

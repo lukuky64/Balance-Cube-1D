@@ -61,5 +61,5 @@ private:
     bool m_imuSelected;
     bool m_rotEncSelected;
 
-    uint16_t m_dt;
+    uint16_t m_aquisition_dt;
 };

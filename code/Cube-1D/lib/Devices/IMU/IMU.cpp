@@ -4,11 +4,20 @@
 
 #else
 
+/*****************************************************************************/
+/*!
+    @brief Constructor for IMU class
+
+    @param intPin The GPIO pin to be used for the interrupt
+
+    @return True on successful configuration
+*/
+/*****************************************************************************/
 IMU::IMU() : m_initialised(false)
 {
     m_accelRange = LSM6DS_ACCEL_RANGE_2_G;
-    m_gyroRange = LSM6DS_GYRO_RANGE_250_DPS;
-    m_dataRate = LSM6DS_RATE_104_HZ;
+    m_gyroRange = LSM6DS_GYRO_RANGE_125_DPS;
+    m_dataRate = LSM6DS_RATE_416_HZ; // also min requirement for high-performance mode
 
     m_accelMutex = xSemaphoreCreateMutex();
     m_gyroMutex = xSemaphoreCreateMutex();
@@ -47,6 +56,13 @@ bool IMU::begin(uint8_t SPI_CS, SPICOM &SPI, gpio_num_t intPin)
     return m_initialised;
 }
 
+/*****************************************************************************/
+/*!
+    @brief  Update with the latest the sensor readings
+
+    @return True on successful event capture
+*/
+/*****************************************************************************/
 bool IMU::update()
 {
     bool success = false;
@@ -67,6 +83,13 @@ bool IMU::update()
     return success;
 }
 
+/***************************************************************************************/
+/*!
+    @brief  Accesses the latest saved reading from accelerometer after calling update()
+
+    @return Float value of acceleration in x-axis  (m/s^2)
+*/
+/***************************************************************************************/
 float IMU::getAccelX()
 {
     SemaphoreGuard guard(m_accelMutex);
@@ -77,6 +100,13 @@ float IMU::getAccelX()
     return 0.0f;
 }
 
+/***************************************************************************************/
+/*!
+    @brief  Accesses the latest saved reading from accelerometer after calling update()
+
+    @return Float value of acceleration in y-axis (m/s^2)
+*/
+/***************************************************************************************/
 float IMU::getAccelY()
 {
     SemaphoreGuard guard(m_accelMutex);
@@ -87,6 +117,13 @@ float IMU::getAccelY()
     return 0.0f;
 }
 
+/***************************************************************************************/
+/*!
+    @brief  Accesses the latest saved reading from accelerometer after calling update()
+
+    @return Float value of acceleration in z-axis (m/s^2)
+*/
+/***************************************************************************************/
 float IMU::getAccelZ()
 {
     SemaphoreGuard guard(m_accelMutex);
@@ -97,6 +134,13 @@ float IMU::getAccelZ()
     return 0.0f;
 }
 
+/***************************************************************************************/
+/*!
+    @brief  Accesses the latest saved reading from accelerometer after calling update()
+
+    @return Float value of gyro in x-axis (rad/s)
+*/
+/***************************************************************************************/
 float IMU::getGyroX()
 {
     SemaphoreGuard guard(m_gyroMutex);
@@ -107,6 +151,13 @@ float IMU::getGyroX()
     return 0.0f;
 }
 
+/***************************************************************************************/
+/*!
+    @brief  Accesses the latest saved reading from accelerometer after calling update()
+
+    @return Float value of gyro in y-axis (rad/s)
+*/
+/***************************************************************************************/
 float IMU::getGyroY()
 {
     SemaphoreGuard guard(m_gyroMutex);
@@ -117,6 +168,13 @@ float IMU::getGyroY()
     return 0.0f;
 }
 
+/***************************************************************************************/
+/*!
+    @brief  Accesses the latest saved reading from accelerometer after calling update()
+
+    @return Float value of gyro in z-axis (rad/s)
+*/
+/***************************************************************************************/
 float IMU::getGyroZ()
 {
     SemaphoreGuard guard(m_gyroMutex);
@@ -144,6 +202,15 @@ bool IMU::checkStatus()
     return true;
 }
 
+/*****************************************************************************/
+/*!
+    @brief  Configures the IMU to generate an interrupt on the specified GPIO pin
+
+    @param intPin The GPIO pin to be used for the interrupt
+
+    @return True on successful configuration
+*/
+/*****************************************************************************/
 bool IMU::configureInturrupt(gpio_num_t intPin)
 {
     m_imu.configIntOutputs(false, false);               // active high and push-pull configuration
@@ -174,9 +241,27 @@ bool IMU::configureInturrupt(gpio_num_t intPin)
     }
 }
 
+/**************************************************************************/
+/*!
+    @brief  Gets the GPIO pin number used for the interrupt
+
+    @return GPIO pin number
+*/
+/**************************************************************************/
 gpio_num_t IMU::getIntPin()
 {
     return m_intPin;
 }
 
 #endif
+
+float IMU::getOmega()
+{
+#if OMEGA_SET_Y_AXIS
+    return getGyroY();
+#elif OMEGA_SET_X_AXIS
+    return getGyroX();
+#elif OMEGA_SET_Z_AXIS
+    return getGyroZ();
+#endif
+}

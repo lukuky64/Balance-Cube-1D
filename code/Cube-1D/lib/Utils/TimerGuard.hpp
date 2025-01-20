@@ -3,11 +3,13 @@
 #include <Arduino.h>
 #include "esp_log.h"
 
+/**************************************************************************/
 /*
 
 USE: TimerGuard guard("TimerGuard", "Operation");
 
 */
+/**************************************************************************/
 
 class TimerGuard
 {
@@ -24,7 +26,8 @@ public:
     {
         unsigned long endUS = micros();
         float passedTimeUS = static_cast<float>(endUS - m_startUS);
-        ESP_LOGI(m_logTag, "%s took: %.2f us", m_operationName, passedTimeUS);
+        float passedTimeMS = passedTimeUS / 1000.0f;
+        ESP_LOGI(m_logTag, "%s took: %.2f ms", m_operationName, passedTimeMS);
     }
 
 private:

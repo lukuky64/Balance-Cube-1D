@@ -8,11 +8,11 @@ Filter::Filter(float processNoise, float measurementNoise, float estimatedError,
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        Q = processNoise;     // Uuncertainty in the model or process
-        R = measurementNoise; // Uncertainty in the measurement
-        P = estimatedError;   // Uncertainty in the initial state
-        X = initialValue;     // Initial state
-        K = 0.0f;             // Kalman Gain
+        m_vars.Q = processNoise;     // Uuncertainty in the model or process
+        m_vars.R = measurementNoise; // Uncertainty in the measurement
+        m_vars.P = estimatedError;   // Uncertainty in the initial state
+        m_vars.X = initialValue;     // Initial state
+        m_vars.K = 0.0f;             // Kalman Gain
     }
 }
 
@@ -28,21 +28,21 @@ void Filter::update(float measurement, float controlInput, float controlEffect)
     {
 
         // Prediction update with control input
-        X = X + controlEffect * controlInput;
-        P = P + Q;
+        m_vars.X = m_vars.X + controlEffect * controlInput;
+        m_vars.P = m_vars.P + m_vars.Q;
 
         // Measurement update
-        if ((P + R) == 0)
+        if ((m_vars.P + m_vars.R) == 0)
         {
             // Prevent division by zero
-            K = 0;
+            m_vars.K = 0;
         }
         else
         {
-            K = P / (P + R);
+            m_vars.K = m_vars.P / (m_vars.P + m_vars.R);
         }
-        X = X + K * (measurement - X);
-        P = (1 - K) * P;
+        m_vars.X = m_vars.X + m_vars.K * (measurement - m_vars.X);
+        m_vars.P = (1 - m_vars.K) * m_vars.P;
     }
 }
 
@@ -59,7 +59,7 @@ void Filter::computeMeasurementVariance(float measurement, bool lastData)
         SemaphoreGuard guard(m_dataMutex);
         if (guard.acquired() && m_count > 1)
         {
-            // Population variance approach
+            // Population variance calcs
             float mean = m_sum / m_count;
             float meanSq = m_sumSq / m_count;
             float varPop = meanSq - (mean * mean);
@@ -67,7 +67,7 @@ void Filter::computeMeasurementVariance(float measurement, bool lastData)
             // Sample variance (unbiased) for smaller sample sizes
             float varSample = varPop * (static_cast<float>(m_count) / (m_count - 1));
 
-            R = varSample;
+            m_vars.R = varSample; // may as well use sample variance formula for better accuracy
 
             // Reset accumulations
             m_sum = 0.0f;
@@ -77,7 +77,6 @@ void Filter::computeMeasurementVariance(float measurement, bool lastData)
         else if (guard.acquired())
         {
             // Edge case
-            R = 0.0f;
             m_sum = 0.0f;
             m_sumSq = 0.0f;
             m_count = 0;
@@ -90,15 +89,15 @@ float Filter::getValue()
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        return X;
+        return m_vars.X;
     }
     return 0.0f; // or some other default value
 }
 
 // Setters
-void Filter::setProcessNoise(float processNoise) { Q = processNoise; }
-void Filter::setMeasurementNoise(float measurementNoise) { R = measurementNoise; }
-void Filter::setEstimatedError(float estimatedError) { P = estimatedError; }
+void Filter::setProcessNoise(float processNoise) { m_vars.Q = processNoise; }
+void Filter::setMeasurementNoise(float measurementNoise) { m_vars.R = measurementNoise; }
+void Filter::setEstimatedError(float estimatedError) { m_vars.P = estimatedError; }
 
 // Getters
 float Filter::getProcessNoise()
@@ -106,7 +105,7 @@ float Filter::getProcessNoise()
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        return Q;
+        return m_vars.Q;
     }
     return 0.0f; // or some other default value
 }
@@ -116,7 +115,7 @@ float Filter::getMeasurementNoise()
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        return R;
+        return m_vars.R;
     }
     return 0.0f; // or some other default value
 }
@@ -126,7 +125,7 @@ float Filter::getEstimatedError()
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        return P;
+        return m_vars.P;
     }
     return 0.0f; // or some other default value
 }
@@ -137,9 +136,9 @@ void Filter::reset(float initialValue, float initialError)
     SemaphoreGuard guard(m_dataMutex);
     if (guard.acquired())
     {
-        X = initialValue;
-        P = initialError;
-        K = 0.0f;
+        m_vars.X = initialValue;
+        m_vars.P = initialError;
+        m_vars.K = 0.0f;
         isInitialised = true;
     }
 }

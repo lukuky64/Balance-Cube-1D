@@ -2,7 +2,7 @@
 
 enum PRIORITY
 {
-    PRIORITY_HIGH = 3,
-    PRIORITY_MEDIUM = 2,
-    PRIORITY_LOW = 1,
+    PRIORITY_HIGH = 2,
+    PRIORITY_MEDIUM = 1,
+    PRIORITY_LOW = 0,
 };

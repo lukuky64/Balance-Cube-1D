@@ -9,14 +9,30 @@ Interface documentation: https://www.infineon.com/dgdl/Infineon-EZ-PD_BCR_Host_P
 #include <Comms/Comms.hpp>
 #include "SemaphoreGuard.hpp"
 
+struct registerInfo
+{
+    uint16_t address; // register address (2-bytes)
+    uint8_t size;     // bytes
+};
+
+struct Registers
+{
+    static constexpr registerInfo DEVICE_MODE = {0x0000, 1};   // Device Mode
+    static constexpr registerInfo TYPE_C_STATUS = {0x100C, 4}; // Type-C Status
+    static constexpr registerInfo SILICON_ID = {0x0002, 2};    // Silicon ID
+    static constexpr registerInfo RESET = {0x0008, 1};         // To reset the device. This may cause system to lose power if we use this.
+    static constexpr registerInfo BUS_VOLTAGE = {0x100D, 1};   // Reports live voltage on VBUS (in 100mV units) using internal ADC on the BCR
+    static constexpr registerInfo EVENT_MASK = {0x1024, 4};    // Event Mask
+};
+
 class USB_PD
 {
 
 public:
     USB_PD(void);
     //	TI_INA209(byte address, float shunt);
-    bool readRegister(word reg_addr, uint8_t *buffer, size_t length);
-    bool writeWord(word reg_addr, word data);
+    bool readRegister(registerInfo register_, uint8_t *buffer);
+    bool writeWord(registerInfo register_, word data);
     bool checkStatus();
     bool begin(I2CCOM &I2C);
     float getVoltage();
@@ -27,15 +43,6 @@ private:
     float m_voltage;
 
     static constexpr uint8_t ADDR = 0x08; // 7-bit I2C address (always this value)
-
-    struct Registers
-    {
-        // static constexpr uint16_t DEVICE_MODE = 0x0000; // Device Mode
-        // static constexpr uint16_t SILICON_ID = 0x0002;  // Silicon ID
-
-        // static constexpr uint16_t RESET = 0x0008;       // To reset the device. This may cause system to lose power if we use this.
-        static constexpr uint16_t BUS_VOLTAGE = 0x100D; // Reports live voltage on VBUS (in 100mV units) using internal ADC on the BCR
-    };
 
     // struct Config
     // {

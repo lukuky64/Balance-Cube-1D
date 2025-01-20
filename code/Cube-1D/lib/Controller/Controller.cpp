@@ -49,7 +49,6 @@ bool Controller::setupFilters()
         bool lastData = (i == n_samples - 1);
 
         m_estimator.estimate();
-
         m_filters.filter_theta.computeMeasurementVariance(m_estimator.getTheta(), lastData);
         m_filters.filter_omega.computeMeasurementVariance(m_estimator.getOmega(), lastData);
         m_filters.filter_motor_theta.computeMeasurementVariance(m_devicesRef.m_bldc.getTheta(), lastData);
@@ -57,6 +56,7 @@ bool Controller::setupFilters()
 
         vTaskDelay(pdMS_TO_TICKS(aquisition_dt_ms));
     }
+    return true;
 }
 
 bool Controller::checkStatus()

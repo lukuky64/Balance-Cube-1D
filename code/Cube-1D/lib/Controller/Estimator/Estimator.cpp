@@ -5,8 +5,8 @@ Estimator::Estimator(Devices &devicesRef, uint16_t dt)
     : m_devicesRef(devicesRef),
       m_imuSelected(false),
       m_rotEncSelected(false),
-      m_dt(dt),
-      m_lds(0.2),
+      m_aquisition_dt(dt),
+      m_lds(0.5),
       m_omegaBias(0.0),
       m_startAngle(0.0)
 {
@@ -64,8 +64,8 @@ bool Estimator::calibrateOmegaBias()
         for (int i = 0; i < n_samples; i++)
         {
             m_devicesRef.m_imu.update();
-            omegaBias += m_devicesRef.m_imu.getGyroY() / n_samples;
-            vTaskDelay(pdMS_TO_TICKS(m_dt));
+            omegaBias += m_devicesRef.m_imu.getOmega() / n_samples;
+            vTaskDelay(pdMS_TO_TICKS(m_aquisition_dt));
         }
 
         if (fabs(omegaBias) > 1.0) // !!! arbitrary threshold, but this value should be low
@@ -102,14 +102,14 @@ bool Estimator::calibrateStartSide()
         float ax = 0;
 
         // averaging n samples for 0.25 seconds
-        int n_samples = 1 / (4 * m_dt);
+        int n_samples = 1 / (4 * m_aquisition_dt);
 
         for (int i = 0; i < n_samples; i++)
         {
             m_devicesRef.m_imu.update();
             ay += m_devicesRef.m_imu.getAccelY(); // If we read positive values for 'y', cube is upside down and we have to go to critical error state
             ax += m_devicesRef.m_imu.getAccelX(); // Sign only changes for 'x' when the cube is flipped
-            vTaskDelay(pdMS_TO_TICKS(m_dt));
+            vTaskDelay(pdMS_TO_TICKS(m_aquisition_dt));
         }
 
         ay /= n_samples;
@@ -162,8 +162,7 @@ void Estimator::estimateWithIMU()
     m_devicesRef.m_imu.update();
 
     // Get angular velocity from IMU gyroscope data
-    float omega_measured = m_devicesRef.m_imu.getGyroY();
-
+    float omega_measured = m_devicesRef.m_imu.getOmega();
     // ESP_LOGI("ESTIMATOR", "Omega measured: %f", omega_measured);
 
     // Predict theta step
@@ -175,7 +174,6 @@ void Estimator::estimateWithIMU()
 
     // Correct theta prediction using acceleration
     correct(ax, ay);
-
     // WrapTheta(); // wrap theta to [-π, π]
 }
 
@@ -230,7 +228,7 @@ void Estimator::predict(float omega_measured)
         // Correct the measured angular velocity with bias
         float omega_corrected = omega_measured - m_omegaBias;
 
-        m_theta += omega_corrected * m_dt;
+        m_theta += omega_corrected * m_aquisition_dt;
         m_omega = omega_corrected;
     }
 }
@@ -239,8 +237,9 @@ void Estimator::predict(float omega_measured)
 void Estimator::correct(float ax, float ay)
 {
 
-    // Normalize linear acceleration
-    float a_norm = sqrt(ax * ax + ay * ay);
+    // Normalise linear acceleration (we are assuming gravity is the only acceleration sensed)
+    // should we account acceleration induced by reaction wheel?
+    float a_norm = sqrt((ax * ax) + (ay * ay));
     a_norm = (a_norm == 0) ? 1 : a_norm; // avoid division by zero
     ax /= a_norm;
     ay /= a_norm;
@@ -248,7 +247,6 @@ void Estimator::correct(float ax, float ay)
     SemaphoreGuard guard(m_theta_mutex);
     if (guard.acquired())
     {
-        // should we account acceleration induced by reaction wheel?
         // Calculate the expected gravity direction
         float gravity_est_x = sin(m_theta);  // rotate by 90 degrees
         float gravity_est_y = -cos(m_theta); // expecting y to be negative
@@ -261,7 +259,7 @@ void Estimator::correct(float ax, float ay)
         float error_theta = atan2(error_y, error_x);
 
         // Apply correction
-        m_theta += m_lds * error_theta; // * m_dt; // multiply by time to ensure time scaling and consistency
+        m_theta += m_lds * error_theta; // * m_aquisition_dt; // multiply by time to ensure time scaling and consistency
     }
 }
 
