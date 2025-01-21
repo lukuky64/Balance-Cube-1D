@@ -1,14 +1,11 @@
-% Parameters
+% Const Parameters
 m = 0.31;         % Total mass (kg)
 g = -9.81;     % Gravitational acceleration (m/s^2)
 l = 0.09;      % Length (m)
 I_P = m * (l * l); % 4.05e-3;       % Moment of inertia about pivot (kg·m^2)
 I_F = 9.28e-4;       % Moment of inertia of the reaction wheel (kg·m^2)
 
-% Define the State-Cost Matrix (Q)
 Q = diag([5, 2, 0.001, 0.1]); % cost of: theta, theta_dot, phi, phi_dot
-
-% Define the Control-Cost Matrix (R)
 R = 5000; % Weight on the control effort (u)
 
 % Create A and B matrices

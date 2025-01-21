@@ -1,6 +1,5 @@
-function [] = simulateSystem(A, B, K, x0, u_max, u_rate_max)
+function [] = simulateSystem(A, B, K, x0, u_max, u_rate_max, dt)
     % Simulation parameters
-    dt = 0.01; % Time step
     T = 3;    % Simulation duration
     time = 0:dt:T;
 
