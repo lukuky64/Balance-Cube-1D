@@ -16,14 +16,37 @@ bool Log::startNewLog()
 
     if (m_sdLog)
     {
-        if (!m_sdTalker.createFile(log_header, log_file_prefix))
+        String startMsg = "Time(s),"; // we should always log time
+
+        if (LOG_THETA)
         {
-            ESP_LOGE("Log", "Failed to create file on SD card!");
+            startMsg += "Theta(rad),";
+        }
+        if (LOG_THETA_DOT)
+        {
+            startMsg += "theta_dot(rad/s),";
+        }
+        if (LOG_PHI)
+        {
+            startMsg += "Phi(rad),";
+        }
+        if (LOG_PHI_DOT)
+        {
+            startMsg += "phi_dot(rad/s)";
+        }
+        if (LOG_SETPOINT)
+        {
+            startMsg += "setpoint(Nm)";
+        }
+
+        if (!m_sdTalker.createFile(startMsg, LOG_FILE_PREFIX))
+        {
+            ESP_LOGE(TAG, "Failed to create file on SD card!");
             return false;
         }
         else
         {
-            ESP_LOGI("Log", "Created file on SD card!");
+            ESP_LOGI(TAG, "Created file on SD card!");
             return true;
         }
     }
@@ -57,7 +80,7 @@ bool Log::logData(const float *data, int dataSize)
     // Ensure logging is set up
     if (!isLogSetup())
     {
-        ESP_LOGE("Log", "Logging not set up.");
+        ESP_LOGE(TAG, "Logging not set up.");
         return false;
     }
 
@@ -79,7 +102,7 @@ bool Log::logData(const float *data, int dataSize)
             // Flush current buffer
             if (!writeBufferAll())
             {
-                ESP_LOGE("Log", "Failed to flush buffer.");
+                ESP_LOGE(TAG, "Failed to flush buffer.");
                 return false;
             }
 
@@ -95,14 +118,14 @@ bool Log::logData(const float *data, int dataSize)
         int written = snprintf(&charBuffer[currentBufferPos], remaining, format, value);
         if (written < 0)
         {
-            ESP_LOGE("Log", "Formatting error while writing float.");
+            ESP_LOGE(TAG, "Formatting error while writing float.");
             return false;
         }
 
         // Ensure we don't write beyond the buffer
         if (static_cast<size_t>(written) >= remaining)
         {
-            ESP_LOGE("Log", "Buffer overflow detected while writing float.");
+            ESP_LOGE(TAG, "Buffer overflow detected while writing float.");
             return false;
         }
 
@@ -158,7 +181,7 @@ bool Log::writeBufferAll()
     {
         if (!m_sdTalker.writeBuffer(charBuffer, currentBufferPos))
         {
-            ESP_LOGE("Log", "Failed to write to SD.");
+            ESP_LOGE(TAG, "Failed to write to SD.");
             success = false;
         }
     }
@@ -167,7 +190,7 @@ bool Log::writeBufferAll()
     {
         if (!m_serialTalker.writeBuffer(charBuffer, currentBufferPos))
         {
-            ESP_LOGE("Log", "Failed to write to Serial.");
+            ESP_LOGE(TAG, "Failed to write to Serial.");
             success = false;
         }
     }

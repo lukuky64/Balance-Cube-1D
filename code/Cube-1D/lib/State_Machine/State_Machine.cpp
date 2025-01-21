@@ -1,4 +1,5 @@
 #include "State_Machine.hpp"
+// #include "perfmon.hpp"
 
 State_Machine::State_Machine() : m_control(m_devices)
 {
@@ -11,6 +12,8 @@ State_Machine::~State_Machine()
 
 void State_Machine::begin()
 {
+    // perfmon_start();
+
     {
         SemaphoreGuard guard(m_stateMutex);
         if (guard.acquired())
@@ -21,7 +24,7 @@ void State_Machine::begin()
 
     if (m_taskManagerTaskHandle == NULL)
     {
-        ESP_LOGI("State_Machine", "Starting Task Manager Task");
+        ESP_LOGI(TAG, "Starting Task Manager Task");
         xTaskCreate(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle);
     }
 }
@@ -36,15 +39,15 @@ void State_Machine::taskManagerTask(void *pvParameters)
     {
         machine->loop();
 
-        ESP_LOGI("State_Machine", "Current state: %s", machine->stateToString(static_cast<STATES>(machine->getCurrentState())));
+        ESP_LOGI(TAG, "Current state: %s", machine->stateToString(static_cast<STATES>(machine->getCurrentState())));
 
         // UBaseType_t uxHighWaterMark;
         // uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-        // ESP_LOGI("State_Machine", "Remaining stack: %u words\n", uxHighWaterMark);
+        // ESP_LOGI(TAG, "Remaining stack: %u words\n", uxHighWaterMark);
 
         // machine->printCpuUsage();
 
-        vTaskDelay(pdMS_TO_TICKS(taskManager_dt_ms)); // Loop current has blocking in certain functions
+        vTaskDelay(pdMS_TO_TICKS(TASK_MANAGER_MS)); // Loop current has blocking in certain functions
     }
 }
 
@@ -113,11 +116,11 @@ void State_Machine::BLDCTask(void *pvParameters)
     while (machine->m_control.getControllable())
     {
         {
-            // TimerGuard guard("State_Machine", "update BLDC task");
+            // TimerGuard guard(TAG, "update BLDC task");
             machine->m_control.updateBLDC(); // currently only takes ~ 5uS or 200kHz
         }
 
-        vTaskDelay(pdMS_TO_TICKS(BLDC_dt_ms));
+        vTaskDelay(pdMS_TO_TICKS(BLDC_MS)); //  could use taskYIELD() instead if we need to be more responsive
     }
 
     machine->m_devices.m_bldc.enableMotor(false); // Disable motor
@@ -131,7 +134,7 @@ void State_Machine::BLDCTask(void *pvParameters)
         }
     }
 
-    ESP_LOGI("State_Machine", "Ending BLDC Task!");
+    ESP_LOGI(TAG, "Ending BLDC Task!");
 
     // Delete the task explicitly
     machine->m_BLDCTaskHandle = NULL;
@@ -148,8 +151,8 @@ void State_Machine::balanceTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateBalanceControl(balance_dt_ms); // currently only takes ~ 30uS or 33kHz
-        vTaskDelay(pdMS_TO_TICKS(balance_dt_ms));
+        machine->m_control.updateBalanceControl(BALANCE_MS); // currently only takes ~ 30uS or 33kHz
+        vTaskDelay(pdMS_TO_TICKS(BALANCE_MS));
     }
 }
 
@@ -162,7 +165,7 @@ void State_Machine::updateFiltersTask(void *pvParameters)
     while (true)
     {
         machine->m_control.updateData(); // currently only takes ~ 70uS or 14kHz. But we aren't really getting data from sensors
-        vTaskDelay(pdMS_TO_TICKS(aquisition_dt_ms));
+        vTaskDelay(pdMS_TO_TICKS(AQUISITION_MS));
     }
 }
 
@@ -191,7 +194,7 @@ void State_Machine::indicationTask(void *pvParameters)
         // uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
         // printf("Remaining stack: %u words\n", uxHighWaterMark);
 
-        vTaskDelay(pdMS_TO_TICKS(indication_dt_ms));
+        vTaskDelay(pdMS_TO_TICKS(INDICATION_MS));
     }
 }
 
@@ -203,7 +206,7 @@ void State_Machine::refreshStatusTask(void *pvParameters)
 
     while (true)
     {
-        vTaskDelay(pdMS_TO_TICKS(refreshStatus_dt_ms));
+        vTaskDelay(pdMS_TO_TICKS(REFRESH_STATUS_MS));
         machine->m_devices.refreshStatusAll();
     }
 }
@@ -214,7 +217,7 @@ void State_Machine::logTask(void *pvParameters)
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
-    ESP_LOGI("State_Machine", "Starting log Task apparently");
+    ESP_LOGI(TAG, "Starting log Task apparently");
 
     bool successLog = machine->m_devices.m_logger.startNewLog();
 
@@ -222,8 +225,8 @@ void State_Machine::logTask(void *pvParameters)
     {
         while (true)
         {
-            machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), log_columns); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
-            vTaskDelay(pdMS_TO_TICKS(log_dt_ms));
+            machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), LOG_COLUMNS); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
+            vTaskDelay(pdMS_TO_TICKS(LOG_MS));
         }
     }
     else
@@ -332,10 +335,10 @@ void State_Machine::lightSleepSeq()
 
     if (m_devices.sleepMode())
     {
-        ESP_LOGI("State_Machine", "Entering Light Sleep!");
+        ESP_LOGI(TAG, "Entering Light Sleep!");
         esp_light_sleep_start(); // Enter Light Sleep
 
-        ESP_LOGI("State_Machine", "Waking up from light sleep!");
+        ESP_LOGI(TAG, "Waking up from light sleep!");
         m_devices.wakeMode();
     }
 
@@ -348,17 +351,17 @@ void State_Machine::lightSleepSeq()
 
 void State_Machine::controlSeq()
 {
-    // ESP_LOGI("State_Machine", "Control Sequence!");
+    // ESP_LOGI(TAG, "Control Sequence!");
 
     if (m_balanceTaskHandle == NULL)
     {
-        ESP_LOGI("State_Machine", "Starting balance Task");
+        ESP_LOGI(TAG, "Starting balance Task");
         xTaskCreate(&State_Machine::balanceTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
     }
 
     if (m_BLDCTaskHandle == NULL)
     {
-        ESP_LOGI("State_Machine", "Starting BLDC Task");
+        ESP_LOGI(TAG, "Starting BLDC Task");
         xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
     }
 }
@@ -389,7 +392,7 @@ STATES State_Machine::getCurrentState()
 void State_Machine::idleSeq()
 {
     vTaskDelay(pdMS_TO_TICKS(50));
-    ESP_LOGI("State_Machine", "Idle Sequence!");
+    ESP_LOGI(TAG, "Idle Sequence!");
 
     unsigned long startTime = millis();
 
@@ -398,11 +401,11 @@ void State_Machine::idleSeq()
     {
         vTaskDelay(pdMS_TO_TICKS(50));
 
-        if (millis() - startTime > sleepTimeout_ms)
+        if (millis() - startTime > SLEEP_TIMEOUT_MS)
         {
             if (ALLOW_SLEEP == 1) // m_devices.canSleep()
             {
-                ESP_LOGI("State_Machine", "Sleep is allowed!");
+                ESP_LOGI(TAG, "Sleep is allowed!");
                 SemaphoreGuard guard(m_stateMutex);
                 if (guard.acquired())
                 {

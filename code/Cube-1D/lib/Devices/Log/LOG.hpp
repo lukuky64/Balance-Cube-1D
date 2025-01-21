@@ -38,4 +38,6 @@ private:
     static constexpr size_t m_bufferSize = 4096; // ensure mulitple of 512 bytes
     char charBuffer[m_bufferSize];
     size_t currentBufferPos; // Track current position in buffer
+
+    static constexpr const char *TAG = "Log";
 };

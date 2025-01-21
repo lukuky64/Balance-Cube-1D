@@ -76,4 +76,6 @@ private:
         {'C', 0x00FFFF},
         {'W', 0xFFFFFF},
         {'O', 0xFF7B00}};
+
+    static constexpr const char *TAG = "Indicators";
 };

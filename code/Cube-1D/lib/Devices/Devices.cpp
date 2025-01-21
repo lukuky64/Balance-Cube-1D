@@ -103,12 +103,12 @@ bool Devices::setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num
 
     if (interrupt_setup != ESP_OK)
     {
-        ESP_LOGE("Devices", "Failed to set up IMU interrupt pin %d", intPin);
+        ESP_LOGE(TAG, "Failed to set up IMU interrupt pin %d", intPin);
         return false;
     }
     else
     {
-        ESP_LOGI("Devices", "IMU interrupt pin %d set up successfully", intPin);
+        ESP_LOGI(TAG, "IMU interrupt pin %d set up successfully", intPin);
     }
 
     return m_imu.begin(CS, m_SPIComSensors, intPin);
@@ -175,7 +175,7 @@ bool Devices::indicateStatus()
 
     if ((statusMask & prefMask) != prefMask)
     {
-        ESP_LOGI("Devices", "Not all prefs met!");
+        ESP_LOGI(TAG, "Not all prefs met!");
         m_indicators.showWarning();
         return requirementsMet;
     }
@@ -186,7 +186,7 @@ bool Devices::indicateStatus()
 
 void Devices::refreshStatusAll()
 {
-    ESP_LOGI("Devices", "Checking all device statuses...");
+    ESP_LOGI(TAG, "Checking all device statuses...");
 
     uint8_t statusMask = 0;
     statusMask |= (m_indicators.checkStatusEither() ? INDICATION_BIT : 0);
@@ -337,14 +337,14 @@ bool Devices::checkRequirementsMet()
     // bool isUsbpdOk = (statusMask & USBPD_BIT) == USBPD_BIT;
     bool isBldcOk = (statusMask & BLDC_BIT) == BLDC_BIT;
     bool isImuOrEncOk = ((statusMask & IMU_BIT) == IMU_BIT) || ((statusMask & ROT_ENC_BIT) == ROT_ENC_BIT);
-    // ESP_LOGI("Devices", "Indication: %d, USBPD: %d, BLDC: %d, IMU/ENC: %d", isIndicationOk, isUsbpdOk, isBldcOk, isImuOrEncOk);
+    // ESP_LOGI(TAG, "Indication: %d, USBPD: %d, BLDC: %d, IMU/ENC: %d", isIndicationOk, isUsbpdOk, isBldcOk, isImuOrEncOk);
 
     return isIndicationOk && isBldcOk && isImuOrEncOk; // isUsbpdOk !!! for now we will remove this
 }
 
 void Devices::setStatus(uint8_t status)
 {
-    // ESP_LOGI("Devices", "Setting Status: %d", status);
+    // ESP_LOGI(TAG, "Setting Status: %d", status);
     {
         SemaphoreGuard guard(m_statusMaskMutex);
         if (guard.acquired())
@@ -375,7 +375,7 @@ uint8_t Devices::getStatus()
             status = m_statusMask;
         }
     }
-    // ESP_LOGI("Devices", "Status: %u", status);
+    // ESP_LOGI(TAG, "Status: %u", status);
     return status;
 }
 
@@ -389,7 +389,7 @@ uint8_t Devices::getPref()
             pref = m_prefMask;
         }
     }
-    // ESP_LOGI("Devices", "Pref: %d", pref);
+    // ESP_LOGI(TAG, "Pref: %d", pref);
     return pref;
 }
 
@@ -425,18 +425,18 @@ bool Devices::canSleep()
         // check if IMU is enabled
         if ((deviceStatus & IMU_BIT) == IMU_BIT)
         {
-            ESP_LOGI("Devices", "Can sleep!");
+            ESP_LOGI(TAG, "Can sleep!");
             return true;
         }
         else
         {
-            ESP_LOGI("Devices", "IMU not enabled, cannot enter light sleep!");
+            ESP_LOGI(TAG, "IMU not enabled, cannot enter light sleep!");
             return false;
         }
     }
     else
     {
-        ESP_LOGI("Devices", "USB connected, cannot enter light sleep!");
+        ESP_LOGI(TAG, "USB connected, cannot enter light sleep!");
         return false;
     }
 }

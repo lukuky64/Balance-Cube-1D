@@ -44,7 +44,7 @@ void Indicators::setupRGBLed(uint8_t ledNeo)
 
 void Indicators::showCriticalError()
 {
-    ESP_LOGI("Indicators", "Showing Critical Error!");
+    ESP_LOGI(TAG, "Showing Critical Error!");
 
     uint16_t duration = 50; // ms
 
@@ -58,7 +58,7 @@ void Indicators::showCriticalError()
 
 void Indicators::showWarning()
 {
-    ESP_LOGI("Indicators", "Showing Warning!");
+    ESP_LOGI(TAG, "Showing Warning!");
 
     uint16_t duration = 50; // ms
 
@@ -72,7 +72,7 @@ void Indicators::showWarning()
 
 void Indicators::showSuccess()
 {
-    ESP_LOGI("Indicators", "Showing Success!");
+    ESP_LOGI(TAG, "Showing Success!");
 
     uint16_t duration = 50; // ms
 
@@ -86,7 +86,7 @@ void Indicators::showSuccess()
 
 void Indicators::showAllGood()
 {
-    // ESP_LOGI("Indicators", "Showing All Good!");
+    // ESP_LOGI(TAG, "Showing All Good!");
 
     uint16_t duration = 50; // ms
 
@@ -95,7 +95,7 @@ void Indicators::showAllGood()
 
 void Indicators::showAllOff()
 {
-    ESP_LOGI("Indicators", "Turning off all Indicators!");
+    ESP_LOGI(TAG, "Turning off all Indicators!");
 
     controlRGBLed(0, 0);
 }

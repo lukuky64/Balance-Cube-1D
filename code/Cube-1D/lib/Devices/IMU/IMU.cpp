@@ -215,7 +215,10 @@ bool IMU::configureInturrupt(gpio_num_t intPin)
 {
     m_imu.configIntOutputs(false, false);               // active high and push-pull configuration
     m_imu.configInt1(false, false, false, false, true); // enabling wake up interrupt
-    m_imu.enableWakeup(true, 50, 20);                   // duration, threshold
+
+    float duration = 0.1f; // seconds
+    uint8_t samples = static_cast<uint8_t>(m_imu.accelerationSampleRate() * (duration));
+    m_imu.enableWakeup(true, 50, 20); // enable, duration, threshold
 
     m_intPin = intPin;
 

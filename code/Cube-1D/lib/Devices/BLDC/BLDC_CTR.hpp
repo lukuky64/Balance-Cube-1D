@@ -22,6 +22,8 @@ public:
     float getMaxTau() { return 0.3f; }
     float getTheta() { return 0.0f; }
     float getOmega() { return 10.0f; }
+    float getTarget() { return 0.2f; }
+
 #else
     bool checkStatus();
     void enableMotor(bool enable);
@@ -32,6 +34,7 @@ public:
     float getMaxTau();
     float getTheta();
     float getOmega();
+    float getTarget();
 
 #endif
 
@@ -44,7 +47,7 @@ private:
     void setTorqueConstant(float Kv);
     float torqueToCurrent(float tau);
 
-    float m_Kv; // Motor Kv rating, units should be rpm/V
+    float m_Kv;          // Motor Kv rating, units should be rpm/V
     float m_max_current; // Maximum current limit
 
     float m_torque_constant; // Torque constant

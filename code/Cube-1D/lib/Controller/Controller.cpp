@@ -8,7 +8,7 @@ Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
                                                   Filter(0.5f, 0.1f, 1.0f, 0.0f),   // Motor Theta
                                                   Filter(0.5f, 0.1f, 1.0f, 0.0f)},  // Motor Omega
 
-                                              m_estimator(devicesRef, aquisition_dt_ms),
+                                              m_estimator(devicesRef, AQUISITION_MS),
                                               m_controlable(false),
                                               m_maxTau(0.0f)
 {
@@ -34,15 +34,17 @@ bool Controller::setup()
         return false;
 
     // sample the readings of all the sensors
-    setupFilters();
+    succ = setupFilters();
 
     m_maxTau = m_devicesRef.m_bldc.getMaxTau();
+
+    return succ;
 }
 
 bool Controller::setupFilters()
 {
     // averaging n samples for 0.5 seconds
-    int n_samples = static_cast<int>(500 / (aquisition_dt_ms));
+    int n_samples = static_cast<int>(500 / (AQUISITION_MS));
 
     for (int i = 0; i < n_samples; i++)
     {
@@ -54,7 +56,7 @@ bool Controller::setupFilters()
         m_filters.filter_motor_theta.computeMeasurementVariance(m_devicesRef.m_bldc.getTheta(), lastData);
         m_filters.filter_motor_omega.computeMeasurementVariance(m_devicesRef.m_bldc.getOmega(), lastData);
 
-        vTaskDelay(pdMS_TO_TICKS(aquisition_dt_ms));
+        vTaskDelay(pdMS_TO_TICKS(AQUISITION_MS));
     }
     return true;
 }
@@ -120,13 +122,30 @@ void Controller::updateBLDC()
     m_devicesRef.m_bldc.loopFOC();
 }
 
-float (&Controller::getDataBuffer())[log_columns]
+float (&Controller::getDataBuffer())[LOG_COLUMNS]
 {
     // get data from the filters. Should match log_columns
-    m_dataBuffer[0] = m_filters.filter_theta.getValue();
-    m_dataBuffer[1] = m_filters.filter_omega.getValue();
-    m_dataBuffer[2] = m_filters.filter_motor_theta.getValue();
-    m_dataBuffer[3] = m_filters.filter_motor_omega.getValue();
+
+    if (LOG_THETA)
+    {
+        m_dataBuffer[0] = m_filters.filter_theta.getValue();
+    }
+    if (LOG_THETA_DOT)
+    {
+        m_dataBuffer[1] = m_filters.filter_omega.getValue();
+    }
+    if (LOG_PHI)
+    {
+        m_dataBuffer[2] = m_filters.filter_motor_theta.getValue();
+    }
+    if (LOG_PHI_DOT)
+    {
+        m_dataBuffer[3] = m_filters.filter_motor_omega.getValue();
+    }
+    if (LOG_SETPOINT)
+    {
+        m_dataBuffer[4] = m_devicesRef.m_bldc.getTarget();
+    }
     // probably want to add setpoint
 
     return m_dataBuffer;
@@ -168,13 +187,13 @@ float Controller::linearRegulator(float dt)
     float error_dot = refs.omega_r - omega;
 
     // PID control law
-    float u = (jerk_Kp * error) + (jerk_Kd * error_dot); // currently a PD controller
+    float u = (JERK_KP * error) + (JERK_KD * error_dot); // currently a PD controller
 
     // Feedforward control (where alpha_ref is the desired angular acceleration)
     u += refs.alpha_r;
 
     // Convert control input to torque
-    float u = u * wheel_J;
+    float u = u * WHEEL_J;
 
     u = m_rateLimiter.limit(u, dt); // rate limit before clamping
     return SoftClamp(u);
@@ -192,7 +211,7 @@ void Controller::setState()
 
 #else
     float currentAngle = m_filters.filter_theta.getValue();
-    m_minJerkController.setTargetAngle(currentAngle, balanceAngle, balancePeriod);
+    m_minJerkController.setTargetAngle(currentAngle, BALANCE_ANGLE, BALANCE_PERIOD);
 #endif
 }
 

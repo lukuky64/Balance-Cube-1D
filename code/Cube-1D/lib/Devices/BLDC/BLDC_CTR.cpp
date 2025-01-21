@@ -36,10 +36,10 @@ bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int sens
     m_Kv = Kv;
     setTorqueConstant(m_Kv);
 
-    m_motor = new BLDCMotor(num_poles, phase_res);
+    m_motor = new BLDCMotor(NUM_POLES, PHASE_RESISTANCE);
     m_driver = new BLDCDriver3PWM(phA, phB, phC, enable);
     m_sensor = mag_enc;
-    m_current_sense = new InlineCurrentSense(sense_mVpA, senseA, senseB, NOT_SET);
+    m_current_sense = new InlineCurrentSense(SENSE_MVPA, senseA, senseB, NOT_SET);
 
     updateVoltageLimits(voltage);
 
@@ -209,6 +209,11 @@ float BLDC_CTR::getMaxTau()
 {
     return m_torque_constant * m_max_current; // current limit is 2A by default. this is not changed anywehre yet
     // return 0.3f;
+}
+
+float BLDC_CTR::getTarget()
+{
+    return m_motor->target; // does this need to be mutex locked?
 }
 
 float BLDC_CTR::getTheta()

@@ -87,4 +87,6 @@ private:
     TaskHandle_t m_logTaskHandle = NULL;
 
     TaskHandle_t m_cpuUsageTaskHandle = NULL;
+
+    static constexpr const char *TAG = "State_Machine";
 };
