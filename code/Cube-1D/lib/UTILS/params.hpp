@@ -6,7 +6,7 @@
 ===============================
 */
 #define ALLOW_SLEEP 1
-#define sleepTimeout_ms 6000 // ms
+#define SLEEP_TIMEOUT_MS 6000 // Time until sleep in idle state (ms)
 
 // Device selection
 #define USE_IMU 1
@@ -27,23 +27,30 @@
 // #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define aquisitionFreq 250    // Hz
-#define balanceFreq 100       // Hz
-#define BLDCFreq 1000         // Hz
-#define logFreq 50            // Hz
-#define refreshStatusFreq 0.2 // Hz
-#define indicationFreq 1      // Hz
-#define taskManagerFreq 10    // Hz
+
+#define AQUISITION_FREQ 250     // Hz
+#define BALANCE_FREQ 100        // Hz
+#define BLDC_FREQ 1000          // Hz
+#define LOG_FREQ 50             // Hz
+#define REFRESH_STATUS_FREQ 0.2 // Hz
+#define INDICATION_FREQ 1       // Hz
+#define TASK_MANAGER_FREQ 10    // Hz
 
 // Log parameters
-#define log_header "Time(s),Theta(rad),theta_dot(rad/s),phi(rad),phi_dot(rad/s)"
-#define log_file_prefix "/LOG"
-#define log_columns 4
+#define LOG_FILE_PREFIX "/LOG"
+
+#define LOG_THETA 1
+#define LOG_THETA_DOT 1
+#define LOG_PHI 1
+#define LOG_PHI_DOT 1
+#define LOG_SETPOINT 0
+
+#define LOG_COLUMNS (LOG_THETA + LOG_THETA_DOT + LOG_PHI + LOG_PHI_DOT)
 
 // BLDC motor parameters
-#define num_poles 11     // pole pairs. 24N22P - how many pole pairs are there?
-#define phase_res 11.1   // phase resistance
-#define sense_mVpA 185.0 // ACS712-05B has the resolution of 0.185mV per Amp
+#define NUM_POLES 11          // pole pairs. 24N22P - how many pole pairs are there?
+#define PHASE_RESISTANCE 11.1 // phase resistance
+#define SENSE_MVPA 185.0      // ACS712-05B has the resolution of 0.185 (milli-Volts per Amp)
 
 // Sensor parameters
 // #define b_ax -0.0664 // Acelerometer bias and scale factor
@@ -67,14 +74,14 @@
 #define LQR_K4 1.0
 #else
 // #define balance_Ki 0.0 // using PD control for now
-#define jerk_Kp 1.0
-#define jerk_Kd 0.0
+#define JERK_KP 1.0
+#define JERK_KD 0.0
 
-#define wheel_J 1 // Moment of inertia of the wheel
+#define WHEEL_J 0.000928 // Moment of inertia of the wheel
 
-#define ANGLE_THRESH 0.5  // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
-#define balanceAngle 0.0  // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
-#define balancePeriod 2.0 // seconds. This is the period of the balance trajectory
+#define ANGLE_THRESH 0.5   // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
+#define BALANCE_ANGLE 0.0  // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
+#define BALANCE_PERIOD 2.0 // seconds. This is the period of the balance trajectory
 #endif
 
 #if USE_ROT_ENC
@@ -87,10 +94,10 @@
 ===============================
 */
 // Task loop periods
-#define aquisition_dt_ms (1000.0 / aquisitionFreq)       // ms
-#define balance_dt_ms (1000.0 / balanceFreq)             // ms
-#define BLDC_dt_ms (1000.0 / BLDCFreq)                   // ms
-#define log_dt_ms (1000.0 / logFreq)                     // ms
-#define refreshStatus_dt_ms (1000.0 / refreshStatusFreq) // ms
-#define indication_dt_ms (1000.0 / indicationFreq)       // ms
-#define taskManager_dt_ms (1000.0 / taskManagerFreq)     // ms
+#define AQUISITION_MS (1000.0 / AQUISITION_FREQ)         // ms
+#define BALANCE_MS (1000.0 / BALANCE_FREQ)               // ms
+#define BLDC_MS (1000.0 / BLDC_FREQ)                     // ms
+#define LOG_MS (1000.0 / LOG_FREQ)                       // ms
+#define REFRESH_STATUS_MS (1000.0 / REFRESH_STATUS_FREQ) // ms
+#define INDICATION_MS (1000.0 / INDICATION_FREQ)         // ms
+#define TASK_MANAGER_MS (1000.0 / TASK_MANAGER_FREQ)     // ms
