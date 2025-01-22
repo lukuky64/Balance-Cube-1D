@@ -12,11 +12,11 @@
 #define USE_IMU 1
 #define LOG_SD 1
 #define LOG_SERIAL 0 // beware, this is slow
-#define SILENT_INDICATION 1
+#define SILENT_INDICATION 0
 #define SERVO_BRAKING 0
 #define USE_ROT_ENC 0
 
-#define DUMMY_IMU 1
+#define DUMMY_IMU 0
 #define DUMMY_SERVO 1
 #define DUMMY_BLDC 1
 #define DUMMY_MAG 1

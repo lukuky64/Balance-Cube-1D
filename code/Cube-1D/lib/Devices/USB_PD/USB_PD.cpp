@@ -70,15 +70,12 @@ bool USB_PD::updateVoltage()
 {
     uint8_t buffer[1]; // BUS_VOLTAGE is 1 byte
 
-    if (readRegister(Registers::BUS_VOLTAGE, buffer)) // !!! reading register twice because it lags behind by 1 (atleast when secondary ESP32 is used as I2C slave)
+    if (readRegister(Registers::BUS_VOLTAGE, buffer))
     {
-        if (readRegister(Registers::BUS_VOLTAGE, buffer))
-        {
-            ESP_LOGI("USB_PD", "Raw buffer[0]: 0x%02X", buffer[0]);
-            m_voltage = (float)buffer[0] / 10.0; // Convert to volts (100 mV units)
-            ESP_LOGI("USB_PD", "Voltage: %f", m_voltage);
-            return true;
-        }
+        // ESP_LOGI("USB_PD", "Raw buffer[0]: 0x%02X", buffer[0]);
+        m_voltage = (float)buffer[0] / 10.0; // Convert to volts (100 mV units)
+        ESP_LOGI("USB_PD", "Voltage: %f", m_voltage);
+        return true;
     }
     return false; // Failed to read
 }
