@@ -41,7 +41,11 @@ bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int sens
     m_sensor = mag_enc;
     m_current_sense = new InlineCurrentSense(SENSE_MVPA, senseA, senseB, NOT_SET);
 
-    updateVoltageLimits(voltage);
+    if (!updateVoltageLimits(voltage))
+    {
+        // Return because there is not enough voltage to use the motor
+        return false;
+    }
 
     m_motor->linkSensor(m_sensor);
 
@@ -144,7 +148,7 @@ float BLDC_CTR::torqueToCurrent(float tau)
     @param voltage The voltage can be supplied
 */
 /***************************************************************************************/
-void BLDC_CTR::updateVoltageLimits(float voltage)
+bool BLDC_CTR::updateVoltageLimits(float voltage)
 {
     m_voltage = voltage;
     m_driver->voltage_power_supply = m_voltage;
@@ -161,7 +165,9 @@ void BLDC_CTR::updateVoltageLimits(float voltage)
     else
     {
         ESP_LOGE("BLDC_CTR", "Voltage too low for sensor alignment.");
+        return false;
     }
+    return true;
 }
 
 /***************************************************************************************/

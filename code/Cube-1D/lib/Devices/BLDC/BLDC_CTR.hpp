@@ -18,7 +18,7 @@ public:
     bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv) { return true; }
     void loopFOC() { return; }
     void moveTarget(float target) { return; }
-    void updateVoltageLimits(float voltage) { return; }
+    bool updateVoltageLimits(float voltage) { return true; }
     float getMaxTau() { return 0.3f; }
     float getTheta() { return 0.0f; }
     float getOmega() { return 10.0f; }
@@ -30,7 +30,7 @@ public:
     bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv);
     void loopFOC();
     void moveTarget(float target);
-    void updateVoltageLimits(float voltage);
+    bool updateVoltageLimits(float voltage);
     float getMaxTau();
     float getTheta();
     float getOmega();

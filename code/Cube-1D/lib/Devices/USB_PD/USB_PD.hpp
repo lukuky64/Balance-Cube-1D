@@ -8,6 +8,7 @@ Interface documentation: https://www.infineon.com/dgdl/Infineon-EZ-PD_BCR_Host_P
 #include <Arduino.h>
 #include <Comms/Comms.hpp>
 #include "SemaphoreGuard.hpp"
+#include "params.hpp"
 
 struct registerInfo
 {
@@ -33,9 +34,17 @@ public:
     //	TI_INA209(byte address, float shunt);
     bool readRegister(registerInfo register_, uint8_t *buffer);
     bool writeWord(registerInfo register_, word data);
+
+#if DUMMY_USBPD
+    bool checkStatus() { return true; }
+    bool begin(I2CCOM &I2C) { return true; }
+    float getVoltage() { return 5.0f; }
+#else
     bool checkStatus();
     bool begin(I2CCOM &I2C);
     float getVoltage();
+
+#endif
 
 private:
     I2CCOM *m_I2C = nullptr;
@@ -54,5 +63,9 @@ private:
     //     static constexpr uint16_t MODE = 0x0007; // Operating Mode
     // };
 
+#if DUMMY_USBPD
+    bool updateVoltage() { return true; }
+#else
     bool updateVoltage();
+#endif
 };

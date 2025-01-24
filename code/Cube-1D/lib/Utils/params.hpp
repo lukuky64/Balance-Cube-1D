@@ -18,13 +18,13 @@
 
 #define DUMMY_IMU 0
 #define DUMMY_SERVO 1
-#define DUMMY_BLDC 1
+#define DUMMY_BLDC 0
 #define DUMMY_MAG 1
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
 #define DUMMY_SERIAL 1
 #define DUMMY_LED 0
-// #define DUMMY_USBPD 1
+#define DUMMY_USBPD 1
 
 // Task loop frequencies
 #define AQUISITION_FREQ 250     // Hz

@@ -5,6 +5,9 @@ USB_PD::USB_PD(void) : m_voltage(0.0)
 {
 }
 
+#if DUMMY_USBPD
+
+#else
 // read a word from the register
 bool USB_PD::readRegister(registerInfo register_, uint8_t *buffer)
 {
@@ -84,3 +87,4 @@ float USB_PD::getVoltage()
 {
     return m_voltage;
 }
+#endif
