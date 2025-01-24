@@ -154,9 +154,9 @@ void BLDC_CTR::updateVoltageLimits(float voltage)
     {
         m_motor->voltage_sensor_align = 12; // 12V for alignment. Maybe increase so we get good calibration readings
     }
-    else if (m_voltage >= 4)
+    else if (m_voltage > 4)
     {
-        m_motor->voltage_sensor_align = 5;
+        m_motor->voltage_sensor_align = m_voltage;
     }
     else
     {

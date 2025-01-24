@@ -10,8 +10,8 @@
 
 // Device selection
 #define USE_IMU 1
-#define LOG_SD 1
-#define LOG_SERIAL 0 // beware, this is slow
+#define LOG_SD 0
+#define LOG_SERIAL 1 // beware, this is slow
 #define SILENT_INDICATION 0
 #define SERVO_BRAKING 0
 #define USE_ROT_ENC 0
@@ -27,7 +27,6 @@
 // #define DUMMY_USBPD 1
 
 // Task loop frequencies
-
 #define AQUISITION_FREQ 250     // Hz
 #define BALANCE_FREQ 100        // Hz
 #define BLDC_FREQ 1000          // Hz
@@ -41,8 +40,8 @@
 
 #define LOG_THETA 1
 #define LOG_THETA_DOT 1
-#define LOG_PHI 1
-#define LOG_PHI_DOT 1
+#define LOG_PHI 0
+#define LOG_PHI_DOT 0
 #define LOG_SETPOINT 0
 
 #define LOG_COLUMNS (LOG_THETA + LOG_THETA_DOT + LOG_PHI + LOG_PHI_DOT)
@@ -58,7 +57,7 @@
 // #define f_ax 1.0065
 // #define f_ay 1.0086
 
-#define OMEGA_SET_Y_AXIS 1 // set to 1 if the omega is measured in the y-axis
+#define OMEGA_SET_Z_AXIS 1 // set to 1 if the omega is measured in the y-axis
 
 // Control params
 #define LQR 1
@@ -66,7 +65,7 @@
 #define MOTOR_KV 52.8  // Nm/A. This is also used to calc max torque (probably not accurate)
 
 #if LQR
-#define ANGLE_THRESH 0.5 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
+#define ANGLE_THRESH 0.3 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 // LQR Gain Matrix (precomputed offline)
 #define LQR_K1 1.0
 #define LQR_K2 1.0

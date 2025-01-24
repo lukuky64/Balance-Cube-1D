@@ -8,7 +8,7 @@ Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
                                                   Filter(0.5f, 0.1f, 1.0f, 0.0f),   // Motor Theta
                                                   Filter(0.5f, 0.1f, 1.0f, 0.0f)},  // Motor Omega
 
-                                              m_estimator(devicesRef, AQUISITION_MS),
+                                              m_estimator(devicesRef, (AQUISITION_MS / 1000.0f)),
                                               m_controlable(false),
                                               m_maxTau(0.0f)
 {

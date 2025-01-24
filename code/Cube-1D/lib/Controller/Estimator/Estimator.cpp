@@ -1,12 +1,12 @@
 #include "Estimator.hpp"
 
 // Constructor
-Estimator::Estimator(Devices &devicesRef, uint16_t dt)
+Estimator::Estimator(Devices &devicesRef, float dt)
     : m_devicesRef(devicesRef),
       m_imuSelected(false),
       m_rotEncSelected(false),
       m_aquisition_dt(dt),
-      m_lds(0.5),
+      m_lds(0.2), // having this low means it will pull value slower. this is probably good because we want to rely on gyro more. This is just useful when it is on its side and has accumulated error
       m_omegaBias(0.0),
       m_startAngle(0.0)
 {
@@ -32,7 +32,7 @@ bool Estimator::selectDevice()
 {
     uint8_t status = m_devicesRef.getStatus();
 
-    ESP_LOGI("ESTIMATOR", "Device status from estimator: %d", status);
+    // ESP_LOGI("ESTIMATOR", "Device status from estimator: %d", status);
 
     // prioritise IMU over ROT_ENC
     if ((status & IMU_BIT) == IMU_BIT)
@@ -81,6 +81,7 @@ bool Estimator::calibrateOmegaBias()
         return false;
     }
 
+    ESP_LOGI("ESTIMATOR", "Omega bias calibrated: %f", m_omegaBias);
     return true;
 }
 
@@ -107,7 +108,7 @@ bool Estimator::calibrateStartSide()
         for (int i = 0; i < n_samples; i++)
         {
             m_devicesRef.m_imu.update();
-            ay += m_devicesRef.m_imu.getAccelY(); // If we read positive values for 'y', cube is upside down and we have to go to critical error state
+            ay += m_devicesRef.m_imu.getAccelY(); // If we read [negative] values for 'y', cube is upside down and we have to go to critical error state
             ax += m_devicesRef.m_imu.getAccelX(); // Sign only changes for 'x' when the cube is flipped
             vTaskDelay(pdMS_TO_TICKS(m_aquisition_dt));
         }
@@ -115,7 +116,7 @@ bool Estimator::calibrateStartSide()
         ay /= n_samples;
         ax /= n_samples;
 
-        if (ay > 0)
+        if (ay < 0)
         {
             ESP_LOGE("ESTIMATOR", "Cube is upside down!, [acel-y] reading: %f", ay);
             return false;
@@ -123,9 +124,9 @@ bool Estimator::calibrateStartSide()
 
         float gravity_45_threshold = GRAVITY_CONST * 0.707; // axes are at 45 degrees to sides.
 
-        if (fabs(ax) < (gravity_45_threshold * 0.9)) // 0.9 is a safety factor
+        if (fabs(ax) < (gravity_45_threshold * 0.9)) // 0.9 is a safety factor to account for noise and other factors
         {
-            ESP_LOGE("ESTIMATOR", "Cube is not flat on its side!, [acel-x] reading: %f", ax);
+            ESP_LOGE("ESTIMATOR", "Cube is not flat on its side!, (acel-x) reading: [%f], should be around: [%f]", ax, gravity_45_threshold);
             return false;
         }
 
@@ -172,8 +173,11 @@ void Estimator::estimateWithIMU()
     float ax = m_devicesRef.m_imu.getAccelX(); // Assuming X-axis
     float ay = m_devicesRef.m_imu.getAccelY(); // Assuming Y-axis
 
+    // ESP_LOGI("ESTIMATOR", "ax: %f, ay: %f", ax, ay);
+
     // Correct theta prediction using acceleration
     correct(ax, ay);
+
     // WrapTheta(); // wrap theta to [-π, π]
 }
 
@@ -218,17 +222,30 @@ void Estimator::estimateWithRot_Enc()
     // }
 }
 
-// Predict step
+// Predict step !!! TODO: It is more accurate to use the time between the last two measurements instead of assuming it is running at the rate with set with task delay
 void Estimator::predict(float omega_measured)
 {
     SemaphoreGuard guard1(m_theta_mutex);
     SemaphoreGuard guard2(m_omega_mutex);
     if (guard1.acquired() && guard2.acquired())
     {
+        // static unsigned long m_lastTime = micros();
+
         // Correct the measured angular velocity with bias
         float omega_corrected = omega_measured - m_omegaBias;
 
+        // ESP_LOGI("ESTIMATOR", "Omega corrected: %f", omega_corrected);
+
+        // m_currentTime = micros();
+        // m_aquisition_dt = (m_currentTime - m_lastTime) / 1000000.0f;
+        // m_lastTime = m_currentTime;
+
+        // ESP_LOGI("ESTIMATOR", "dt: %f", m_aquisition_dt);
+
         m_theta += omega_corrected * m_aquisition_dt;
+
+        // ESP_LOGI("ESTIMATOR", "Theta: %f", m_theta);
+
         m_omega = omega_corrected;
     }
 }
@@ -236,9 +253,7 @@ void Estimator::predict(float omega_measured)
 // Correct step
 void Estimator::correct(float ax, float ay)
 {
-
-    // Normalise linear acceleration (we are assuming gravity is the only acceleration sensed)
-    // should we account acceleration induced by reaction wheel?
+    // Normalize linear acceleration (assuming gravity-dominated measurement)
     float a_norm = sqrt((ax * ax) + (ay * ay));
     a_norm = (a_norm == 0) ? 1 : a_norm; // avoid division by zero
     ax /= a_norm;
@@ -247,19 +262,18 @@ void Estimator::correct(float ax, float ay)
     SemaphoreGuard guard(m_theta_mutex);
     if (guard.acquired())
     {
-        // Calculate the expected gravity direction
-        float gravity_est_x = sin(m_theta);  // rotate by 90 degrees
-        float gravity_est_y = -cos(m_theta); // expecting y to be negative
+        // // Calculate the expected gravity direction
+        // float gravity_est_x = sin(m_theta);
+        // float gravity_est_y = cos(m_theta);
 
-        // Compute error between measured and estimated gravity
-        float error_x = ax - gravity_est_x;
-        float error_y = ay - gravity_est_y;
+        // Compute angular error between measured and estimated gravity direction
+        float measured_theta = atan2(ax, ay);
+        float error_theta = measured_theta - m_theta;
 
-        // Compute error angle (simplified)
-        float error_theta = atan2(error_y, error_x);
+        // ESP_LOGI("ESTIMATOR", "Measured theta: %f, Error theta: %f", measured_theta, error_theta);
 
         // Apply correction
-        m_theta += m_lds * error_theta; // * m_aquisition_dt; // multiply by time to ensure time scaling and consistency
+        m_theta += m_lds * error_theta;
     }
 }
 

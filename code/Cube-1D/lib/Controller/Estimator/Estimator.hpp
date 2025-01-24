@@ -15,7 +15,7 @@ class Estimator
 {
 public:
     // Constructor
-    Estimator(Devices &devicesRef, uint16_t dt);
+    Estimator(Devices &devicesRef, float dt);
 
     // Estimate step
     void estimate();
@@ -61,5 +61,8 @@ private:
     bool m_imuSelected;
     bool m_rotEncSelected;
 
-    uint16_t m_aquisition_dt;
+    float m_aquisition_dt;
+
+    // unsigned long m_lastTime;
+    // unsigned long m_currentTime;
 };
