@@ -89,8 +89,9 @@ bool Estimator::calibrate()
 {
     bool succ = false;
 
-    succ = calibrateStartSide();  // set the position of the cube to either -90 or deg based on accel readings (where 0 is the upright position)
-    succ &= calibrateOmegaBias(); // calibrate the angular velocity bias
+    succ = calibrateStartSide(); // set the position of the cube to either -90 or deg based on accel readings (where 0 is the upright position)
+    if (succ)
+        succ &= calibrateOmegaBias(); // calibrate the angular velocity bias
 
     return succ;
 }

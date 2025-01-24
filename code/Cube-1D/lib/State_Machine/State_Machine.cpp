@@ -305,11 +305,11 @@ void State_Machine::calibrationSeq()
 
     ESP_LOGI("State_Machine CALIBRATION", "Calibration Sequence!");
 
-    bool calibrated = m_devices.calibrateSeq();
+    bool succ = m_devices.calibrateSeq();
 
-    m_control.setup();
+    succ &= m_control.setup();
 
-    if (m_updateFiltersTaskHandle == NULL)
+    if ((m_updateFiltersTaskHandle == NULL) && succ)
     {
         xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
     }
@@ -317,7 +317,7 @@ void State_Machine::calibrationSeq()
     SemaphoreGuard guard(m_stateMutex);
     if (guard.acquired())
     {
-        m_currState = (calibrated) ? IDLE : CRITICAL_ERROR;
+        m_currState = (succ) ? IDLE : CRITICAL_ERROR;
     }
 }
 

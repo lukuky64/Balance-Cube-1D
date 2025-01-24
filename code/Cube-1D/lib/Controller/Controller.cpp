@@ -34,7 +34,7 @@ bool Controller::setup()
         return false;
 
     // sample the readings of all the sensors
-    succ = setupFilters();
+    succ &= setupFilters();
 
     m_maxTau = m_devicesRef.m_bldc.getMaxTau();
 
