@@ -156,7 +156,7 @@ bool BLDC_CTR::updateVoltageLimits(float voltage)
 
     if (m_voltage >= 12)
     {
-        m_motor->voltage_sensor_align = 12; // 12V for alignment. Maybe increase so we get good calibration readings
+        m_motor->voltage_sensor_align = 8; // 12V for alignment. Maybe increase so we get good current readings
     }
     else if (m_voltage > 4)
     {
@@ -182,6 +182,8 @@ void BLDC_CTR::setMotorSettings()
 
     // set motion control loop to be used
     m_motor->controller = MotionControlType::torque;
+
+    m_motor->foc_modulation = FOCModulationType::SpaceVectorPWM; // SinePWM is default. This will allow for better use of voltage range
 
     // Q axis
     m_motor->PID_current_q.P = 3;

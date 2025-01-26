@@ -218,7 +218,7 @@ bool IMU::configureInturrupt(gpio_num_t intPin)
 
     float duration = 0.05f; // seconds
     uint8_t samples = static_cast<uint8_t>(m_imu.accelerationSampleRate() * (duration));
-    m_imu.enableWakeup(true, samples, 10); // enable, duration, threshold
+    m_imu.enableWakeup(true, samples, 20); // enable, duration, threshold
 
     m_intPin = intPin;
 

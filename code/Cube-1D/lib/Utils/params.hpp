@@ -6,7 +6,7 @@
 ===============================
 */
 #define ALLOW_SLEEP 1
-#define SLEEP_TIMEOUT_MS 6000 // Time until sleep in idle state (ms)
+#define SLEEP_TIMEOUT_MS 20000 // Time until sleep in idle state (ms)
 
 // Device selection
 #define USE_IMU 1
@@ -19,7 +19,7 @@
 #define DUMMY_IMU 0
 #define DUMMY_SERVO 1
 #define DUMMY_BLDC 0
-#define DUMMY_MAG 1
+#define DUMMY_MAG 0
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
 #define DUMMY_SERIAL 1
@@ -40,11 +40,11 @@
 
 #define LOG_THETA 1
 #define LOG_THETA_DOT 1
-#define LOG_PHI 0
-#define LOG_PHI_DOT 0
+#define LOG_PHI 1
+#define LOG_PHI_DOT 1
 #define LOG_SETPOINT 0
 
-#define LOG_COLUMNS (LOG_THETA + LOG_THETA_DOT + LOG_PHI + LOG_PHI_DOT)
+#define LOG_COLUMNS (LOG_THETA + LOG_THETA_DOT + LOG_PHI + LOG_PHI_DOT + LOG_SETPOINT)
 
 // BLDC motor parameters
 #define NUM_POLES 11          // pole pairs. 24N22P - how many pole pairs are there?
@@ -67,10 +67,10 @@
 #if LQR
 #define ANGLE_THRESH 0.3 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 // LQR Gain Matrix (precomputed offline)
-#define LQR_K1 1.0
-#define LQR_K2 1.0
-#define LQR_K3 1.0
-#define LQR_K4 1.0
+#define LQR_K1 -0.936f
+#define LQR_K2 -0.133f
+#define LQR_K3 0.0f
+#define LQR_K4 0.0f //-0.005f
 #else
 // #define balance_Ki 0.0 // using PD control for now
 #define JERK_KP 1.0

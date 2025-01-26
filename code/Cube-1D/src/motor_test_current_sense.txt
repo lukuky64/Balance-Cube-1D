@@ -12,13 +12,13 @@
 
 // BLDC motor & driver instance
 BLDCMotor motor = BLDCMotor(11);
-BLDCDriver3PWM driver = BLDCDriver3PWM(6, 10, 5, 8);
+BLDCDriver3PWM driver = BLDCDriver3PWM(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN);
 
-MagneticSensorSPI sensor = MagneticSensorSPI(AS5147_SPI, 10);
+MagneticSensorSPI sensor = MagneticSensorSPI(AS5147_SPI, SPI_CS_MAG);
 
 // inline current sensor instance
 // ACS712-05B has the resolution of 0.185mV per Amp
-InlineCurrentSense current_sense = InlineCurrentSense(185.0f, 4, 5);
+InlineCurrentSense current_sense = InlineCurrentSense(185.0f, BLDC_SENSE_A, BLDC_SENSE_B);
 
 // commander communication instance
 Commander command = Commander(Serial);
@@ -39,7 +39,7 @@ void setup()
 
     // driver config
     // power supply voltage [V]
-    driver.voltage_power_supply = 20;
+    driver.voltage_power_supply = 12;
     driver.init();
     // link driver
     motor.linkDriver(&driver);
@@ -83,7 +83,7 @@ void setup()
     ESP_LOGI("TEST", "initFOC Result: %d", result);
 
     // set the inital target value
-    motor.target = 2;
+    motor.target = 12;
 
     // subscribe motor to the commander
     command.add('T', doMotion, "motion control");

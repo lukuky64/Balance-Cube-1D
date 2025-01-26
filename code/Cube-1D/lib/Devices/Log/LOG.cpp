@@ -16,7 +16,7 @@ bool Log::startNewLog()
 
     if (m_sdLog)
     {
-        String startMsg = "Time(s),"; // we should always log time
+        String startMsg = "Time(s),"; // Should always log time
 
         if (LOG_THETA)
         {

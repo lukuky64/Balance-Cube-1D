@@ -38,7 +38,7 @@ public:
 #if DUMMY_USBPD
     bool checkStatus() { return true; }
     bool begin(I2CCOM &I2C) { return true; }
-    float getVoltage() { return 5.0f; }
+    float getVoltage() { return 12.0f; }
 #else
     bool checkStatus();
     bool begin(I2CCOM &I2C);
