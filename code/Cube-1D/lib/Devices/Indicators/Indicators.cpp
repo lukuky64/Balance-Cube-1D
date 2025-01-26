@@ -64,7 +64,7 @@ void Indicators::showWarning()
 
     for (int i = 0; i < 2; i++)
     {
-        controlBuzzer(tones[3].frequency, duration);
+        // controlBuzzer(tones[3].frequency, duration);
         controlRGBLed(colours[7].value, duration); // Orange
         vTaskDelay(pdMS_TO_TICKS(duration));       // off period
     }

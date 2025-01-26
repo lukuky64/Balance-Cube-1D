@@ -16,27 +16,27 @@ bool Log::startNewLog()
 
     if (m_sdLog)
     {
-        String startMsg = "Time(s),"; // Should always log time
+        String startMsg = "Time(s)"; // Should always log time
 
         if (LOG_THETA)
         {
-            startMsg += "Theta(rad),";
+            startMsg += ",Theta(rad)";
         }
         if (LOG_THETA_DOT)
         {
-            startMsg += "theta_dot(rad/s),";
+            startMsg += ",theta_dot(rad/s)";
         }
         if (LOG_PHI)
         {
-            startMsg += "Phi(rad),";
+            startMsg += ",Phi(rad)";
         }
         if (LOG_PHI_DOT)
         {
-            startMsg += "phi_dot(rad/s)";
+            startMsg += ",phi_dot(rad/s)";
         }
         if (LOG_SETPOINT)
         {
-            startMsg += "setpoint(Nm)";
+            startMsg += ",setpoint(Nm)";
         }
 
         if (!m_sdTalker.createFile(startMsg, LOG_FILE_PREFIX))

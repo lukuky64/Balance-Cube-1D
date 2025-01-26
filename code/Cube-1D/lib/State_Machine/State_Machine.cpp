@@ -39,7 +39,7 @@ void State_Machine::taskManagerTask(void *pvParameters)
     {
         machine->loop();
 
-        ESP_LOGI(TAG, "Current state: %s", machine->stateToString(static_cast<STATES>(machine->getCurrentState())));
+        // ESP_LOGI(TAG, "Current state: %s", machine->stateToString(static_cast<STATES>(machine->getCurrentState())));
 
         // UBaseType_t uxHighWaterMark;
         // uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
@@ -164,7 +164,10 @@ void State_Machine::updateFiltersTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateData(); // currently only takes ~ 70uS or 14kHz. But we aren't really getting data from sensors
+        {
+            // TimerGuard guard(TAG, "update filter task");
+            machine->m_control.updateData(); // takes ~ 380uS or 2.63kHz
+        }
         vTaskDelay(pdMS_TO_TICKS(AQUISITION_MS));
     }
 }

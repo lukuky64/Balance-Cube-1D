@@ -22,15 +22,13 @@
 #define DUMMY_MAG 0
 #define DUMMY_ROT_ENC 1
 #define DUMMY_SD 0
-#define DUMMY_SERIAL 1
-#define DUMMY_LED 0
 #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define AQUISITION_FREQ 250     // Hz
+#define AQUISITION_FREQ 400     // Hz
 #define BALANCE_FREQ 100        // Hz
 #define BLDC_FREQ 1000          // Hz
-#define LOG_FREQ 50             // Hz
+#define LOG_FREQ 100            // Hz
 #define REFRESH_STATUS_FREQ 0.2 // Hz
 #define INDICATION_FREQ 1       // Hz
 #define TASK_MANAGER_FREQ 10    // Hz
@@ -42,7 +40,7 @@
 #define LOG_THETA_DOT 1
 #define LOG_PHI 1
 #define LOG_PHI_DOT 1
-#define LOG_SETPOINT 0
+#define LOG_SETPOINT 1
 
 #define LOG_COLUMNS (LOG_THETA + LOG_THETA_DOT + LOG_PHI + LOG_PHI_DOT + LOG_SETPOINT)
 
@@ -61,16 +59,16 @@
 
 // Control params
 #define LQR 1
-#define RATE_LIMIT 2.5 // Nm/s
-#define MOTOR_KV 52.8  // Nm/A. This is also used to calc max torque (probably not accurate)
+#define RATE_LIMIT 100.0f // Nm/s
+#define MOTOR_KV 52.8     // Nm/A. This is also used to calc max torque (probably not accurate)
 
 #if LQR
-#define ANGLE_THRESH 0.3 // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
+#define ANGLE_THRESH 1.5f // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
 // LQR Gain Matrix (precomputed offline)
-#define LQR_K1 -0.936f
-#define LQR_K2 -0.133f
+#define LQR_K1 -0.5f
+#define LQR_K2 -0.05f
 #define LQR_K3 0.0f
-#define LQR_K4 0.0f //-0.005f
+#define LQR_K4 0.0f //.0046f
 #else
 // #define balance_Ki 0.0 // using PD control for now
 #define JERK_KP 1.0

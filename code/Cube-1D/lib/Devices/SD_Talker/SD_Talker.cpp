@@ -245,7 +245,7 @@ bool SD_Talker::writeBuffer(const char *buffer, size_t bufferIndex)
             }
             else
             {
-                ESP_LOGI("SD_Talker", "Successfully wrote %d bytes to SD card.", bytesWritten);
+                // ESP_LOGI("SD_Talker", "Successfully wrote %d bytes to SD card.", bytesWritten);
                 return true;
             }
         }
