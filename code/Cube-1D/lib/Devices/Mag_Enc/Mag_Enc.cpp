@@ -17,6 +17,20 @@ Mag_Enc::Mag_Enc()
 #if DUMMY_MAG
 
 #else
+
+/*****************************************************************************/
+/*!
+    @brief Initializes the magnetic sensor.
+
+    @param cs - chip select pin
+
+    @param SPI_BUS - SPICOM object containing the SPI bus and mutex
+
+    @param config - configuration structure for specific sensor
+
+    @return true if the magnetic sensor is successfully initialized, false otherwise
+*/
+/*****************************************************************************/
 bool Mag_Enc::init(int cs, SPICOM &SPI_BUS, Mag_EncConfig_s config)
 {
   chip_select_pin = cs;
@@ -59,23 +73,39 @@ bool Mag_Enc::init(int cs, SPICOM &SPI_BUS, Mag_EncConfig_s config)
   return true;
 }
 
-//  Shaft angle calculation
-//  angle is in radians [rad]
+/*****************************************************************************/
+/*!
+    @brief Gets the current angle of the motor shaft.
+
+    @return float - current angle of the motor shaft in radians [rad].
+*/
+/*****************************************************************************/
 float Mag_Enc::getSensorAngle()
 {
   return (getRawCount() / (float)cpr) * _2PI;
 }
 
-// function reading the raw counter of the magnetic sensor
+/*****************************************************************************/
+/*!
+    @brief Gets the raw counter of the magnetic sensor.
+
+    @return int - raw counter of the magnetic sensor.
+*/
+/*****************************************************************************/
 int Mag_Enc::getRawCount()
 {
   return (int)Mag_Enc::read(angle_register);
 }
 
-// SPI functions
-/**
- * Utility function used to calculate even parity of word
- */
+/*****************************************************************************/
+/*!
+    @brief Calculate the even parity of a 16 bit word.
+
+    @param value - 16 bit word to calculate the parity of.
+
+    @return byte - the parity of the 16 bit word.
+*/
+/*****************************************************************************/
 byte Mag_Enc::spiCalcEvenParity(word value)
 {
   byte cnt = 0;
@@ -90,15 +120,19 @@ byte Mag_Enc::spiCalcEvenParity(word value)
   return cnt & 0x1;
 }
 
-/*
- * Read a register from the sensor
- * Takes the address of the register as a 16 bit word
- * Returns the value of the register
- */
+/*****************************************************************************/
+/*!
+    @brief Read a register from the sensor.
+
+    @param angle_register - address of the register to read (16 bit word).
+
+    @return word - value of the register.
+*/
+/*****************************************************************************/
 word Mag_Enc::read(word angle_register)
 {
 
-  //ESP_LOGI("MAG_ENC", "Reading register: %x", angle_register);
+  // ESP_LOGI("MAG_ENC", "Reading register: %x", angle_register);
 
   word command = angle_register;
 
@@ -155,10 +189,12 @@ word Mag_Enc::read(word angle_register)
   return register_value & data_mask; // Return the data, stripping the non data (e.g parity) bits
 }
 
-/**
- * Closes the SPI connection
- * SPI has an internal SPI-device counter, for each init()-call the close() function must be called exactly 1 time
- */
+/*****************************************************************************/
+/*!
+    @brief Close the SPI connection. This function must be called exactly
+    once for each init() call.
+*/
+/*****************************************************************************/
 void Mag_Enc::close()
 {
   SemaphoreGuard guard(m_SPI_BUS->mutex);
@@ -168,6 +204,12 @@ void Mag_Enc::close()
   }
 }
 
+/*****************************************************************************/
+/*!
+    @brief Check the status of the magnetic sensor.
+    @return true if the magnetic sensor is working correctly, false otherwise.
+*/
+/*****************************************************************************/
 bool Mag_Enc::checkStatus()
 {
   return true;

@@ -1,10 +1,5 @@
 #pragma once
 
-/*
-CYPD3177 DATASHEET: https://www.infineon.com/dgdl/Infineon-EZ-PD_BCR_Datasheet_USB_Type-C_Port_Controller_for_Power_Sinks-DataSheet-v03_00-EN.pdf?fileId=8ac78c8c7d0d8da4017d0ee7ce9d70ad
-Interface documentation: https://www.infineon.com/dgdl/Infineon-EZ-PD_BCR_Host_Processor_Interface_Specification-Software-v01_00-EN.pdf?fileId=8ac78c8c7d0d8da4017d0f8c4313766b&da=t
-*/
-
 #include <Arduino.h>
 #include <Comms/Comms.hpp>
 #include "SemaphoreGuard.hpp"
@@ -26,6 +21,16 @@ struct Registers
     static constexpr registerInfo EVENT_MASK = {0x1024, 4};    // Event Mask
 };
 
+/******************************************************************************************************************************************************************************************/
+/*!
+    @file
+    @brief References and documentation for the CYPD3177 chip and its interface.
+
+    @details
+    - CYPD3177 DATASHEET: https://www.infineon.com/dgdl/Infineon-EZ-PD_BCR_Datasheet_USB_Type-C_Port_Controller_for_Power_Sinks-DataSheet-v03_00-EN.pdf?fileId=8ac78c8c7d0d8da4017d0ee7ce9d70ad
+    - Interface documentation: https://www.infineon.com/dgdl/Infineon-EZ-PD_BCR_Host_Processor_Interface_Specification-Software-v01_00-EN.pdf?fileId=8ac78c8c7d0d8da4017d0f8c4313766b&da=t
+*/
+/******************************************************************************************************************************************************************************************/
 class USB_PD
 {
 

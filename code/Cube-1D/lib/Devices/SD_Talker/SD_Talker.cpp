@@ -29,7 +29,6 @@ SD_Talker::~SD_Talker()
     }
 }
 
-// !!! this doesn't work as intended
 bool SD_Talker::checkStatus()
 {
     if (!initialised)

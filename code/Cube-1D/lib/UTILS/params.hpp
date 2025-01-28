@@ -58,7 +58,7 @@
 // LQR Gain Matrix (precomputed offline)
 #define LQR_K1 -1.0f   // theta
 #define LQR_K2 -0.3f   // theta_dot
-#define LQR_K3 0.0f    // phi
+#define LQR_K3 0.0f    // phi. If we want to use this, best to wrap phi to 0 to 2pi in the LQR class, ortherwise its hard to recover from multiple rotations
 #define LQR_K4 -0.002f // phi_dot
 #else
 // #define balance_Ki 0.0 // using PD control for now

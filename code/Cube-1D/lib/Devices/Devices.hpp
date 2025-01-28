@@ -40,7 +40,7 @@ public:
     ~Devices();
     // bool setupIndication(bool silentIndication);
     bool setupUSBPD(gpio_num_t SCL, gpio_num_t SDA);
-    bool setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK);
+    bool setupBLDC(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv);
     bool setupIMU(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, gpio_num_t intPin);
     bool setupROT_ENC();
     bool setupMAG(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK);

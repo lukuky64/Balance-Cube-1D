@@ -18,6 +18,14 @@ Indicators::~Indicators()
     vSemaphoreDelete(statusMutex);
 }
 
+/*****************************************************************************/
+/*!
+    @brief  Setup the buzzer and create the buzzer mutex. Play a quick chirp
+    to indicate success.
+
+    @param  BuzzerPin The GPIO pin to be used for the buzzer
+*/
+/*****************************************************************************/
 void Indicators::setupBuzzer(uint8_t buzzerPin)
 {
     m_buzzerPin = buzzerPin;
@@ -30,6 +38,15 @@ void Indicators::setupBuzzer(uint8_t buzzerPin)
     controlBuzzer(tones[6].frequency, 50);
 }
 
+/*****************************************************************************/
+/*!
+    @brief Setup the RGB LED and create the RGB LED mutex. Flash the LED
+    to indicate success.
+
+    @param ledNeo The GPIO pin to be used for the RGB LED. Assuming the
+    LED is an addressable LED (e.g. WS2812B).
+*/
+/*****************************************************************************/
 void Indicators::setupRGBLed(uint8_t ledNeo)
 {
     m_ledNeo = ledNeo;
@@ -42,6 +59,11 @@ void Indicators::setupRGBLed(uint8_t ledNeo)
     controlRGBLed(colours[1].value, 50); // Green
 }
 
+/*****************************************************************************/
+/*!
+    @brief Show a critical error indication. This will play a tone and flash red.
+*/
+/*****************************************************************************/
 void Indicators::showCriticalError()
 {
     ESP_LOGI(TAG, "Showing Critical Error!");
@@ -56,6 +78,11 @@ void Indicators::showCriticalError()
     }
 }
 
+/*****************************************************************************/
+/*!
+    @brief Show a warning indication. This will flash orange two times.
+*/
+/*****************************************************************************/
 void Indicators::showWarning()
 {
     ESP_LOGI(TAG, "Showing Warning!");
@@ -70,6 +97,12 @@ void Indicators::showWarning()
     }
 }
 
+/*****************************************************************************/
+/*!
+    @brief Show a success indication. This will play a tone and flash green
+    three times.
+*/
+/*****************************************************************************/
 void Indicators::showSuccess()
 {
     ESP_LOGI(TAG, "Showing Success!");
@@ -84,6 +117,11 @@ void Indicators::showSuccess()
     }
 }
 
+/*****************************************************************************/
+/*!
+    @brief Show an all good indication. This will flash green once.
+*/
+/*****************************************************************************/
 void Indicators::showAllGood()
 {
     // ESP_LOGI(TAG, "Showing All Good!");
@@ -93,13 +131,31 @@ void Indicators::showAllGood()
     controlRGBLed(colours[1].value, duration);
 }
 
+/*****************************************************************************/
+/*!
+    @brief Turn off all indicators. This will turn off the buzzer and RGB LED.
+*/
+/*****************************************************************************/
 void Indicators::showAllOff()
 {
     ESP_LOGI(TAG, "Turning off all Indicators!");
 
     controlRGBLed(0, 0);
+    controlBuzzer(0, 0);
 }
 
+/*****************************************************************************/
+/*!
+    @brief Control the buzzer. This will play a tone at a given frequency
+    for a given duration.
+
+    @param frequency The frequency of the tone to be played (Hz)
+
+    @param duration The duration of the tone to be played (ms)
+
+    @return True if the buzzer was setup successfully, false otherwise.
+*/
+/*****************************************************************************/
 bool Indicators::controlBuzzer(int frequency, int duration)
 {
     if (m_buzzerEnabled)
@@ -116,6 +172,18 @@ bool Indicators::controlBuzzer(int frequency, int duration)
     return false;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Control the RGB LED. This will flash the LED a given colour for
+    a given duration.
+
+    @param hexValue The hex value of the colour to be displayed (0xRRGGBB)
+
+    @param duration The duration of the colour to be displayed (ms)
+
+    @return True if the RGB LED was setup successfully, false otherwise.
+*/
+/*****************************************************************************/
 bool Indicators::controlRGBLed(int hexValue, int duration)
 {
     if (m_RGBLedEnabled)
@@ -140,32 +208,53 @@ bool Indicators::controlRGBLed(int hexValue, int duration)
     return false;
 }
 
-bool Indicators::checkStatusEither()
+/*****************************************************************************/
+/*!
+    @brief Check the status of the indicators.
+
+    @return True if the buzzer or RGB LED is enabled, false otherwise.
+*/
+/*****************************************************************************/
+bool Indicators::checkStatus()
 {
     SemaphoreGuard guard(statusMutex);
     if (guard.acquired())
     {
-        return m_buzzerEnabled || m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
+        return m_buzzerEnabled || m_RGBLedEnabled;
     }
     return false;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Check the status of the buzzer.
+
+    @return True if the buzzer is enabled, false otherwise.
+*/
+/*****************************************************************************/
 bool Indicators::checkStatusBuzzer()
 {
     SemaphoreGuard guard(statusMutex);
     if (guard.acquired())
     {
-        return m_buzzerEnabled; // !!! Do we need to do mutexing, probably
+        return m_buzzerEnabled;
     }
     return false;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Check the status of the RGB LED.
+
+    @return True if the RGB LED is enabled, false otherwise.
+*/
+/*****************************************************************************/
 bool Indicators::checkStatusLed()
 {
     SemaphoreGuard guard(statusMutex);
     if (guard.acquired())
     {
-        return m_RGBLedEnabled; // !!! Do we need to do mutexing, probably
+        return m_RGBLedEnabled;
     }
     return false;
 }

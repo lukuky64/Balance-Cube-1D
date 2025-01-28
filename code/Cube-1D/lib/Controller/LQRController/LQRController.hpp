@@ -31,4 +31,6 @@ public:
 private:
     // LQR Gain Matrix (precomputed offline)
     Gains m_K;
+
+    void WrapAngle(float &angle);
 };

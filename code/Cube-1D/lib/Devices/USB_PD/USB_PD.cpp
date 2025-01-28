@@ -60,7 +60,7 @@ bool USB_PD::writeWord(registerInfo register_, word data)
 
 bool USB_PD::checkStatus()
 {
-    return true;
+    return updateVoltage();
 }
 
 bool USB_PD::begin(I2CCOM &I2C)
@@ -78,6 +78,12 @@ bool USB_PD::updateVoltage()
         // ESP_LOGI("USB_PD", "Raw buffer[0]: 0x%02X", buffer[0]);
         m_voltage = (float)buffer[0] / 10.0; // Convert to volts (100 mV units)
         ESP_LOGI("USB_PD", "Voltage: %f", m_voltage);
+
+        if ((m_voltage > 22.0f) || (m_voltage < 4.0f)) // Min voltage is 5V, Max is 20V. But the ADC may be off.
+        {
+            return false;
+        }
+
         return true;
     }
     return false; // Failed to read

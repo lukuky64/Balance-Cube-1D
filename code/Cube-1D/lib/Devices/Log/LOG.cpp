@@ -10,6 +10,15 @@ Log::~Log()
 {
 }
 
+/*****************************************************************************/
+/*!
+    @brief Start a new log file on the SD card or serial port. The file will be
+    named sequentially with the prefix "LOG_FILE_PREFIX". The file will contain
+    the time in seconds and the data specified by the LOG_ flags.
+
+    @return True if the log file was created successfully, false otherwise.
+*/
+/*****************************************************************************/
 bool Log::startNewLog()
 {
     setStartTime();
@@ -60,21 +69,49 @@ bool Log::startNewLog()
     return false;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Sets the log flag for logging to the SD card.
+*/
+/*****************************************************************************/
 void Log::selectLogSD()
 {
     m_sdLog = true;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Sets the log flag for logging to the serial port.
+*/
+/*****************************************************************************/
 void Log::selectLogSerial()
 {
     m_serialLog = true;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Resets the start time for the log file.
+*/
+/*****************************************************************************/
 void Log::setStartTime()
 {
     m_startTime = millis();
 }
 
+/*****************************************************************************/
+/*!
+    @brief Logs the data to the SD card or serial port. The data is formatted
+    as a comma-separated list of floats. The first float is the time in seconds
+    since the log file was created.
+
+    @param data Pointer to the data array to log.
+
+    @param dataSize Number of elements in the data array.
+
+    @return True if the data was logged successfully, false otherwise.
+*/
+/*****************************************************************************/
 bool Log::logData(const float *data, int dataSize)
 {
     // Ensure logging is set up
@@ -167,6 +204,13 @@ bool Log::logData(const float *data, int dataSize)
     return true;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Writes the buffer to the SD card or serial port.
+
+    @return True if the buffer was written successfully, false otherwise.
+*/
+/*****************************************************************************/
 bool Log::writeBufferAll()
 {
     if (currentBufferPos == 0)
@@ -202,11 +246,23 @@ bool Log::writeBufferAll()
     return success;
 }
 
+/*****************************************************************************/
+/*!
+    @brief Checks if logging is set up.
+
+    @return True if logging is set up, false otherwise.
+*/
+/*****************************************************************************/
 bool Log::isLogSetup()
 {
     return (m_sdLog || m_serialLog);
 }
 
+/*****************************************************************************/
+/*!
+    @brief Forces the buffer to be written to the SD card or serial port.
+*/
+/*****************************************************************************/
 void Log::forceFlush()
 {
     writeBufferAll();

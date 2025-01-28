@@ -212,7 +212,6 @@ void BLDC_CTR::setMotorSettings()
     m_motor->target = 0;
 }
 
-// !!! Need to implement
 float BLDC_CTR::getMaxTau()
 {
     return m_torque_constant * m_max_current; // current limit is 2A by default. this is not changed anywehre yet

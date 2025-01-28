@@ -40,7 +40,7 @@ public:
     void showAllGood();
     void showAllOff();
 
-    bool checkStatusEither();
+    bool checkStatus();
     bool checkStatusBuzzer();
     bool checkStatusLed();
 

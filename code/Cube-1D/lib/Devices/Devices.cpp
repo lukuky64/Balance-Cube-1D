@@ -53,11 +53,10 @@ bool Devices::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
     return false;
 }
 
-bool Devices::setupBLDC(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK)
+bool Devices::setupBLDC(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv)
 {
     // mag must be setup first. Make sure USBPD gets the voltage before this is used
-    bool succ = m_bldc.begin(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), MOTOR_KV);
-    return succ; // probably should be getting all these variables from function params
+    return m_bldc.begin(phA, phB, phC, enable, senseA, senseB, MAG_CS, mag_enc, voltage, Kv);
 }
 
 bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPI)
@@ -184,20 +183,20 @@ bool Devices::indicateStatus()
     return requirementsMet;
 }
 
-void Devices::refreshStatusAll()
+void Devices::refreshStatusAll() // !!!
 {
     ESP_LOGI(TAG, "Checking all device statuses...");
 
     uint8_t statusMask = 0;
-    statusMask |= (m_indicators.checkStatusEither() ? INDICATION_BIT : 0);
-    statusMask |= (m_usbPD.checkStatus() ? USBPD_BIT : 0);                  // need to implement
-    statusMask |= (m_bldc.checkStatus() ? BLDC_BIT : 0);                    // need to implement
-    statusMask |= (m_imu.checkStatus() ? IMU_BIT : 0);                      // need to implement
-    statusMask |= (m_rotEnc.checkStatus() ? ROT_ENC_BIT : 0);               // need to implement
-    statusMask |= (m_magEnc.checkStatus() ? MAG_BIT : 0);                   // need to implement
-    statusMask |= (m_logger.m_serialTalker.checkStatus() ? SERIAL_BIT : 0); // need to implement
-    statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);         // need to implement
-    statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0);                  // need to implement
+    statusMask |= (m_indicators.checkStatus() ? INDICATION_BIT : 0);
+    statusMask |= (m_usbPD.checkStatus() ? USBPD_BIT : 0);
+    statusMask |= (m_bldc.checkStatus() ? BLDC_BIT : 0);      // need to implement
+    statusMask |= (m_imu.checkStatus() ? IMU_BIT : 0);        // need to implement
+    statusMask |= (m_rotEnc.checkStatus() ? ROT_ENC_BIT : 0); // need to implement
+    statusMask |= (m_magEnc.checkStatus() ? MAG_BIT : 0);     // need to implement
+    statusMask |= (m_logger.m_serialTalker.checkStatus() ? SERIAL_BIT : 0);
+    statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);
+    statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0); // need to implement
 
     setStatus(statusMask);
 }
@@ -295,11 +294,18 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
         prefMask |= MAG_BIT;
     }
 
-    // set up BLDC
-    if (setupBLDC(SPI_CS_MAG, SPI_MISO, SPI_MOSI, SPI_CLK))
+    // Magnetic sensor and valid voltage reading is required for BLDC
+    if ((statusMask & MAG_BIT) == MAG_BIT)
     {
-        statusMask |= BLDC_BIT;
-        prefMask |= BLDC_BIT;
+        if ((statusMask & USBPD_BIT) == USBPD_BIT)
+        {
+            // set up BLDC
+            if (setupBLDC(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), MOTOR_KV))
+            {
+                statusMask |= BLDC_BIT;
+                prefMask |= BLDC_BIT;
+            }
+        }
     }
 
     setStatus(statusMask);
@@ -334,12 +340,12 @@ bool Devices::checkRequirementsMet()
     uint8_t statusMask = getStatus();
 
     bool isIndicationOk = (statusMask & INDICATION_BIT) == INDICATION_BIT;
-    // bool isUsbpdOk = (statusMask & USBPD_BIT) == USBPD_BIT;
+    bool isUsbpdOk = (statusMask & USBPD_BIT) == USBPD_BIT;
     bool isBldcOk = (statusMask & BLDC_BIT) == BLDC_BIT;
     bool isImuOrEncOk = ((statusMask & IMU_BIT) == IMU_BIT) || ((statusMask & ROT_ENC_BIT) == ROT_ENC_BIT);
     // ESP_LOGI(TAG, "Indication: %d, USBPD: %d, BLDC: %d, IMU/ENC: %d", isIndicationOk, isUsbpdOk, isBldcOk, isImuOrEncOk);
 
-    return isIndicationOk && isBldcOk && isImuOrEncOk; // isUsbpdOk !!! for now we will remove this
+    return isIndicationOk && isBldcOk && isImuOrEncOk && isUsbpdOk;
 }
 
 void Devices::setStatus(uint8_t status)
