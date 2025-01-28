@@ -6,9 +6,9 @@ Estimator::Estimator(Devices &devicesRef, float dt)
       m_imuSelected(false),
       m_rotEncSelected(false),
       m_aquisition_dt(dt),
-      m_lds(0.2), // having this low means it will pull value slower. this is probably good because we want to rely on gyro more. This is just useful when it is on its side and has accumulated error
-      m_omegaBias(0.0),
-      m_startAngle(0.0)
+      m_lds(0.02f), // having this low means it will pull value slower. this is probably good because we want to rely on gyro more. This is just useful when it is on its side and has accumulated error
+      m_omegaBias(0.0f),
+      m_startAngle(0.0f)
 {
     m_theta_mutex = xSemaphoreCreateMutex();
     m_omega_mutex = xSemaphoreCreateMutex();
@@ -123,21 +123,27 @@ bool Estimator::calibrateStartSide()
             return false;
         }
 
-        float gravity_45_threshold = GRAVITY_CONST * 0.707; // axes are at 45 degrees to sides.
+        float current_angle = atan2(ax, ay);
 
-        if (fabs(ax) < (gravity_45_threshold * 0.9)) // 0.9 is a safety factor to account for noise and other factors
+        // float gravity_45_threshold = GRAVITY_CONST * 0.707; // axes are at 45 degrees to sides.
+
+        // float average_accel = (fabs(ax) + fabs(ay)) / 2;
+
+        if (fabs(current_angle) < (QUARTER_PI * 0.96)) // 0.96 is a safety factor to account for noise and other factors
         {
-            ESP_LOGE("ESTIMATOR", "Cube is not flat on its side!, (acel-x) reading: [%f], should be around: [%f]", ax, gravity_45_threshold);
+            ESP_LOGE("ESTIMATOR", "Cube is not flat on its side!, angle reading +/-: [%f], should be around +/-: [%f]", fabs(current_angle), QUARTER_PI);
             return false;
         }
 
-        else if (ax < 0)
+        else if (current_angle < 0)
         {
-            m_startAngle = -QUARTER_PI; // pivot point is at -45 (anti-clockwise from upright position)
+            m_startAngle = current_angle; // pivot point is at -45 (anti-clockwise from upright position) !!! TODO : it's currently the opposite
+            m_accelAngleBias = current_angle + QUARTER_PI;
         }
         else
         {
-            m_startAngle = QUARTER_PI; // pivot point is at 45 (clockwise from upright position)
+            m_startAngle = current_angle; // pivot point is at 45 (clockwise from upright position)  !!! TODO : it's currently the opposite
+            m_accelAngleBias = current_angle - QUARTER_PI;
         }
 
         SemaphoreGuard guard(m_theta_mutex);
@@ -268,7 +274,7 @@ void Estimator::correct(float ax, float ay)
         // float gravity_est_y = cos(m_theta);
 
         // Compute angular error between measured and estimated gravity direction
-        float measured_theta = atan2(ax, ay);
+        float measured_theta = atan2(ax, ay) - m_accelAngleBias;
         float error_theta = measured_theta - m_theta;
 
         // ESP_LOGI("ESTIMATOR", "Measured theta: %f, Error theta: %f", measured_theta, error_theta);

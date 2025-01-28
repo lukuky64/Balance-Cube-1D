@@ -8,7 +8,7 @@
 
 #include "SemaphoreGuard.hpp"
 
-#define QUARTER_PI (PI / 4.0f);
+#define QUARTER_PI (PI / 4.0f)
 
 // Attitude estimator class
 class Estimator
@@ -53,7 +53,8 @@ private:
     SemaphoreHandle_t m_theta_mutex = nullptr;
     SemaphoreHandle_t m_omega_mutex = nullptr;
 
-    float m_omegaBias; // Angular velocity bias (rad/s)
+    float m_omegaBias;      // Angular velocity bias (rad/s)
+    float m_accelAngleBias; // Acceleration bias
 
     // Estimator gains for acceleration
     const float m_lds;
