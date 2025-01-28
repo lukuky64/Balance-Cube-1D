@@ -9,8 +9,8 @@
 #define SLEEP_TIMEOUT_MS 20000 // Time until sleep in idle state (ms)
 
 // Device selection
-#define LOG_SD 0
-#define LOG_SERIAL 1 // beware, this is slow
+#define LOG_SD 1
+#define LOG_SERIAL 0 // beware, this is slow
 #define SILENT_INDICATION 0
 #define SERVO_BRAKING 0
 #define USE_ROT_ENC 0
@@ -25,13 +25,13 @@
 #define DUMMY_USBPD 1
 
 // Task loop frequencies
-#define AQUISITION_FREQ 400f     // Hz
-#define BALANCE_FREQ 100f        // Hz
-#define BLDC_FREQ 1000f          // Hz
-#define LOG_FREQ 100f            // Hz
+#define AQUISITION_FREQ 400.0f   // Hz
+#define BALANCE_FREQ 100.0f      // Hz
+#define BLDC_FREQ 1000.0f        // Hz
+#define LOG_FREQ 100.0f          // Hz
 #define REFRESH_STATUS_FREQ 0.2f // Hz
-#define INDICATION_FREQ 1f       // Hz
-#define TASK_MANAGER_FREQ 10f    // Hz
+#define INDICATION_FREQ 1.0f     // Hz
+#define TASK_MANAGER_FREQ 10.0f  // Hz
 
 // Log parameters
 #define LOG_FILE_PREFIX "/LOG"
@@ -59,7 +59,7 @@
 
 // Control params
 #define LQR 1
-#define RATE_LIMIT 100.0f // Nm/s
+#define RATE_LIMIT 100.0f // Nm/s. Large value so we can ignore for now
 #define MOTOR_KV 52.8f    // Nm/A. This is also used to calc max torque (probably not accurate)
 
 #if LQR

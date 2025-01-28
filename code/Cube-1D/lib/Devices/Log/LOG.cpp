@@ -36,7 +36,7 @@ bool Log::startNewLog()
         }
         if (LOG_SETPOINT)
         {
-            startMsg += ",setpoint(Nm)";
+            startMsg += ",setpoint(A)";
         }
 
         if (!m_sdTalker.createFile(startMsg, LOG_FILE_PREFIX))
