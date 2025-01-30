@@ -54,8 +54,8 @@ void State_Machine::taskManagerTask(void *pvParameters)
 
         // machine->printCpuUsage();
 
-        UBaseType_t stackRemaining = uxTaskGetStackHighWaterMark(machine->m_wifiTaskHandle);
-        ESP_LOGI(TAG, "Remaining stack for WiFi Task: %u words\n", stackRemaining);
+        // UBaseType_t stackRemaining = uxTaskGetStackHighWaterMark(machine->m_wifiTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for WiFi Task: %u words\n", stackRemaining);
 
         // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_logTaskHandle);
         // ESP_LOGI(TAG, "Remaining stack for Log Task: %u words\n", stackRemaining);
@@ -302,7 +302,7 @@ void State_Machine::wifiTask(void *pvParameters)
     while (true)
     {
         wsServer.loop(); // Process WebSocket events
-        String message = String(machine->m_control.m_filters.filter_theta.getValue());
+        String message = "{\"angle\":" + String(machine->m_control.m_filters.filter_theta.getValue()) + "}";
         wsServer.sendMessage(message);
         vTaskDelay(pdMS_TO_TICKS(20));
     }
