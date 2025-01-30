@@ -13,7 +13,7 @@
     <p>Status: <span id="status">Disconnected</span></p>
 
     <script>
-        let scene, camera, renderer, square;
+        let scene, camera, renderer, square, group;
 
         function init() {
             scene = new THREE.Scene();
@@ -22,16 +22,35 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Create a square (thin box)
-            const geometry = new THREE.BoxGeometry(1, 1, 0.1);  // Thin rectangle
-            const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+            // Create a group to control rotation about the corner
+            group = new THREE.Group();
+
+            // Create the square
+            const geometry = new THREE.BoxGeometry(3, 3, 0.001); // Thin rectangle
+            const material = new THREE.MeshBasicMaterial({ color: 0xff4d6d, wireframe: false });
             square = new THREE.Mesh(geometry, material);
-            scene.add(square);
 
-            // Rotate the square to balance on its corner at the start
-            square.rotation.z = Math.PI / 4;
+            // Offset the square so its bottom-left cor ner is at (0,0)
+            square.position.set(1.5, 1.5, 0);  // 🔹 Moves the pivot to a corner
 
-            camera.position.z = 3;
+            // Add square to the group
+            group.add(square);
+            scene.add(group);
+
+            // Add a floor (a static rectangle beneath the square)
+            const floorGeometry = new THREE.PlaneGeometry(20, 0.5);  // Wide rectangle
+            const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });  // Gray color
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+
+            // Position the floor slightly below the square
+            floor.position.set(0, -0.25, 0);  // Adjust height as needed
+
+            // Add the floor to the scene (not in the group)
+            scene.add(floor);
+
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 2, 0);
+
             animate();
         }
 
@@ -41,18 +60,23 @@
         }
 
         // WebSocket connection to ESP32-S3
-        const ws = new WebSocket('ws://192.168.4.1:8080'); // 🔹 Replace with ESP32-S3 WebSocket URL
+        const ws = new WebSocket('ws://192.168.4.1:8080');
 
         ws.onopen = function () {
             document.getElementById("status").innerText = "Connected";
         };
 
         ws.onmessage = function (event) {
-            const data = JSON.parse(event.data);
-            const angle = THREE.MathUtils.degToRad(data.angle);  // Convert degrees to radians
+            let data;
+            try {
+                data = JSON.parse(event.data);
+                angle = data.angle;
+            } catch (error) {
+                angle = parseFloat(event.data);
+            }
 
-            // Apply rotation only around the z-axis (tilting effect)
-            square.rotation.z = Math.PI / 4 + angle;  // Tilt from the perfectly balanced position
+            // Apply rotation to the group (which rotates the square around its corner)
+            group.rotation.z = Math.PI / 4 + angle;
         };
 
         ws.onclose = function () {
