@@ -301,9 +301,9 @@ void State_Machine::wifiTask(void *pvParameters)
 
     while (true)
     {
-        wsServer.loop(); // Process WebSocket events
-        String message = "{\"angle\":" + String(machine->m_control.m_filters.filter_theta.getValue()) + "}";
-        wsServer.sendMessage(message);
+        wsServer.loop();                                                                                                                                                                        // Process WebSocket events
+        String JSONmessage = "{\"angle\":" + String(machine->m_control.m_filters.filter_theta.getValue()) + ",\"omega\":" + String(machine->m_control.m_filters.filter_omega.getValue()) + "}"; // JSON
+        wsServer.sendMessage(JSONmessage);
         vTaskDelay(pdMS_TO_TICKS(20));
     }
 

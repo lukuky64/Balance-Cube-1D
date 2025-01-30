@@ -25,10 +25,15 @@ float LQRController::generate(float theta, float theta_dot, float phi, float phi
     // Compute the control input: u = -K * x
 
     // WrapAngle(phi);
-    return -(m_K.k1 * theta +
-             m_K.k2 * theta_dot +
-             m_K.k3 * phi +
-             m_K.k4 * phi_dot);
+    // return -(m_K.k1 * theta +
+    //          m_K.k2 * theta_dot +
+    //          m_K.k3 * phi +
+    //          m_K.k4 * phi_dot);
+
+    return -(Params::LQR_K1 * theta +
+             Params::LQR_K2 * theta_dot +
+             Params::LQR_K3 * phi +
+             Params::LQR_K4 * phi_dot);
 }
 
 // keeps the angle between 0 and 2*PI
