@@ -49,64 +49,7 @@ classdef ControlSimulator
             end
         end
         
-        function feasible = simulate(obj, x0, plot_results)
-            % Simulate the system and return feasibility
-            if nargin < 3
-                plot_results = true; % Default: plot results
-            end
-            
-            % Simulation parameters
-            T = 3; % Simulation duration
-            time = 0:obj.dt:T;
-            
-            % Initialise state and control input storage
-            x = x0;
-            x_vals = zeros(length(time), length(x0)); % Store states over time
-            u_vals = zeros(1, length(time)); % Store control inputs over time
-            u_prev = 0; % Previous control input (initialised to 0)
-            
-            % Feasibility check
-            feasible = false;
-            
-            % Simulate system response
-            for i = 1:length(time)
-                % Store the current state
-                x_vals(i, :) = x';
-                
-                % Compute control input
-                u = -obj.K * x;
-                
-                % Gradual clamping of control input
-                if abs(u) > obj.u_max
-                    u = sign(u) * obj.u_max;
-                end
-                
-                % Apply rate limiting
-                u_dot = (u - u_prev) / obj.dt; % Compute the rate of change
-                if abs(u_dot) > obj.u_rate_max
-                    u = u_prev + sign(u_dot) * obj.u_rate_max * obj.dt;
-                end
-                
-                u_vals(i) = u; % Store control input
-                
-                % Update state using Euler integration
-                x_dot = obj.A * x + obj.B * u;
-                x = x + x_dot * obj.dt;
-                
-                % Check if the first state (theta) is sufficiently close to zero
-                if abs(x(1)) < 1e-3
-                    feasible = true;
-                end
-                
-                % Update the previous control input
-                u_prev = u;
-            end
-            
-            % Plot results if required
-            if plot_results
-                obj.plotResults(time, x_vals, u_vals);
-            end
-        end
+        
 
         function x0 = findThetaLimit(obj, x0)
             if(sign(x0(1)) == 0)
@@ -136,46 +79,136 @@ classdef ControlSimulator
             % direction, which should oppsose omega.
         end
         
+        function feasible = simulate(obj, x0, plot_results, state_axes, input_axes)
+            % Simulate the system and return feasibility
+            if nargin < 5
+                input_axes = []; % Default: no input axes
+            end
+            if nargin < 4
+                state_axes = []; % Default: no state axes
+            end
+            if nargin < 3
+                plot_results = true; % Default: plot results
+            end
+        
+            % Simulation parameters
+            T = 3; % Simulation duration
+            time = 0:obj.dt:T;
+        
+            % Initialise state and control input storage
+            x = x0;
+            x_vals = zeros(length(time), length(x0)); % Store states over time
+            u_vals = zeros(1, length(time)); % Store control inputs over time
+            u_prev = 0; % Previous control input (initialised to 0)
+        
+            % Feasibility check
+            feasible = false;
+        
+            % Simulate system response
+            for i = 1:length(time)
+                % Store the current state
+                x_vals(i, :) = x';
+        
+                % Compute control input
+                u = -obj.K * x;
+        
+                % Gradual clamping of control input
+                if abs(u) > obj.u_max
+                    u = sign(u) * obj.u_max;
+                end
+        
+                % Apply rate limiting
+                u_dot = (u - u_prev) / obj.dt; % Compute the rate of change
+                if abs(u_dot) > obj.u_rate_max
+                    u = u_prev + sign(u_dot) * obj.u_rate_max * obj.dt;
+                end
+        
+                u_vals(i) = u; % Store control input
+        
+                % Update state using Euler integration
+                x_dot = obj.A * x + obj.B * u;
+                x = x + x_dot * obj.dt;
+        
+                % Check if the first state (theta) is sufficiently close to zero
+                if abs(x(1)) < 1e-3
+                    feasible = true;
+                end
+        
+                % Update the previous control input
+                u_prev = u;
+            end
+        
+            % Plot results if required
+            if plot_results
+                if ~isempty(state_axes)
+                    obj.plotResultsState(time, x_vals, state_axes);
+                else
+                    obj.plotResults(time, x_vals, u_vals); % Default: create new figures
+                end
+                if ~isempty(input_axes)
+                    obj.plotResultsInput(time, u_vals, input_axes);
+                end
+            end
+        end
+
+        function plotResultsState(~, time, x_vals, axes_handle)
+            % Fully clear axes
+            cla(axes_handle, 'reset');
+            
+            % Plot states into the provided axes
+            hold(axes_handle, 'on');
+            plot(axes_handle, time, x_vals(:, 1), 'DisplayName', 'θ (rad)', 'LineWidth', 1.5);
+            plot(axes_handle, time, x_vals(:, 2), 'DisplayName', 'θ dot (rad/s)', 'LineWidth', 1.5);
+            legend(axes_handle, 'show');
+            title(axes_handle, 'System States');
+            xlabel(axes_handle, 'Time (s)');
+            ylabel(axes_handle, 'Value');
+            grid(axes_handle, 'on');
+            hold(axes_handle, 'off');
+
+            drawnow; % Force redraw
+        end
+        
+        function plotResultsInput(~, time, u_vals, axes_handle)
+            % Fully clear axes
+            cla(axes_handle, 'reset');
+            
+            % Plot control input into the provided axes
+            plot(axes_handle, time, u_vals, 'LineWidth', 1.5);
+            title(axes_handle, 'Control Input');
+            xlabel(axes_handle, 'Time (s)');
+            ylabel(axes_handle, 'u (Nm)');
+            grid(axes_handle, 'on');
+        end
+        
         function plotResults(~, time, x_vals, u_vals)
-            % Plot system states
+            % Default plotting: create new figures for states and input
             figure;
-            subplot(2, 2, 1);
+            subplot(2, 1, 1);
             plot(time, x_vals(:, 1), 'LineWidth', 1.5);
-            title('Angle (θ)');
-            xlabel('Time (s)');
-            ylabel('θ (rad)');
-            grid on;
-
-            subplot(2, 2, 2);
+            hold on;
             plot(time, x_vals(:, 2), 'LineWidth', 1.5);
-            title('Angular Velocity (θ dot)');
+            title('System States');
             xlabel('Time (s)');
-            ylabel('θ dot (rad/s)');
+            ylabel('Value');
+            legend('θ (rad)', 'θ dot (rad/s)');
             grid on;
-
-            subplot(2, 2, 3);
+        
+            subplot(2, 1, 2);
             plot(time, x_vals(:, 3), 'LineWidth', 1.5);
-            title('Reaction Wheel Angle (φ)');
-            xlabel('Time (s)');
-            ylabel('φ (rad)');
-            grid on;
-
-            subplot(2, 2, 4);
+            hold on;
             plot(time, x_vals(:, 4), 'LineWidth', 1.5);
-            title('Reaction Wheel Angular Velocity (φ dot)');
+            title('Reaction Wheel States');
             xlabel('Time (s)');
-            ylabel('φ dot (rad/s)');
+            ylabel('Value');
+            legend('φ (rad)', 'φ dot (rad/s)');
             grid on;
-
-            % Add Overall Title for State Plots
-            sgtitle('System States with LQR Control');
-
-            % Plot control input
+        
             figure;
             plot(time, u_vals, 'LineWidth', 1.5);
+            title('Control Input');
             xlabel('Time (s)');
-            ylabel('Control Input (u)');
-            title('Control Input vs. Time');
+            ylabel('u (Nm)');
             grid on;
         end
     end
