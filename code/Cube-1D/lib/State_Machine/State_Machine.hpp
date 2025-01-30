@@ -54,6 +54,7 @@ public:
     STATES getCurrentState();
     void criticalErrorSeq();
     void logSeq();
+    void wifiSeq();
     const char *stateToString(STATES state);
 
     // FreeRTOS Tasks
@@ -66,6 +67,7 @@ public:
     static void logTask(void *pvParameters);
     static void ControlabilityTask(void *pvParameters);
     static void checkControllableTask(void *pvParameters);
+    static void wifiTask(void *pvParameters);
 
 private:
     SemaphoreHandle_t m_stateMutex = NULL;
@@ -89,6 +91,8 @@ private:
     TaskHandle_t m_logTaskHandle = NULL;
 
     TaskHandle_t m_cpuUsageTaskHandle = NULL;
+
+    TaskHandle_t m_wifiTaskHandle = NULL;
 
     static constexpr const char *TAG = "State_Machine";
 

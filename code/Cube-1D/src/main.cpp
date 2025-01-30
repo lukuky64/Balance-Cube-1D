@@ -25,6 +25,7 @@ void setup()
 
 void loop()
 {
+    vTaskDelay(portMAX_DELAY); // Suspend the task indefinitely
     // esp_log_set_vprintf
     // cli.run(); // Run the CLI
     // delay(100);

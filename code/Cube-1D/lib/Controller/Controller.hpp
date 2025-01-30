@@ -44,6 +44,7 @@ public:
 
     // void setTargetTau(float tau);
     // float getTargetTau();
+    FILTERS m_filters;
 
 private:
     void updateControlability();
@@ -59,7 +60,6 @@ private:
     RateLimiter m_rateLimiter;
 
     Devices &m_devicesRef;
-    FILTERS m_filters;
     Estimator m_estimator;
 
     // SemaphoreHandle_t m_target_tau_mutex = nullptr;

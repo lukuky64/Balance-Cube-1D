@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32-S3 Balancing Square</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+
+<body>
+    <h2>ESP32-S3 Balancing Square Visualization</h2>
+    <p>Status: <span id="status">Disconnected</span></p>
+
+    <script>
+        let scene, camera, renderer, square;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Create a square (thin box)
+            const geometry = new THREE.BoxGeometry(1, 1, 0.1);  // Thin rectangle
+            const material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+            square = new THREE.Mesh(geometry, material);
+            scene.add(square);
+
+            // Rotate the square to balance on its corner at the start
+            square.rotation.z = Math.PI / 4;
+
+            camera.position.z = 3;
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // WebSocket connection to ESP32-S3
+        const ws = new WebSocket('ws://192.168.4.1:8080'); // 🔹 Replace with ESP32-S3 WebSocket URL
+
+        ws.onopen = function () {
+            document.getElementById("status").innerText = "Connected";
+        };
+
+        ws.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            const angle = THREE.MathUtils.degToRad(data.angle);  // Convert degrees to radians
+
+            // Apply rotation only around the z-axis (tilting effect)
+            square.rotation.z = Math.PI / 4 + angle;  // Tilt from the perfectly balanced position
+        };
+
+        ws.onclose = function () {
+            document.getElementById("status").innerText = "Disconnected";
+        };
+
+        init();
+    </script>
+</body>
+
+</html>

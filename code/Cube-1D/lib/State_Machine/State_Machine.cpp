@@ -1,8 +1,11 @@
 #include "State_Machine.hpp"
 #include "Params.hpp"
 // #include "perfmon.hpp"
+#include "WebSocketServer.hpp"
 
-State_Machine *State_Machine::instance = nullptr; // Initialize static pointer
+WebSocketServer wsServer;
+
+State_Machine *State_Machine::instance = nullptr; // Initialize static pointer. Was being used for USBSerial reading stuff
 
 State_Machine::State_Machine() : m_control(m_devices)
 {
@@ -28,7 +31,8 @@ void State_Machine::begin()
     if (m_taskManagerTaskHandle == NULL)
     {
         ESP_LOGI(TAG, "Starting Task Manager Task");
-        xTaskCreate(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle);
+        // xTaskCreate(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle, 1);
     }
 }
 
@@ -49,6 +53,27 @@ void State_Machine::taskManagerTask(void *pvParameters)
         // ESP_LOGI(TAG, "Remaining stack: %u words\n", uxHighWaterMark);
 
         // machine->printCpuUsage();
+
+        UBaseType_t stackRemaining = uxTaskGetStackHighWaterMark(machine->m_wifiTaskHandle);
+        ESP_LOGI(TAG, "Remaining stack for WiFi Task: %u words\n", stackRemaining);
+
+        // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_logTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for Log Task: %u words\n", stackRemaining);
+
+        // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_BLDCTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for BLDC Task: %u words\n", stackRemaining);
+
+        // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_balanceTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for Balance Task: %u words\n", stackRemaining);
+
+        // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_updateFiltersTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for Filters Task: %u words\n", stackRemaining);
+
+        // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_refreshStatusTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for Refresh Status Task: %u words\n", stackRemaining);
+
+        // stackRemaining = uxTaskGetStackHighWaterMark(machine->m_indicationLoopTaskHandle);
+        // ESP_LOGI(TAG, "Remaining stack for Indication Task: %u words\n", stackRemaining);
 
         vTaskDelay(pdMS_TO_TICKS(Params::TASK_MANAGER_MS)); // Loop current has blocking in certain functions
     }
@@ -81,7 +106,8 @@ void State_Machine::loop()
     case CALIBRATION:
     {
         calibrationSeq();
-        logSeq(); // initial logging start
+        logSeq();  // initial logging start
+        wifiSeq(); // start wifi server
     }
     break;
     case IDLE:
@@ -230,7 +256,7 @@ void State_Machine::refreshStatusTask(void *pvParameters)
 
     while (true)
     {
-        vTaskDelay(pdMS_TO_TICKS(Params::REFRESH_STATUS_MS));
+        vTaskDelay(pdMS_TO_TICKS(Params::REFRESH_STATUS_MS)); // delay first to create initial offset
         machine->m_devices.refreshStatusAll();
     }
 }
@@ -241,7 +267,7 @@ void State_Machine::logTask(void *pvParameters)
     // Convert generic pointer back to State_Machine*
     auto *machine = static_cast<State_Machine *>(pvParameters);
 
-    ESP_LOGI(TAG, "Starting log Task apparently");
+    ESP_LOGI(TAG, "Starting log Task");
 
     bool successLog = machine->m_devices.m_logger.startNewLog();
 
@@ -249,7 +275,8 @@ void State_Machine::logTask(void *pvParameters)
     {
         // This method is more precise than vTaskDelay
         TickType_t xLastWakeTime = xTaskGetTickCount();              // Get initial tick count
-        const TickType_t xFrequency = pdMS_TO_TICKS(Params::LOG_MS); // Logging period
+        const TickType_t xFrequency = pdMS_TO_TICKS(Params::LOG_MS); // Logging period\
+
 
         while (true)
         {
@@ -262,6 +289,26 @@ void State_Machine::logTask(void *pvParameters)
         machine->m_logTaskHandle = NULL; // clear the handle
         vTaskDelete(NULL);
     }
+}
+
+void State_Machine::wifiTask(void *pvParameters)
+{
+    vTaskDelay(pdMS_TO_TICKS(50));
+    // Convert generic pointer back to State_Machine*
+    auto *machine = static_cast<State_Machine *>(pvParameters);
+
+    wsServer.begin();
+
+    while (true)
+    {
+        wsServer.loop(); // Process WebSocket events
+        String message = String(machine->m_control.m_filters.filter_theta.getValue());
+        wsServer.sendMessage(message);
+        vTaskDelay(pdMS_TO_TICKS(20));
+    }
+
+    machine->m_wifiTaskHandle = NULL; // clear the handle
+    vTaskDelete(NULL);
 }
 
 // void State_Machine::ControlabilityTask(void *pvParameters)
@@ -296,11 +343,13 @@ void State_Machine::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
+        // xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
+        xTaskCreatePinnedToCore(&State_Machine::indicationTask, "Indication Loop Task", 4096, this, PRIORITY_LOW, &m_indicationLoopTaskHandle, 1);
     }
     if (m_refreshStatusTaskHandle == NULL)
     {
-        xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
+        // xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::refreshStatusTask, "Device status check loop Task", 4096, this, PRIORITY_LOW, &m_refreshStatusTaskHandle, 1);
     }
 }
 
@@ -339,7 +388,8 @@ void State_Machine::calibrationSeq()
 
     if ((m_updateFiltersTaskHandle == NULL) && succ)
     {
-        xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
+        // xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle, 1);
     }
 
     SemaphoreGuard guard(m_stateMutex);
@@ -377,6 +427,14 @@ void State_Machine::lightSleepSeq()
     }
 }
 
+void State_Machine::wifiSeq()
+{
+    if (m_wifiTaskHandle == NULL)
+    {
+        xTaskCreatePinnedToCore(&State_Machine::wifiTask, "WiFi Task", 4096, this, PRIORITY_HIGH, &m_wifiTaskHandle, 0); // core 0 for wifi tasks
+    }
+}
+
 void State_Machine::controlSeq()
 {
     // ESP_LOGI(TAG, "Control Sequence!");
@@ -384,13 +442,15 @@ void State_Machine::controlSeq()
     if (m_balanceTaskHandle == NULL)
     {
         ESP_LOGI(TAG, "Starting balance Task");
-        xTaskCreate(&State_Machine::balanceTask, "Starting balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
+        // xTaskCreate(&State_Machine::balanceTask, "balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::balanceTask, "balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle, 1); // Core 1 for real-time tasks
     }
 
     if (m_BLDCTaskHandle == NULL)
     {
         ESP_LOGI(TAG, "Starting BLDC Task");
-        xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
+        // xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::BLDCTask, "BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle, 1); // Core 1 for real-time tasks
     }
 }
 
@@ -398,7 +458,8 @@ void State_Machine::logSeq()
 {
     if (m_logTaskHandle == NULL)
     {
-        xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
+        // xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle, 1);
     }
 }
 
