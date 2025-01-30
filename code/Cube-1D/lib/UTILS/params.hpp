@@ -62,10 +62,10 @@ namespace Params
 
         static float ANGLE_THRESH = 0.4f; // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
         // LQR Gain Matrix (precomputed offline)
-        static float LQR_K1 = -1.4f;    // theta
-        static float LQR_K2 = -0.3f;    // theta_dot
-        static float LQR_K3 = -0.0f;    // phi. If we want to use this, best to wrap phi to 0 to 2pi in the LQR class, ortherwise its hard to recover from multiple rotations
-        static float LQR_K4 = -0.0023f; // phi_dot
+        static float LQR_K1 = -1.2f;   // theta
+        static float LQR_K2 = -0.25f;  // theta_dot
+        static float LQR_K3 = -0.0f;   // phi. If we want to use this, best to wrap phi to 0 to 2pi in the LQR class, ortherwise its hard to recover from multiple rotations
+        static float LQR_K4 = -0.002f; // phi_dot
 
         // Should just get rid of these since we aren't using the min jerk controller
         static float JERK_KP = 1.0f;
@@ -105,17 +105,18 @@ namespace Params
                 Preferences preferences;
                 if (preferences.begin("params", false)) // Open in RW mode
                 {
-// Helper macro to check and initialize parameters
-#define LOAD_OR_INIT(pref, type, var, defaultVal)                                                                     \
-        if (!pref.isKey(#var))                                                                                        \
-        {                                                                                                             \
-                ESP_LOGW("Params", "Key %s not found. Initializing default: %s = %f", #var, #var, (float)defaultVal); \
-                pref.put##type(#var, defaultVal);                                                                     \
-                var = defaultVal;                                                                                     \
-        }                                                                                                             \
-        else                                                                                                          \
-        {                                                                                                             \
-                var = pref.get##type(#var, defaultVal);                                                               \
+#define LOAD_OR_INIT(pref, type, var, defaultVal)                                     \
+        if (pref.isKey(#var))                                                         \
+        {                                                                             \
+                var = pref.get##type(#var, defaultVal);                               \
+                ESP_LOGI("Params", "Loaded %s = %f", #var, (float)var);               \
+        }                                                                             \
+        else                                                                          \
+        {                                                                             \
+                ESP_LOGW("Params", "Key %s not found. Initializing default: %s = %f", \
+                         #var, #var, (float)defaultVal);                              \
+                pref.put##type(#var, defaultVal); /* No commit needed */              \
+                var = defaultVal;                                                     \
         }
                         // Load or initialize values
                         LOAD_OR_INIT(preferences, UInt, ALLOW_SLEEP, 1);
@@ -131,10 +132,10 @@ namespace Params
                         LOAD_OR_INIT(preferences, Float, SENSE_MVPA, 185.0f);
                         LOAD_OR_INIT(preferences, Float, RATE_LIMIT, 100.0f);
                         LOAD_OR_INIT(preferences, Float, MOTOR_KV, 52.8f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K1, -1.4f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K2, -0.3f);
+                        LOAD_OR_INIT(preferences, Float, LQR_K1, -1.2f);
+                        LOAD_OR_INIT(preferences, Float, LQR_K2, -0.25f);
                         LOAD_OR_INIT(preferences, Float, LQR_K3, -0.0f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K4, -0.0023f);
+                        LOAD_OR_INIT(preferences, Float, LQR_K4, -0.002f);
                         LOAD_OR_INIT(preferences, Float, JERK_KP, 1.0f);
                         LOAD_OR_INIT(preferences, Float, JERK_KD, 0.0f);
                         LOAD_OR_INIT(preferences, Float, WHEEL_J, 0.000928f);
@@ -144,7 +145,6 @@ namespace Params
 
                         recalculatePeriods(); // Update dependent calculations
                         preferences.end();
-
                         ESP_LOGI("Params", "Preferences loaded.");
                 }
                 else
@@ -154,24 +154,50 @@ namespace Params
         }
 
         // Save preferences to NVS
-        template <typename T>
-        static void savePreference(const char *key, T value)
+        // template <typename T>
+        // static void savePreference(const char *key, T value)
+        // {
+        //         Preferences preferences;
+        //         if (preferences.begin("params", false)) // Open in RW mode
+        //         {
+        //                 if constexpr (std::is_same<T, unsigned int>::value)
+        //                 {
+        //                         preferences.putUInt(key, value);
+        //                         ESP_LOGI("Params", "Stored unsigned int preference: %s = %d", key, value);
+        //                 }
+        //                 else if constexpr (std::is_same<T, float>::value)
+        //                 {
+        //                         preferences.putFloat(key, value);
+        //                         ESP_LOGI("Params", "Stored float preference: %s = %f", key, value);
+        //                         // print the parameter to see if it changed
+        //                         ESP_LOGI("Params", "LQR_K1 = %f", LQR_K1);
+        //                 }
+        //                 else
+        //                 {
+        //                         ESP_LOGE("Params", "Unsupported type for saving preference.");
+        //                 }
+
+        //                 preferences.end();
+        //         }
+        //         else
+        //         {
+        //                 ESP_LOGE("Params", "Failed to open NVS storage!");
+        //         }
+        // }
+
+        static void savePreference(const char *key, float value)
         {
                 Preferences preferences;
                 if (preferences.begin("params", false)) // Open in RW mode
                 {
+                        preferences.putFloat(key, value);
+                        ESP_LOGI("Params", "Stored float preference: %s = %f", key, value);
 
-                        if constexpr (std::is_same<T, unsigned int>::value)
+                        // Explicitly update the variable if it matches a parameter
+                        if (strcmp(key, "LQR_K1") == 0)
                         {
-                                preferences.putUInt(key, value);
-                        }
-                        else if constexpr (std::is_same<T, float>::value)
-                        {
-                                preferences.putFloat(key, value);
-                        }
-                        else
-                        {
-                                ESP_LOGE("Params", "Unsupported type for saving preference.");
+                                LQR_K1 = value;
+                                ESP_LOGI("Params", "Updated LQR_K1 in RAM: %f", LQR_K1);
                         }
 
                         preferences.end();
@@ -212,5 +238,41 @@ namespace Params
 
                 delay(1000);
                 esp_restart(); // Restart ESP32 to apply changes
+        }
+
+        static float getFloat(const char *key)
+        {
+                Preferences preferences;
+                if (preferences.begin("params", false))
+                {
+                        float val = preferences.getFloat(key, 0.0f);
+                        preferences.end();
+                        return val;
+                }
+                return 0.0f;
+        }
+
+        static unsigned int getUInt(const char *key)
+        {
+                Preferences preferences;
+                if (preferences.begin("params", false))
+                {
+                        unsigned int val = preferences.getUInt(key, 0);
+                        preferences.end();
+                        return val;
+                }
+                return 0;
+        }
+
+        static bool exists(const char *key)
+        {
+                Preferences preferences;
+                if (preferences.begin("params", false)) // Open in read mode
+                {
+                        bool keyExists = preferences.isKey(key);
+                        preferences.end();
+                        return keyExists;
+                }
+                return false; // Return false if unable to open NVS
         }
 }
