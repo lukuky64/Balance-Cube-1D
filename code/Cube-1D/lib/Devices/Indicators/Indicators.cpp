@@ -141,7 +141,7 @@ void Indicators::showAllOff()
     ESP_LOGI(TAG, "Turning off all Indicators!");
 
     controlRGBLed(0, 0);
-    controlBuzzer(0, 0);
+    controlBuzzer(300, 50);
 }
 
 /*****************************************************************************/

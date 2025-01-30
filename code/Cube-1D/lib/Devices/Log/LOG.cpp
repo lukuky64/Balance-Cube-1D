@@ -27,28 +27,28 @@ bool Log::startNewLog()
     {
         String startMsg = "Time(s)"; // Should always log time
 
-        if (LOG_THETA)
+        if (Params::LOG_THETA)
         {
             startMsg += ",Theta(rad)";
         }
-        if (LOG_THETA_DOT)
+        if (Params::LOG_THETA_DOT)
         {
             startMsg += ",theta_dot(rad/s)";
         }
-        if (LOG_PHI)
+        if (Params::LOG_PHI)
         {
             startMsg += ",Phi(rad)";
         }
-        if (LOG_PHI_DOT)
+        if (Params::LOG_PHI_DOT)
         {
             startMsg += ",phi_dot(rad/s)";
         }
-        if (LOG_SETPOINT)
+        if (Params::LOG_SETPOINT)
         {
             startMsg += ",setpoint(A)";
         }
 
-        if (!m_sdTalker.createFile(startMsg, LOG_FILE_PREFIX))
+        if (!m_sdTalker.createFile(startMsg, Params::LOG_FILE_PREFIX))
         {
             ESP_LOGE(TAG, "Failed to create file on SD card!");
             return false;

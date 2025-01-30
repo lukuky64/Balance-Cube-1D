@@ -36,10 +36,10 @@ bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int sens
     m_Kv = Kv;
     setTorqueConstant(m_Kv);
 
-    m_motor = new BLDCMotor(NUM_POLES, PHASE_RESISTANCE);
+    m_motor = new BLDCMotor(Params::NUM_POLES, Params::PHASE_RES);
     m_driver = new BLDCDriver3PWM(phA, phB, phC, enable);
     m_sensor = mag_enc;
-    m_current_sense = new InlineCurrentSense(SENSE_MVPA, senseA, senseB, NOT_SET);
+    m_current_sense = new InlineCurrentSense(Params::SENSE_MVPA, senseA, senseB, NOT_SET);
 
     if (!updateVoltageLimits(voltage))
     {

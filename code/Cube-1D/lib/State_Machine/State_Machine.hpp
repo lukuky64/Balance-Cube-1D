@@ -36,6 +36,8 @@ public:
     State_Machine();
     ~State_Machine();
 
+    static State_Machine *instance; // Global pointer to instance
+
     void begin();
     void loop();
 
@@ -89,4 +91,9 @@ private:
     TaskHandle_t m_cpuUsageTaskHandle = NULL;
 
     static constexpr const char *TAG = "State_Machine";
+
+    // BLDC is a high freq task so we need to use the GPTimer
+    static void IRAM_ATTR onBLDCTimer();
+    void startBLDCTimer();
+    hw_timer_t *bldcTimer = NULL;
 };

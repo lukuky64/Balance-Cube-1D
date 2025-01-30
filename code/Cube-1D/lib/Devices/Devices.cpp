@@ -300,7 +300,7 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
         if ((statusMask & USBPD_BIT) == USBPD_BIT)
         {
             // set up BLDC
-            if (setupBLDC(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), MOTOR_KV))
+            if (setupBLDC(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), Params::MOTOR_KV))
             {
                 statusMask |= BLDC_BIT;
                 prefMask |= BLDC_BIT;

@@ -1,4 +1,7 @@
 #include "CLI.hpp"
+#include "params.hpp"
+
+USBCDC USBSerial(0); // Define USBSerial once here
 
 CLI::CLI(unsigned long baud)
 {
@@ -13,6 +16,11 @@ void CLI::addCommand(char cmdID, CommandCallback callback)
         _commandList[_commandCount].id = cmdID;
         _commandList[_commandCount].callback = callback;
         _commandCount++;
+
+        // this shouldn't really be here
+        SERIAL_INTERFACE.print("Added command. Type '");
+        SERIAL_INTERFACE.print(cmdID);
+        SERIAL_INTERFACE.println("' paramName=value' to set preferences.");
     }
     else
     {
@@ -73,6 +81,7 @@ void CLI::handleBuffer()
         {
             // If found, call its callback with the argument
             _commandList[i].callback(arg);
+            ;
             return;
         }
     }
@@ -80,4 +89,35 @@ void CLI::handleBuffer()
     // If no match, print an error
     SERIAL_INTERFACE.print("Unknown command: ");
     SERIAL_INTERFACE.println(cmdID);
+}
+
+void CLI::setVariable(const char *arg)
+{
+    const char *delimiter = strchr(arg, '=');
+    if (!delimiter)
+    {
+        SERIAL_INTERFACE.println("Invalid format. Use varName=value");
+        return;
+    }
+
+    String varName = String(arg).substring(0, delimiter - arg);
+    String valueStr = String(arg).substring(delimiter - arg + 1);
+
+    // Detect float vs. integer by looking for a decimal point
+    if (valueStr.indexOf('.') >= 0)
+    {
+        float fValue = valueStr.toFloat();
+        Params::savePreference(varName.c_str(), fValue);
+        SERIAL_INTERFACE.print("Stored float preference: ");
+    }
+    else
+    {
+        unsigned int iValue = (unsigned int)valueStr.toInt();
+        Params::savePreference(varName.c_str(), iValue);
+        SERIAL_INTERFACE.print("Stored integer preference: ");
+    }
+
+    SERIAL_INTERFACE.print(varName);
+    SERIAL_INTERFACE.print(" = ");
+    SERIAL_INTERFACE.println(valueStr);
 }

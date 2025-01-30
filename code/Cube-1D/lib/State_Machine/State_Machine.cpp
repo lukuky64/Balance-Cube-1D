@@ -1,5 +1,8 @@
 #include "State_Machine.hpp"
+#include "Params.hpp"
 // #include "perfmon.hpp"
+
+State_Machine *State_Machine::instance = nullptr; // Initialize static pointer
 
 State_Machine::State_Machine() : m_control(m_devices)
 {
@@ -47,7 +50,7 @@ void State_Machine::taskManagerTask(void *pvParameters)
 
         // machine->printCpuUsage();
 
-        vTaskDelay(pdMS_TO_TICKS(TASK_MANAGER_MS)); // Loop current has blocking in certain functions
+        vTaskDelay(pdMS_TO_TICKS(Params::TASK_MANAGER_MS)); // Loop current has blocking in certain functions
     }
 }
 
@@ -102,6 +105,24 @@ void State_Machine::loop()
     }
 }
 
+// void IRAM_ATTR State_Machine::onBLDCTimer()
+// {
+//     if (instance && instance->m_BLDCTaskHandle != NULL) // Use instance pointer
+//     {
+//         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//         vTaskNotifyGiveFromISR(instance->m_BLDCTaskHandle, &xHigherPriorityTaskWoken);
+//         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+//     }
+// }
+
+// void State_Machine::startBLDCTimer()
+// {
+//     bldcTimer = timerBegin(0, 80, true); // Timer 0, prescaler 80 → 1 tick = 1 µs
+//     timerAttachInterrupt(bldcTimer, &State_Machine::onBLDCTimer, true);
+//     timerAlarmWrite(bldcTimer, Params::BLDC_MS * 1000, true); // Set period in µs
+//     timerAlarmEnable(bldcTimer);                              // Enable the timer
+// }
+
 void State_Machine::BLDCTask(void *pvParameters)
 {
     vTaskDelay(pdMS_TO_TICKS(50));
@@ -110,8 +131,8 @@ void State_Machine::BLDCTask(void *pvParameters)
 
     machine->m_devices.m_bldc.enableMotor(true); // Enable motor
 
-    unsigned long startUS;
-    unsigned long endUS = micros();
+    TickType_t xLastWakeTime = xTaskGetTickCount();               // Store initial tick count
+    const TickType_t xFrequency = pdMS_TO_TICKS(Params::BLDC_MS); // Task period
 
     while (machine->m_control.getControllable())
     {
@@ -120,7 +141,7 @@ void State_Machine::BLDCTask(void *pvParameters)
             machine->m_control.updateBLDC(); // currently only takes ~ 5uS or 200kHz
         }
 
-        vTaskDelay(pdMS_TO_TICKS(BLDC_MS)); //  could use taskYIELD() instead if we need to be more responsive
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 
     machine->m_devices.m_bldc.enableMotor(false); // Disable motor
@@ -151,8 +172,8 @@ void State_Machine::balanceTask(void *pvParameters)
 
     while (true)
     {
-        machine->m_control.updateBalanceControl(BALANCE_MS); // currently only takes ~ 30uS or 33kHz
-        vTaskDelay(pdMS_TO_TICKS(BALANCE_MS));
+        machine->m_control.updateBalanceControl(Params::BALANCE_MS); // currently only takes ~ 30uS or 33kHz
+        vTaskDelay(pdMS_TO_TICKS(Params::BALANCE_MS));
     }
 }
 
@@ -168,7 +189,7 @@ void State_Machine::updateFiltersTask(void *pvParameters)
             // TimerGuard guard(TAG, "update filter task");
             machine->m_control.updateData(); // takes ~ 380uS or 2.63kHz
         }
-        vTaskDelay(pdMS_TO_TICKS(AQUISITION_MS));
+        vTaskDelay(pdMS_TO_TICKS(Params::AQUISITION_MS));
     }
 }
 
@@ -197,7 +218,7 @@ void State_Machine::indicationTask(void *pvParameters)
         // uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
         // printf("Remaining stack: %u words\n", uxHighWaterMark);
 
-        vTaskDelay(pdMS_TO_TICKS(INDICATION_MS));
+        vTaskDelay(pdMS_TO_TICKS(Params::INDICATION_MS));
     }
 }
 
@@ -209,7 +230,7 @@ void State_Machine::refreshStatusTask(void *pvParameters)
 
     while (true)
     {
-        vTaskDelay(pdMS_TO_TICKS(REFRESH_STATUS_MS));
+        vTaskDelay(pdMS_TO_TICKS(Params::REFRESH_STATUS_MS));
         machine->m_devices.refreshStatusAll();
     }
 }
@@ -226,10 +247,14 @@ void State_Machine::logTask(void *pvParameters)
 
     if (successLog)
     {
+        // This method is more precise than vTaskDelay
+        TickType_t xLastWakeTime = xTaskGetTickCount();              // Get initial tick count
+        const TickType_t xFrequency = pdMS_TO_TICKS(Params::LOG_MS); // Logging period
+
         while (true)
         {
-            machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), LOG_COLUMNS); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
-            vTaskDelay(pdMS_TO_TICKS(LOG_MS));
+            machine->m_devices.m_logger.logData(machine->m_control.getDataBuffer(), Params::LOG_COLUMNS); // around 160 microseconds without flush (3 float points and time), ~37ms for flush (4kB)
+            vTaskDelayUntil(&xLastWakeTime, xFrequency);
         }
     }
     else
@@ -259,7 +284,7 @@ void State_Machine::logTask(void *pvParameters)
 
 void State_Machine::initialisationSeq()
 {
-    STATES currState = m_devices.init(LOG_SD, LOG_SERIAL, SILENT_INDICATION, SERVO_BRAKING, USE_IMU, USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
+    STATES currState = m_devices.init(Params::LOG_SD, Params::LOG_SERIAL, Params::SILENT_INDICATION, Params::SERVO_BRAKING, Params::USE_IMU, Params::USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
 
     {
         SemaphoreGuard guard(m_stateMutex);
@@ -404,9 +429,9 @@ void State_Machine::idleSeq()
     {
         vTaskDelay(pdMS_TO_TICKS(50));
 
-        if (millis() - startTime > SLEEP_TIMEOUT_MS)
+        if (millis() - startTime > Params::SLP_TIMEOUT_MS)
         {
-            if (ALLOW_SLEEP == 1) // m_devices.canSleep()
+            if (Params::ALLOW_SLEEP == 1) // m_devices.canSleep()
             {
                 ESP_LOGI(TAG, "Sleep is allowed!");
                 SemaphoreGuard guard(m_stateMutex);

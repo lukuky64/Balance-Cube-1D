@@ -57,7 +57,7 @@ bool Estimator::calibrateOmegaBias()
     if (m_imuSelected)
     {
         // Calculate angular velocity bias by averaging n samples for 0.5 seconds
-        int n_samples = static_cast<int>(500 / (AQUISITION_MS));
+        int n_samples = static_cast<int>(500 / (Params::AQUISITION_MS));
 
         float omegaBias = 0.0;
 

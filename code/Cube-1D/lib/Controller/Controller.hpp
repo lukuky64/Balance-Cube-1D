@@ -36,7 +36,7 @@ public:
     float getTargetAccel();
     float linearRegulator(float dt);
 
-    float (&getDataBuffer())[LOG_COLUMNS];
+    float (&getDataBuffer())[MAX_LOG_COLUMNS];
 
     void setState();
 
@@ -71,5 +71,5 @@ private:
     float integral_error;
     float previous_error;
 
-    float m_dataBuffer[LOG_COLUMNS];
+    float m_dataBuffer[MAX_LOG_COLUMNS];
 };

@@ -9,24 +9,24 @@
 // #define SERIAL_INTERFACE Serial
 // #endif
 
-#define SERIAL_INTERFACE Serial
+extern USBCDC USBSerial; // Declare USBSerial globally
+
+#define SERIAL_INTERFACE USBSerial
 
 class CLI
 {
 public:
     using CommandCallback = std::function<void(const char *)>;
 
-    // Constructor: starts serial at the given baud rate
     explicit CLI(unsigned long baud = 115200);
 
-    // Register a command ID + callback
     void addCommand(char cmdID, CommandCallback callback);
-
-    // Continuously poll serial for incoming characters and handle commands
     void run();
 
+    // Helper to parse and set a variable dynamically
+    void setVariable(const char *arg);
+
 private:
-    // A small struct to keep track of individual commands
     struct Command
     {
         char id;
@@ -42,6 +42,5 @@ private:
     char _rxBuffer[MAX_BUFFER_SIZE];
     int _rxIndex = 0;
 
-    // Helper function to parse and handle the buffer
     void handleBuffer();
 };
