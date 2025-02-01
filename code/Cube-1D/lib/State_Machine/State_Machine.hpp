@@ -97,7 +97,7 @@ private:
     static constexpr const char *TAG = "State_Machine";
 
     // BLDC is a high freq task so we need to use the GPTimer
-    static void IRAM_ATTR onBLDCTimer();
-    void startBLDCTimer();
-    hw_timer_t *bldcTimer = NULL;
+    // static bool IRAM_ATTR onBLDCTimer(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
+    // void startBLDCTimer();
+    // gptimer_handle_t bldcTimer = NULL;
 };

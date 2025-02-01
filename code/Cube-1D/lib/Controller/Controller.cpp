@@ -3,10 +3,10 @@
 
 Controller::Controller(Devices &devicesRef) : m_devicesRef(devicesRef),
                                               m_filters{
-                                                  Filter(0.25f, 0.1f, 100.0f, 0.0f), // Theta - don't trust initial values. Set 'P' high
-                                                  Filter(0.25f, 0.1f, 1.0f, 0.0f),   // Omega
-                                                  Filter(0.25f, 0.1f, 1.0f, 0.0f),   // Motor Theta
-                                                  Filter(0.25f, 0.1f, 1.0f, 0.0f)},  // Motor Omega
+                                                  Filter(0.1f, 0.1f, 100.0f, 0.0f), // Theta - don't trust initial values. Set 'P' high
+                                                  Filter(0.1f, 0.1f, 0.01f, 0.0f),  // Omega
+                                                  Filter(0.1f, 0.1f, 100.0f, 0.0f), // Motor Theta
+                                                  Filter(0.1f, 0.1f, 0.01f, 0.0f)}, // Motor Omega
 
                                               m_estimator(devicesRef, (Params::AQUISITION_MS / 1000.0f)),
                                               m_controlable(false),
@@ -58,6 +58,7 @@ bool Controller::setupFilters()
 
         vTaskDelay(pdMS_TO_TICKS(Params::AQUISITION_MS));
     }
+
     return true;
 }
 

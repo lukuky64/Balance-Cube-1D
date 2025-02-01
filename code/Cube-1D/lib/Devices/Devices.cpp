@@ -156,7 +156,7 @@ bool Devices::setupSDLog(gpio_num_t CS, gpio_num_t MISO, gpio_num_t MOSI, gpio_n
 
 bool Devices::setupServo(gpio_num_t servoPin)
 {
-    return m_servo.begin(servoPin);
+    return true; // m_servo.begin(servoPin);
 }
 
 bool Devices::indicateStatus()
@@ -196,7 +196,7 @@ void Devices::refreshStatusAll() // !!!
     statusMask |= (m_magEnc.checkStatus() ? MAG_BIT : 0);     // need to implement
     statusMask |= (m_logger.m_serialTalker.checkStatus() ? SERIAL_BIT : 0);
     statusMask |= (m_logger.m_sdTalker.checkStatus() ? SD_BIT : 0);
-    statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0); // need to implement
+    // statusMask |= (m_servo.checkStatus() ? SERVO_BIT : 0); // need to implement
 
     setStatus(statusMask);
 }

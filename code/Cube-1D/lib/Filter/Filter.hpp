@@ -29,6 +29,7 @@ public:
     // Getters
     float getProcessNoise();
     float getMeasurementNoise();
+    void setR(float R);
     float getEstimatedError();
 
     void computeMeasurementVariance(float measurement, bool lastData);

@@ -4,7 +4,7 @@
 #include "freertos/semphr.h"
 #include "esp_log.h"
 
-#define mutexTimeOut pdMS_TO_TICKS(1000)
+#define mutexTimeOut pdMS_TO_TICKS(5000)
 
 class SemaphoreGuard
 {

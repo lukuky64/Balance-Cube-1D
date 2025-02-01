@@ -131,22 +131,81 @@ void State_Machine::loop()
     }
 }
 
-// void IRAM_ATTR State_Machine::onBLDCTimer()
+// // Timer ISR (Runs every 500 µs → 2 kHz)
+// bool IRAM_ATTR State_Machine::onBLDCTimer(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 // {
-//     if (instance && instance->m_BLDCTaskHandle != NULL) // Use instance pointer
+//     State_Machine *machine = static_cast<State_Machine *>(user_ctx);
+//     if (machine && machine->m_BLDCTaskHandle != NULL)
 //     {
 //         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-//         vTaskNotifyGiveFromISR(instance->m_BLDCTaskHandle, &xHigherPriorityTaskWoken);
+//         vTaskNotifyGiveFromISR(machine->m_BLDCTaskHandle, &xHigherPriorityTaskWoken);
 //         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 //     }
+//     return true; // Return true to indicate the ISR was handled successfully
 // }
 
+// // Start GPTimer with 500 µs period
 // void State_Machine::startBLDCTimer()
 // {
-//     bldcTimer = timerBegin(0, 80, true); // Timer 0, prescaler 80 → 1 tick = 1 µs
-//     timerAttachInterrupt(bldcTimer, &State_Machine::onBLDCTimer, true);
-//     timerAlarmWrite(bldcTimer, Params::BLDC_MS * 1000, true); // Set period in µs
-//     timerAlarmEnable(bldcTimer);                              // Enable the timer
+//     instance = this; // Store instance pointer
+
+//     gptimer_config_t timer_config = {
+//         .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+//         .direction = GPTIMER_COUNT_UP,
+//         .resolution_hz = 1000000 // 1 MHz (1 tick = 1 µs)
+//     };
+
+//     if (gptimer_new_timer(&timer_config, &bldcTimer) != ESP_OK)
+//     {
+//         ESP_LOGE(TAG, "Failed to create BLDC GPTimer!");
+//         return;
+//     }
+
+//     gptimer_event_callbacks_t cbs = {
+//         .on_alarm = &State_Machine::onBLDCTimer};
+//     gptimer_register_event_callbacks(bldcTimer, &cbs, this);
+
+//     gptimer_alarm_config_t alarm_config = {};
+//     alarm_config.alarm_count = 500; // 500 µs (2 kHz)
+//     alarm_config.reload_count = 0;
+//     alarm_config.flags.auto_reload_on_alarm = true;
+
+//     gptimer_set_alarm_action(bldcTimer, &alarm_config);
+//     gptimer_enable(bldcTimer);
+//     gptimer_start(bldcTimer);
+// }
+
+// // FreeRTOS Task for BLDC Updates
+// void State_Machine::BLDCTask(void *pvParameters)
+// {
+//     auto *machine = static_cast<State_Machine *>(pvParameters);
+
+//     machine->startBLDCTimer();
+
+//     machine->m_devices.m_bldc.enableMotor(true); // Enable motor
+
+//     while (machine->m_control.getControllable())
+//     {
+
+//         ulTaskNotifyTake(pdTRUE, portMAX_DELAY); // Wait for ISR notification
+//         machine->m_control.updateBLDC();         // Runs at 2 kHz
+//         // vTaskDelay(pdMS_TO_TICKS(1));
+//     }
+
+//     machine->m_devices.m_bldc.enableMotor(false); // Disable motor
+
+//     // go to idle state
+//     {
+//         SemaphoreGuard guard(machine->m_stateMutex);
+//         if (guard.acquired())
+//         {
+//             machine->m_currState = IDLE;
+//         }
+//     }
+
+//     // Cleanup
+//     machine->m_BLDCTaskHandle = NULL;
+//     vTaskDelete(NULL);
 // }
 
 void State_Machine::BLDCTask(void *pvParameters)
@@ -304,7 +363,7 @@ void State_Machine::wifiTask(void *pvParameters)
         wsServer.loop();                                                                                                                                                                        // Process WebSocket events
         String JSONmessage = "{\"angle\":" + String(machine->m_control.m_filters.filter_theta.getValue()) + ",\"omega\":" + String(machine->m_control.m_filters.filter_omega.getValue()) + "}"; // JSON
         wsServer.sendMessage(JSONmessage);
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
     machine->m_wifiTaskHandle = NULL; // clear the handle
@@ -329,30 +388,6 @@ void State_Machine::wifiTask(void *pvParameters)
 
 // }
 
-void State_Machine::initialisationSeq()
-{
-    STATES currState = m_devices.init(Params::LOG_SD, Params::LOG_SERIAL, Params::SILENT_INDICATION, Params::SERVO_BRAKING, Params::USE_IMU, Params::USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
-
-    {
-        SemaphoreGuard guard(m_stateMutex);
-        if (guard.acquired())
-        {
-            m_currState = currState;
-        }
-    }
-
-    if (m_indicationLoopTaskHandle == NULL)
-    {
-        // xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
-        xTaskCreatePinnedToCore(&State_Machine::indicationTask, "Indication Loop Task", 4096, this, PRIORITY_LOW, &m_indicationLoopTaskHandle, 1);
-    }
-    if (m_refreshStatusTaskHandle == NULL)
-    {
-        // xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
-        xTaskCreatePinnedToCore(&State_Machine::refreshStatusTask, "Device status check loop Task", 4096, this, PRIORITY_LOW, &m_refreshStatusTaskHandle, 1);
-    }
-}
-
 void State_Machine::criticalErrorSeq()
 {
     ESP_LOGE("State_Machine CRITICAL ERROR", "Critical Error Sequence!");
@@ -373,29 +408,6 @@ void State_Machine::criticalErrorSeq()
         {
             m_currState = INITIALISATION;
         }
-    }
-}
-
-void State_Machine::calibrationSeq()
-{
-    vTaskDelay(pdMS_TO_TICKS(50));
-
-    ESP_LOGI("State_Machine CALIBRATION", "Calibration Sequence!");
-
-    bool succ = m_devices.calibrateSeq();
-
-    succ &= m_control.setup();
-
-    if ((m_updateFiltersTaskHandle == NULL) && succ)
-    {
-        // xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
-        xTaskCreatePinnedToCore(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle, 1);
-    }
-
-    SemaphoreGuard guard(m_stateMutex);
-    if (guard.acquired())
-    {
-        m_currState = (succ) ? IDLE : CRITICAL_ERROR;
     }
 }
 
@@ -424,6 +436,53 @@ void State_Machine::lightSleepSeq()
     if (guard.acquired())
     {
         m_currState = CONTROL;
+    }
+}
+
+void State_Machine::initialisationSeq()
+{
+    STATES currState = m_devices.init(Params::LOG_SD, Params::LOG_SERIAL, Params::SILENT_INDICATION, Params::SERVO_BRAKING, Params::USE_IMU, Params::USE_ROT_ENC) ? CALIBRATION : CRITICAL_ERROR;
+
+    {
+        SemaphoreGuard guard(m_stateMutex);
+        if (guard.acquired())
+        {
+            m_currState = currState;
+        }
+    }
+
+    if (m_indicationLoopTaskHandle == NULL)
+    {
+        // xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
+        xTaskCreatePinnedToCore(&State_Machine::indicationTask, "Indication Loop Task", 4096, this, PRIORITY_LOW, &m_indicationLoopTaskHandle, 1);
+    }
+    if (m_refreshStatusTaskHandle == NULL)
+    {
+        // xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::refreshStatusTask, "Device status check loop Task", 4096, this, PRIORITY_LOW, &m_refreshStatusTaskHandle, 1);
+    }
+}
+
+void State_Machine::calibrationSeq()
+{
+    vTaskDelay(pdMS_TO_TICKS(50));
+
+    ESP_LOGI("State_Machine CALIBRATION", "Calibration Sequence!");
+
+    bool succ = m_devices.calibrateSeq();
+
+    succ &= m_control.setup();
+
+    if ((m_updateFiltersTaskHandle == NULL) && succ)
+    {
+        // xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
+        xTaskCreatePinnedToCore(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle, 1);
+    }
+
+    SemaphoreGuard guard(m_stateMutex);
+    if (guard.acquired())
+    {
+        m_currState = (succ) ? IDLE : CRITICAL_ERROR;
     }
 }
 

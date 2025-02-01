@@ -76,7 +76,7 @@ public:
     Rot_Enc m_rotEnc;
     Mag_Enc m_magEnc;
     Log m_logger;
-    Servo_CTR m_servo;
+    // Servo_CTR m_servo;
 
 private:
     void setStatus(uint8_t status);

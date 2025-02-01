@@ -1,10 +1,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include <Preferences.h>
-#include "esp_log.h"
-
-#define LOAD_PARAM(pref, type, var, defaultVal) var = pref.get##type(#var, defaultVal);
 
 #define LQR 1
 #define MAX_LOG_COLUMNS 10
@@ -20,259 +16,70 @@
 
 #define OMEGA_SET_Z_AXIS 1
 
-// Namespace to encapsulate all variables and functions
 namespace Params
 {
-        static unsigned int ALLOW_SLEEP = 1;
-        static unsigned int SLP_TIMEOUT_MS = 30000; // Time until sleep in idle state (ms)
+        // Global parameter declarations (extern means defined elsewhere)
+        extern unsigned int ALLOW_SLEEP;
+        extern float SLP_TIMEOUT_MS;
+        extern float AQUISITION_FREQ;
+        extern float BALANCE_FREQ;
+        extern float BLDC_FREQ;
+        extern float LOG_FREQ;
+        extern float REFR_STAT_FREQ;
+        extern float INDICATION_FREQ;
+        extern float TASK_MANGR_FREQ;
 
-        // Task loop frequencies
-        static float AQUISITION_FREQ = 400.0f; // Hz
-        static float BALANCE_FREQ = 100.0f;    // Hz
-        static float BLDC_FREQ = 1000.0f;      // Hz
-        static float LOG_FREQ = 100.0f;        // Hz
-        static float REFR_STAT_FREQ = 0.2f;    // Hz
-        static float INDICATION_FREQ = 1.0f;   // Hz
-        static float TASK_MANGR_FREQ = 10.0f;  // Hz
+        extern unsigned int LOG_SD;
+        extern unsigned int LOG_SERIAL;
+        extern unsigned int SILENT_INDICATION;
+        extern unsigned int SERVO_BRAKING;
+        extern unsigned int USE_ROT_ENC;
+        extern unsigned int USE_IMU;
 
-        // Device preference selection
-        static unsigned int LOG_SD = 1;
-        static unsigned int LOG_SERIAL = 0; // beware, this is slow
-        static unsigned int SILENT_INDICATION = 0;
-        static unsigned int SERVO_BRAKING = 0;
-        static unsigned int USE_ROT_ENC = 0;
-        static unsigned int USE_IMU = 1;
+        extern const char *LOG_FILE_PREFIX;
+        extern unsigned int LOG_THETA;
+        extern unsigned int LOG_THETA_DOT;
+        extern unsigned int LOG_PHI;
+        extern unsigned int LOG_PHI_DOT;
+        extern unsigned int LOG_SETPOINT;
 
-        // Log parameters
-        static const char *LOG_FILE_PREFIX = "/LOG";
-        static unsigned int LOG_THETA = 1;
-        static unsigned int LOG_THETA_DOT = 1;
-        static unsigned int LOG_PHI = 1;
-        static unsigned int LOG_PHI_DOT = 1;
-        static unsigned int LOG_SETPOINT = 1;
+        extern unsigned int NUM_POLES;
+        extern float PHASE_RES;
+        extern float SENSE_MVPA;
 
-        // BLDC motor parameters
-        static unsigned int NUM_POLES = 11; // pole pairs. 24N22P - how many pole pairs are there?
-        static float PHASE_RES = 11.1f;     // phase resistance
-        static float SENSE_MVPA = 185.0f;   // ACS712-05B has the resolution of 0.185 (milli-Volts per Amp)
+        extern float RATE_LIMIT;
+        extern float MOTOR_KV;
+        extern float ANGLE_THRESH;
+        extern float LQR_K1;
+        extern float LQR_K2;
+        extern float LQR_K3;
+        extern float LQR_K4;
 
-        // Control params
-        static float RATE_LIMIT = 100.0f; // Nm/s. Large value so we can ignore for now
-        static float MOTOR_KV = 52.8f;    // Nm/A. This is also used to calc max torque (probably not accurate)
+        extern float JERK_KP;
+        extern float JERK_KD;
+        extern float WHEEL_J;
+        extern float BALANCE_ANGLE;
+        extern float BALANCE_PERIOD;
 
-        static float ANGLE_THRESH = 0.4f; // Threshold for controllable bounds. Radians, 0.5 rad = 28.6 deg
-        // LQR Gain Matrix (precomputed offline)
-        static float LQR_K1 = -1.2f;   // theta
-        static float LQR_K2 = -0.25f;  // theta_dot
-        static float LQR_K3 = -0.0f;   // phi. If we want to use this, best to wrap phi to 0 to 2pi in the LQR class, ortherwise its hard to recover from multiple rotations
-        static float LQR_K4 = -0.002f; // phi_dot
+        extern unsigned int ENC_PPR;
+        extern unsigned int LOG_COLUMNS;
 
-        // Should just get rid of these since we aren't using the min jerk controller
-        static float JERK_KP = 1.0f;
-        static float JERK_KD = 0.0f;
-        static float WHEEL_J = 0.000928f;   // Moment of inertia of the wheel
-        static float BALANCE_ANGLE = 0.0f;  // radians. This is the angle at which the cube will balance. Needs to be calibrated to account for mass offsets
-        static float BALANCE_PERIOD = 2.0f; // seconds. This is the period of the balance trajectory
+        // Periods (in ms)
+        extern float AQUISITION_MS;
+        extern float BALANCE_MS;
+        extern float BLDC_MS;
+        extern float LOG_MS;
+        extern float REFRESH_STATUS_MS;
+        extern float INDICATION_MS;
+        extern float TASK_MANAGER_MS;
 
-        static unsigned int ENC_PPR = 600;
-
-        static unsigned int LOG_COLUMNS = (LOG_THETA + LOG_THETA_DOT + LOG_PHI + LOG_PHI_DOT + LOG_SETPOINT); // Number of columns in the log file
-
-        // Periods (calculated from frequencies)
-        static float AQUISITION_MS = (1000.0 / AQUISITION_FREQ);    // ms
-        static float BALANCE_MS = (1000.0 / BALANCE_FREQ);          // ms
-        static float BLDC_MS = (1000.0 / BLDC_FREQ);                // ms
-        static float LOG_MS = (1000.0 / LOG_FREQ);                  // ms
-        static float REFRESH_STATUS_MS = (1000.0 / REFR_STAT_FREQ); // ms
-        static float INDICATION_MS = (1000.0 / INDICATION_FREQ);    // ms
-        static float TASK_MANAGER_MS = (1000.0 / TASK_MANGR_FREQ);  // ms
-
-        // Recalculate dependent periods
-        static void recalculatePeriods()
-        {
-                AQUISITION_MS = (1000.0 / AQUISITION_FREQ);
-                BALANCE_MS = (1000.0 / BALANCE_FREQ);
-                BLDC_MS = (1000.0 / BLDC_FREQ);
-                LOG_MS = (1000.0 / LOG_FREQ);
-                REFRESH_STATUS_MS = (1000.0 / REFR_STAT_FREQ);
-                INDICATION_MS = (1000.0 / INDICATION_FREQ);
-                TASK_MANAGER_MS = (1000.0 / TASK_MANGR_FREQ);
-        }
-
-        // Functions to handle persistent storage
-        static void loadPreferences()
-        {
-                Preferences preferences;
-                if (preferences.begin("params", false)) // Open in RW mode
-                {
-#define LOAD_OR_INIT(pref, type, var, defaultVal)                                     \
-        if (pref.isKey(#var))                                                         \
-        {                                                                             \
-                var = pref.get##type(#var, defaultVal);                               \
-                ESP_LOGI("Params", "Loaded %s = %f", #var, (float)var);               \
-        }                                                                             \
-        else                                                                          \
-        {                                                                             \
-                ESP_LOGW("Params", "Key %s not found. Initializing default: %s = %f", \
-                         #var, #var, (float)defaultVal);                              \
-                pref.put##type(#var, defaultVal); /* No commit needed */              \
-                var = defaultVal;                                                     \
-        }
-                        // Load or initialize values
-                        LOAD_OR_INIT(preferences, UInt, ALLOW_SLEEP, 1);
-                        LOAD_OR_INIT(preferences, UInt, SLP_TIMEOUT_MS, 30000);
-                        LOAD_OR_INIT(preferences, Float, AQUISITION_FREQ, 400.0f);
-                        LOAD_OR_INIT(preferences, Float, BALANCE_FREQ, 100.0f);
-                        LOAD_OR_INIT(preferences, Float, BLDC_FREQ, 1000.0f);
-                        LOAD_OR_INIT(preferences, Float, LOG_FREQ, 100.0f);
-                        LOAD_OR_INIT(preferences, Float, REFR_STAT_FREQ, 0.2f);
-                        LOAD_OR_INIT(preferences, Float, INDICATION_FREQ, 1.0f);
-                        LOAD_OR_INIT(preferences, Float, TASK_MANGR_FREQ, 10.0f);
-                        LOAD_OR_INIT(preferences, Float, PHASE_RES, 11.1f);
-                        LOAD_OR_INIT(preferences, Float, SENSE_MVPA, 185.0f);
-                        LOAD_OR_INIT(preferences, Float, RATE_LIMIT, 100.0f);
-                        LOAD_OR_INIT(preferences, Float, MOTOR_KV, 52.8f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K1, -1.2f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K2, -0.25f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K3, -0.0f);
-                        LOAD_OR_INIT(preferences, Float, LQR_K4, -0.002f);
-                        LOAD_OR_INIT(preferences, Float, JERK_KP, 1.0f);
-                        LOAD_OR_INIT(preferences, Float, JERK_KD, 0.0f);
-                        LOAD_OR_INIT(preferences, Float, WHEEL_J, 0.000928f);
-                        LOAD_OR_INIT(preferences, Float, ANGLE_THRESH, 0.4f);
-                        LOAD_OR_INIT(preferences, Float, BALANCE_ANGLE, 0.0f);
-                        LOAD_OR_INIT(preferences, Float, BALANCE_PERIOD, 2.0f);
-
-                        recalculatePeriods(); // Update dependent calculations
-                        preferences.end();
-                        ESP_LOGI("Params", "Preferences loaded.");
-                }
-                else
-                {
-                        ESP_LOGE("Params", "Failed to open NVS storage!");
-                }
-        }
-
-        // Save preferences to NVS
-        // template <typename T>
-        // static void savePreference(const char *key, T value)
-        // {
-        //         Preferences preferences;
-        //         if (preferences.begin("params", false)) // Open in RW mode
-        //         {
-        //                 if constexpr (std::is_same<T, unsigned int>::value)
-        //                 {
-        //                         preferences.putUInt(key, value);
-        //                         ESP_LOGI("Params", "Stored unsigned int preference: %s = %d", key, value);
-        //                 }
-        //                 else if constexpr (std::is_same<T, float>::value)
-        //                 {
-        //                         preferences.putFloat(key, value);
-        //                         ESP_LOGI("Params", "Stored float preference: %s = %f", key, value);
-        //                         // print the parameter to see if it changed
-        //                         ESP_LOGI("Params", "LQR_K1 = %f", LQR_K1);
-        //                 }
-        //                 else
-        //                 {
-        //                         ESP_LOGE("Params", "Unsupported type for saving preference.");
-        //                 }
-
-        //                 preferences.end();
-        //         }
-        //         else
-        //         {
-        //                 ESP_LOGE("Params", "Failed to open NVS storage!");
-        //         }
-        // }
-
-        static void savePreference(const char *key, float value)
-        {
-                Preferences preferences;
-                if (preferences.begin("params", false)) // Open in RW mode
-                {
-                        preferences.putFloat(key, value);
-                        ESP_LOGI("Params", "Stored float preference: %s = %f", key, value);
-
-                        // Explicitly update the variable if it matches a parameter
-                        if (strcmp(key, "LQR_K1") == 0)
-                        {
-                                LQR_K1 = value;
-                                ESP_LOGI("Params", "Updated LQR_K1 in RAM: %f", LQR_K1);
-                        }
-
-                        preferences.end();
-                }
-                else
-                {
-                        ESP_LOGE("Params", "Failed to open NVS storage!");
-                }
-        }
-
-        // Set frequency and recalculate dependent periods
-        static void setFrequency(const char *keyFreq, float &freq, float newFreq)
-        {
-                freq = newFreq;
-
-                // Save the frequency to NVS
-                savePreference(keyFreq, freq);
-
-                // Recalculate dependent variables
-                recalculatePeriods();
-        }
-
-        static void wipeSettings()
-        {
-                ESP_LOGW("NVS", "Wiping preferences and rebooting...");
-
-                Preferences preferences;
-                if (preferences.begin("params", false)) // Open in RW mode
-                {
-                        preferences.clear(); // Erase all stored values
-                        preferences.end();
-                        ESP_LOGW("NVS", "Preferences wiped!");
-                }
-                else
-                {
-                        ESP_LOGE("NVS", "Failed to open NVS storage!");
-                }
-
-                delay(1000);
-                esp_restart(); // Restart ESP32 to apply changes
-        }
-
-        static float getFloat(const char *key)
-        {
-                Preferences preferences;
-                if (preferences.begin("params", false))
-                {
-                        float val = preferences.getFloat(key, 0.0f);
-                        preferences.end();
-                        return val;
-                }
-                return 0.0f;
-        }
-
-        static unsigned int getUInt(const char *key)
-        {
-                Preferences preferences;
-                if (preferences.begin("params", false))
-                {
-                        unsigned int val = preferences.getUInt(key, 0);
-                        preferences.end();
-                        return val;
-                }
-                return 0;
-        }
-
-        static bool exists(const char *key)
-        {
-                Preferences preferences;
-                if (preferences.begin("params", false)) // Open in read mode
-                {
-                        bool keyExists = preferences.isKey(key);
-                        preferences.end();
-                        return keyExists;
-                }
-                return false; // Return false if unable to open NVS
-        }
+        // Function declarations
+        void recalculatePeriods();
+        void loadPreferences();
+        void savePreference(const char *key, float value);
+        void setFrequency(const char *keyFreq, float &freq, float newFreq);
+        void wipeSettings();
+        float getFloat(const char *key);
+        unsigned int getUInt(const char *key);
+        bool exists(const char *key);
 }

@@ -120,6 +120,15 @@ float Filter::getMeasurementNoise()
     return 0.0f; // or some other default value
 }
 
+void Filter::setR(float R)
+{
+    SemaphoreGuard guard(m_dataMutex);
+    if (guard.acquired())
+    {
+        m_vars.R = R;
+    }
+}
+
 float Filter::getEstimatedError()
 {
     SemaphoreGuard guard(m_dataMutex);
