@@ -56,8 +56,8 @@ bool Estimator::calibrateOmegaBias()
 {
     if (m_imuSelected)
     {
-        // Calculate angular velocity bias by averaging n samples for 0.5 seconds
-        int n_samples = static_cast<int>(500 / (Params::AQUISITION_MS));
+        // Calculate angular velocity bias by averaging n samples for 0.2 seconds
+        int n_samples = static_cast<int>(1 / (5 * m_aquisition_dt));
 
         float omegaBias = 0.0;
 
@@ -68,7 +68,7 @@ bool Estimator::calibrateOmegaBias()
             vTaskDelay(pdMS_TO_TICKS(m_aquisition_dt));
         }
 
-        if (fabs(omegaBias) > 1.0) // !!! arbitrary threshold, but this value should be low
+        if (fabs(omegaBias) > 0.01) // Value from test: [-0.003454]
         {
             ESP_LOGE("ESTIMATOR", "Cube is moving too much for calibration, Omega = %f", omegaBias);
             return false;
@@ -103,8 +103,8 @@ bool Estimator::calibrateStartSide()
         float ay = 0;
         float ax = 0;
 
-        // averaging n samples for 0.25 seconds
-        int n_samples = 1 / (4 * m_aquisition_dt);
+        // averaging n samples for 0.1 seconds
+        int n_samples = static_cast<int>(1 / (10 * m_aquisition_dt));
 
         for (int i = 0; i < n_samples; i++)
         {

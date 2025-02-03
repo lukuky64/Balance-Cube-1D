@@ -21,6 +21,7 @@ public:
     void addCommand(char cmdID, CommandCallback callback);
     void setVariable(const char *arg);
     void commandHandler(const String &command);
+    void pingMsg();
 
 private:
     struct Command
@@ -32,7 +33,7 @@ private:
     WebSocketsServer webSocket;
 
     const char *ap_ssid = "BALANCE_CUBE_1D"; // 🔹 WiFi network name
-    const char *ap_password = "123";         // 🔹 WiFi password, was 12345678
+    const char *ap_password = "12345678";    // 🔹 WiFi password, minimum 8 characters
 
     Command _commandList[MAX_COMMANDS];
     int _commandCount = 0;

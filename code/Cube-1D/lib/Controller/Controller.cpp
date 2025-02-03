@@ -43,8 +43,8 @@ bool Controller::setup()
 
 bool Controller::setupFilters()
 {
-    // averaging n samples for 0.5 seconds
-    int n_samples = static_cast<int>(500 / (Params::AQUISITION_MS));
+    // averaging n samples for 0.2 seconds
+    int n_samples = static_cast<int>(200 / (Params::AQUISITION_MS));
 
     for (int i = 0; i < n_samples; i++)
     {

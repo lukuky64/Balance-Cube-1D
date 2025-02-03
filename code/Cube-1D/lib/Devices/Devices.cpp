@@ -317,7 +317,7 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
     if (checkRequirementsMet())
     {
         ESP_LOGI("Initialisation", "Minimum device successes satisfied!");
-        m_indicators.showSuccess();
+        // m_indicators.showSuccess();
         result = true;
     }
     else

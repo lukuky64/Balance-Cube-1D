@@ -16,6 +16,8 @@
 
 #define OMEGA_SET_Z_AXIS 1
 
+#define USE_WIFI 1 // when enabled, tasks will be pinned to specific cores
+
 namespace Params
 {
         // Global parameter declarations (extern means defined elsewhere)

@@ -22,15 +22,25 @@ void WebSocketServer::begin()
             this->commandHandler((char *)payload);
         } });
 
-    // Add commands
+    // Set a variable
     addCommand('S', [this](const char *arg)
                { this->setVariable(arg); });
 
-    // Wipe settings
+    // Wipe all modified variables and restart
     addCommand('R', [](const char *arg)
                { Params::wipeSettings(); });
 
+    // ping command
+    addCommand('P', [this](const char *arg)
+               { this->pingMsg(); });
+
     // get a variable
+}
+
+void WebSocketServer::pingMsg()
+{
+    sendMessage("Pong");
+    ESP_LOGI("WebSocket", "Pong");
 }
 
 void WebSocketServer::loop()

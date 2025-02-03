@@ -117,7 +117,7 @@ bool Log::logData(const float *data, int dataSize)
     // Ensure logging is set up
     if (!isLogSetup())
     {
-        ESP_LOGE(TAG, "Logging not set up.");
+        // ESP_LOGE(TAG, "Logging not set up.");
         return false;
     }
 
@@ -226,6 +226,7 @@ bool Log::writeBufferAll()
         if (!m_sdTalker.writeBuffer(charBuffer, currentBufferPos))
         {
             ESP_LOGE(TAG, "Failed to write to SD.");
+            m_sdLog = false;
             success = false;
         }
     }
@@ -235,6 +236,7 @@ bool Log::writeBufferAll()
         if (!m_serialTalker.writeBuffer(charBuffer, currentBufferPos))
         {
             ESP_LOGE(TAG, "Failed to write to Serial.");
+            m_serialLog = false;
             success = false;
         }
     }

@@ -62,7 +62,7 @@ private:
     bool m_imuSelected;
     bool m_rotEncSelected;
 
-    float m_aquisition_dt;
+    float m_aquisition_dt; // units are seconds
 
     // unsigned long m_lastTime;
     // unsigned long m_currentTime;

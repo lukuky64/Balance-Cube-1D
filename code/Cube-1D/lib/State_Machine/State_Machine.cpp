@@ -31,8 +31,11 @@ void State_Machine::begin()
     if (m_taskManagerTaskHandle == NULL)
     {
         ESP_LOGI(TAG, "Starting Task Manager Task");
-        // xTaskCreate(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle);
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle, 1);
+#else
+        xTaskCreate(&State_Machine::taskManagerTask, "Starting Task Manager", 4096, this, PRIORITY_MEDIUM, &m_taskManagerTaskHandle);
+#endif
     }
 }
 
@@ -118,7 +121,8 @@ void State_Machine::loop()
     case LIGHT_SLEEP:
     {
         lightSleepSeq();
-        logSeq(); // go back to logging after sleep
+        logSeq();  // go back to logging after sleep
+        wifiSeq(); // re-start wifi server
     }
     break;
     case CONTROL:
@@ -363,7 +367,8 @@ void State_Machine::wifiTask(void *pvParameters)
         wsServer.loop();                                                                                                                                                                        // Process WebSocket events
         String JSONmessage = "{\"angle\":" + String(machine->m_control.m_filters.filter_theta.getValue()) + ",\"omega\":" + String(machine->m_control.m_filters.filter_omega.getValue()) + "}"; // JSON
         wsServer.sendMessage(JSONmessage);
-        vTaskDelay(pdMS_TO_TICKS(10));
+        vTaskDelay(pdMS_TO_TICKS(1)); // small delay
+        // taskYIELD(); // using this causes crashing
     }
 
     machine->m_wifiTaskHandle = NULL; // clear the handle
@@ -421,6 +426,9 @@ void State_Machine::lightSleepSeq()
 
         vTaskDelete(m_logTaskHandle);
         m_logTaskHandle = NULL;
+
+        vTaskDelete(m_wifiTaskHandle);
+        m_wifiTaskHandle = NULL; // clear the handle
     }
 
     if (m_devices.sleepMode())
@@ -453,13 +461,20 @@ void State_Machine::initialisationSeq()
 
     if (m_indicationLoopTaskHandle == NULL)
     {
-        // xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
+//
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::indicationTask, "Indication Loop Task", 4096, this, PRIORITY_LOW, &m_indicationLoopTaskHandle, 1);
+#else
+        xTaskCreate(&State_Machine::indicationTask, "Indication Loop Task", 2048, this, PRIORITY_LOW, &m_indicationLoopTaskHandle); // uses 1836 bytes of stack
+#endif
     }
     if (m_refreshStatusTaskHandle == NULL)
     {
-        // xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::refreshStatusTask, "Device status check loop Task", 4096, this, PRIORITY_LOW, &m_refreshStatusTaskHandle, 1);
+#else
+        xTaskCreate(&State_Machine::refreshStatusTask, "Device status check loop Task", 2048, this, PRIORITY_LOW, &m_refreshStatusTaskHandle);
+#endif
     }
 }
 
@@ -475,8 +490,11 @@ void State_Machine::calibrationSeq()
 
     if ((m_updateFiltersTaskHandle == NULL) && succ)
     {
-        // xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle, 1);
+#else
+        xTaskCreate(&State_Machine::updateFiltersTask, "Starting Filters Task", 4096, this, PRIORITY_HIGH, &m_updateFiltersTaskHandle);
+#endif
     }
 
     SemaphoreGuard guard(m_stateMutex);
@@ -484,14 +502,21 @@ void State_Machine::calibrationSeq()
     {
         m_currState = (succ) ? IDLE : CRITICAL_ERROR;
     }
+
+    if (succ)
+    {
+        m_devices.m_indicators.showSuccess();
+    }
 }
 
 void State_Machine::wifiSeq()
 {
+#if USE_WIFI
     if (m_wifiTaskHandle == NULL)
     {
         xTaskCreatePinnedToCore(&State_Machine::wifiTask, "WiFi Task", 4096, this, PRIORITY_HIGH, &m_wifiTaskHandle, 0); // core 0 for wifi tasks
     }
+#endif
 }
 
 void State_Machine::controlSeq()
@@ -501,15 +526,21 @@ void State_Machine::controlSeq()
     if (m_balanceTaskHandle == NULL)
     {
         ESP_LOGI(TAG, "Starting balance Task");
-        // xTaskCreate(&State_Machine::balanceTask, "balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::balanceTask, "balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle, 1); // Core 1 for real-time tasks
+#else
+        xTaskCreate(&State_Machine::balanceTask, "balance Task", 4096, this, PRIORITY_HIGH, &m_balanceTaskHandle);
+#endif
     }
 
     if (m_BLDCTaskHandle == NULL)
     {
         ESP_LOGI(TAG, "Starting BLDC Task");
-        // xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::BLDCTask, "BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle, 1); // Core 1 for real-time tasks
+#else
+        xTaskCreate(&State_Machine::BLDCTask, "Starting BLDC Task", 4096, this, PRIORITY_HIGH, &m_BLDCTaskHandle);
+#endif
     }
 }
 
@@ -517,8 +548,11 @@ void State_Machine::logSeq()
 {
     if (m_logTaskHandle == NULL)
     {
-        // xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
+#if USE_WIFI
         xTaskCreatePinnedToCore(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle, 1);
+#else
+        xTaskCreate(&State_Machine::logTask, "Starting log Task", 4096, this, PRIORITY_MEDIUM, &m_logTaskHandle);
+#endif
     }
 }
 
