@@ -18,8 +18,11 @@
     <input type="text" id="commandInput" placeholder="S BALANCE_FREQ=150" style="width: 180px;">
     <button onclick="sendCommand()">Send</button>
 
+    <!-- Button for sending ping -->
+    <button onclick="sendPing()">Ping</button>
+
     <!-- Latest received message -->
-    <p>Latest Message: <span id="latestMessage">None</span></p>
+    <p>Latest Angle: <span id="latestAngle">None</span></p>
 
     <!-- <h3>Angle vs Time</h3> -->
     <canvas id="chart"></canvas>
@@ -34,6 +37,8 @@
         let chart;
         let scene, camera, renderer, square, group;
         let ws;
+
+        let pingStartTime;
 
         function init() {
             scene = new THREE.Scene();
@@ -167,9 +172,16 @@
             };
 
             ws.onmessage = function (event) {
+
+                if (event.data === "Pong") {
+                    getPong();
+                    return; // don't parse JSON
+                }
+
                 let data;
                 try {
                     data = JSON.parse(event.data);
+
                     const angle = data.angle;
                     const omega = data.omega;
 
@@ -180,7 +192,7 @@
                     updateChart(angle, omega);
 
                     // Update latest received message
-                    document.getElementById("latestMessage").innerText = `Time: ${time}, Angle: ${angle}`;
+                    document.getElementById("latestAngle").innerText = angle;
                 } catch (error) {
                     console.error("Error parsing data:", event.data);
                 }
@@ -201,6 +213,21 @@
             } else {
                 alert("WebSocket is not connected!");
             }
+        }
+
+        function sendPing() {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send("P");
+                pingStartTime = performance.now();
+            }
+            else {
+                alert("WebSocket is not connected!");
+            }
+        }
+
+        function getPong() {
+            const lapsedTime = performance.now() - pingStartTime;
+            alert("ping pong time = " + lapsedTime + " ms");
         }
 
         init();
