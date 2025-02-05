@@ -30,10 +30,13 @@ BLDC_CTR::~BLDC_CTR()
     @return True on success
 */
 /*****************************************************************************/
-bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv)
+bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, int nFLT, int nSLEEP, Mag_Enc *mag_enc, float voltage, float Kv)
 {
     m_max_current = DEF_CURRENT_LIM; // 2A current limit by default
     m_Kv = Kv;
+    m_nFLT = nFLT;
+    m_nSLEEP = nSLEEP;
+
     setTorqueConstant(m_Kv);
 
     m_motor = new BLDCMotor(Params::NUM_POLES, Params::PHASE_RES);
@@ -46,6 +49,11 @@ bool BLDC_CTR::begin(int phA, int phB, int phC, int enable, int senseA, int sens
         // Return because there is not enough voltage to use the motor
         return false;
     }
+
+    // setup nFault pin
+    pinMode(m_nFLT, INPUT);
+    pinMode(m_nSLEEP, OUTPUT);
+    digitalWrite(m_nSLEEP, HIGH);
 
     m_motor->linkSensor(m_sensor);
 
@@ -82,7 +90,19 @@ void BLDC_CTR::setTorqueConstant(float Kv)
 
 bool BLDC_CTR::checkStatus()
 {
-    return true;
+    return (digitalRead(m_nFLT) == 1);
+}
+
+void BLDC_CTR::sleepMode(bool sleep)
+{
+    if (sleep)
+    {
+        digitalWrite(m_nSLEEP, LOW);
+    }
+    else
+    {
+        digitalWrite(m_nSLEEP, HIGH);
+    }
 }
 
 /*****************************************************************************/

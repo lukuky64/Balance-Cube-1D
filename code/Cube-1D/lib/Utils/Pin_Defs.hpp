@@ -20,7 +20,7 @@
 #define BLDC_SENSE_B GPIO_NUM_5
 #define BLDC_nSLP GPIO_NUM_18
 #define BLDC_EN GPIO_NUM_16
-#define BLDC_nFLT GPIO_NUM_17
+#define BLDC_nFLT GPIO_NUM_17 // External pullup. LOW when fault
 #define BLDC_nRST GPIO_NUM_8
 #define BUZZER GPIO_NUM_42
 #define ENC_3V3_A GPIO_NUM_47

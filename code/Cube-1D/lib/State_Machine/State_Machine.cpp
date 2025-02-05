@@ -121,6 +121,7 @@ void State_Machine::loop()
     case LIGHT_SLEEP:
     {
         lightSleepSeq();
+        indicationSeq();
         logSeq();  // go back to logging after sleep
         wifiSeq(); // re-start wifi server
     }
@@ -428,22 +429,27 @@ void State_Machine::lightSleepSeq()
         m_logTaskHandle = NULL;
 
         vTaskDelete(m_wifiTaskHandle);
-        m_wifiTaskHandle = NULL; // clear the handle
+        m_wifiTaskHandle = NULL;
+
+        vTaskDelete(m_indicationLoopTaskHandle);
+        m_indicationLoopTaskHandle = NULL;
     }
 
     if (m_devices.sleepMode())
     {
+        vTaskDelay(pdMS_TO_TICKS(100));
         ESP_LOGI(TAG, "Entering Light Sleep!");
         esp_light_sleep_start(); // Enter Light Sleep
 
         ESP_LOGI(TAG, "Waking up from light sleep!");
         m_devices.wakeMode();
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 
     SemaphoreGuard guard(m_stateMutex);
     if (guard.acquired())
     {
-        m_currState = CONTROL;
+        m_currState = IDLE;
     }
 }
 
@@ -458,6 +464,12 @@ void State_Machine::initialisationSeq()
             m_currState = currState;
         }
     }
+
+    indicationSeq();
+}
+
+void State_Machine::indicationSeq()
+{
 
     if (m_indicationLoopTaskHandle == NULL)
     {

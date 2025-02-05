@@ -15,7 +15,7 @@ public:
 #if DUMMY_BLDC
     bool checkStatus() { return true; }
     void enableMotor(bool enable) { return; }
-    bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv) { return true; }
+    bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, int nFLT, int nSLEEP, Mag_Enc *mag_enc, float voltage, float Kv) { return true; }
     void loopFOC() { return; }
     void moveTarget(float target) { return; }
     bool updateVoltageLimits(float voltage) { return true; }
@@ -27,7 +27,7 @@ public:
 #else
     bool checkStatus();
     void enableMotor(bool enable);
-    bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv);
+    bool begin(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, int nFLT, int nSLEEP, Mag_Enc *mag_enc, float voltage, float Kv);
     void loopFOC();
     void moveTarget(float target);
     bool updateVoltageLimits(float voltage);
@@ -35,6 +35,7 @@ public:
     float getTheta();
     float getOmega();
     float getTarget();
+    void sleepMode(bool sleep);
 
 #endif
 
@@ -53,6 +54,9 @@ private:
     float m_torque_constant; // Torque constant
 
     float m_voltage;
+
+    int m_nFLT;   // pin for rading driver fault. LOW when fault
+    int m_nSLEEP; // pin for controlling sleep. LOW for sleep
 
     void setMotorSettings();
 };

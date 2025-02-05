@@ -53,10 +53,10 @@ bool Devices::setupUSBPD(gpio_num_t SCL, gpio_num_t SDA)
     return false;
 }
 
-bool Devices::setupBLDC(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, Mag_Enc *mag_enc, float voltage, float Kv)
+bool Devices::setupBLDC(int phA, int phB, int phC, int enable, int senseA, int senseB, int MAG_CS, int nFLT, int nSLEEP, Mag_Enc *mag_enc, float voltage, float Kv)
 {
     // mag must be setup first. Make sure USBPD gets the voltage before this is used
-    return m_bldc.begin(phA, phB, phC, enable, senseA, senseB, MAG_CS, mag_enc, voltage, Kv);
+    return m_bldc.begin(phA, phB, phC, enable, senseA, senseB, MAG_CS, nFLT, nSLEEP, mag_enc, voltage, Kv);
 }
 
 bool Devices::setupSPI(gpio_num_t MISO, gpio_num_t MOSI, gpio_num_t CLK, SPICOM &SPI)
@@ -300,7 +300,7 @@ bool Devices::init(bool logSD, bool logSerial, bool SilentIndication, bool servo
         if ((statusMask & USBPD_BIT) == USBPD_BIT)
         {
             // set up BLDC
-            if (setupBLDC(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, &m_magEnc, m_usbPD.getVoltage(), Params::MOTOR_KV))
+            if (setupBLDC(BLDC_INA, BLDC_INB, BLDC_INC, BLDC_EN, BLDC_SENSE_A, BLDC_SENSE_B, SPI_CS_MAG, BLDC_nFLT, BLDC_nSLP, &m_magEnc, m_usbPD.getVoltage(), Params::MOTOR_KV))
             {
                 statusMask |= BLDC_BIT;
                 prefMask |= BLDC_BIT;
@@ -403,6 +403,8 @@ bool Devices::sleepMode()
 {
     bool deviceSLeepSucc = true;
 
+    m_bldc.sleepMode(true);
+
     m_indicators.showAllOff();
 
     if (!deviceSLeepSucc)
@@ -420,6 +422,10 @@ bool Devices::sleepMode()
 
 void Devices::wakeMode()
 {
+    // quick beep
+    m_bldc.sleepMode(false);
+
+    m_indicators.showSuccess();
 }
 
 bool Devices::canSleep()

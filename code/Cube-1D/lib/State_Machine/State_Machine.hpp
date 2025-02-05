@@ -53,6 +53,8 @@ public:
     // void checkActivityTask();
     STATES getCurrentState();
     void criticalErrorSeq();
+    void indicationSeq();
+
     void logSeq();
     void wifiSeq();
     const char *stateToString(STATES state);

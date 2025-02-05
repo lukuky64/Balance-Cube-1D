@@ -129,7 +129,7 @@ bool Estimator::calibrateStartSide()
 
         // float average_accel = (fabs(ax) + fabs(ay)) / 2;
 
-        if (fabs(current_angle) < (QUARTER_PI * 0.96)) // 0.96 is a safety factor to account for noise and other factors
+        if (fabs(current_angle) < (QUARTER_PI * 0.98)) // 0.98 is a safety factor to account for noise and other factors
         {
             ESP_LOGE("ESTIMATOR", "Cube is not flat on its side!, angle reading +/-: [%f], should be around +/-: [%f]", fabs(current_angle), QUARTER_PI);
             return false;
